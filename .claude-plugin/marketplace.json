@@ -1,0 +1,12 @@
+{
+  "name": "saved-reels-digest",
+  "description": "Turn your saved Instagram reels into a deduplicated digest with Claude Code",
+  "owner": { "name": "OWNER" },
+  "plugins": [
+    {
+      "name": "saved-reels",
+      "source": "./",
+      "description": "Go through your saved Instagram reels, keep the ones on your topic, merge duplicates, get a ranked digest. Free and local."
+    }
+  ]
+}

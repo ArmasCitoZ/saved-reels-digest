@@ -1,0 +1,10 @@
+{
+  "name": "saved-reels",
+  "version": "0.1.0",
+  "description": "Claude goes through your saved Instagram reels, keeps the ones about your topic (tech/AI by default), transcribes them locally with Whisper, merges duplicates and writes a ranked digest. 100% free and local.",
+  "author": { "name": "OWNER" },
+  "homepage": "https://github.com/OWNER/saved-reels-digest",
+  "repository": "https://github.com/OWNER/saved-reels-digest",
+  "license": "MIT",
+  "keywords": ["instagram", "reels", "saved", "whisper", "transcription", "knowledge-base", "digest"]
+}

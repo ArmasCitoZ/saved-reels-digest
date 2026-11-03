@@ -1,0 +1,4 @@
+yt-dlp>=2025.1.1
+faster-whisper>=1.1.0
+instaloader>=4.14
+browser_cookie3>=0.19.1
