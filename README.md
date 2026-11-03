@@ -28,7 +28,7 @@ Se puede volver a lanzar cuando quieras: solo procesa lo que hayas guardado desd
 Necesitas [Claude Code](https://claude.com/claude-code) y Python 3.9 o superior. Abre Claude Code y escribe:
 
 ```
-/plugin marketplace add OWNER/saved-reels-digest
+/plugin marketplace add ArmasCitoZ/saved-reels-digest
 /plugin install saved-reels@saved-reels-digest
 ```
 
@@ -46,7 +46,7 @@ Para elegir otro tema basta con decirlo: `/saved-reels:digest marketing y negoci
 <summary>Instalación sin plugin (copiar la skill)</summary>
 
 ```bash
-git clone https://github.com/OWNER/saved-reels-digest
+git clone https://github.com/ArmasCitoZ/saved-reels-digest
 cp -r saved-reels-digest/skills/digest ~/.claude/skills/saved-reels-digest
 ```
 Después, en Claude Code: `/saved-reels-digest`.
@@ -115,7 +115,7 @@ Se aceptan PRs. Ideas pendientes: soporte para TikTok y YouTube Shorts guardados
 It's free: there are no paid APIs or keys. Transcription runs on your machine and the analysis runs in your normal Claude Code plan.
 
 ```
-/plugin marketplace add OWNER/saved-reels-digest
+/plugin marketplace add ArmasCitoZ/saved-reels-digest
 /plugin install saved-reels@saved-reels-digest
 /saved-reels:digest
 ```

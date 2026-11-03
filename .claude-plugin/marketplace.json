@@ -1,7 +1,7 @@
 {
   "name": "saved-reels-digest",
   "description": "Turn your saved Instagram reels into a deduplicated digest with Claude Code",
-  "owner": { "name": "OWNER" },
+  "owner": { "name": "ArmasCitoZ" },
   "plugins": [
     {
       "name": "saved-reels",
