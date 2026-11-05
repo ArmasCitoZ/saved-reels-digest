@@ -4,7 +4,7 @@ Small, shippable steps. Each one is a real improvement that gets tested before i
 Tick the box when done and link the commit. Ideas welcome via issues.
 
 ## Calidad y confianza
-- [ ] Tests con pytest para `collect.py` (export JSON, HTML, zip, colecciones)
+- [x] Tests con pytest para `collect.py` (export JSON, HTML, zip, colecciones)
 - [ ] Tests para `db.py` (next / set / similar / dump)
 - [ ] GitHub Actions: lint (ruff) + tests en Linux, macOS y Windows
 - [ ] Fixture de exportación de Instagram anonimizada para los tests

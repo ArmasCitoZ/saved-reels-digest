@@ -6,3 +6,4 @@ __pycache__/
 reels.json
 digest.md
 .session/
+.pytest_cache/
