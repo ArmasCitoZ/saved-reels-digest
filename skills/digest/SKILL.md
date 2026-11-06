@@ -84,8 +84,10 @@ Repeat until `next` says nothing is left. Do not print every decision to the use
 ## Step 4: transcribe (local Whisper)
 
 `PY SCRIPTS/transcribe.py` transcribes `true` + `maybe` video reels and deletes the audio.
-Default model `small` (good for Spanish/English, ~460 MB once). On a slow machine
-suggest `--model base`; with an NVIDIA GPU it uses it automatically. Roughly 10–30 s
+The model is picked from the computer's RAM (`--model auto`, shown by `doctor.py`):
+`tiny` under 4 GB, `base` under 8 GB, otherwise `small` (good for Spanish/English,
+~460 MB once), and `medium` on an NVIDIA GPU, which is used automatically. The user can
+force one with `--model small` etc. if accuracy is poor. Roughly 10–30 s
 per reel on CPU, so run in the background for big batches and report progress.
 If many fail with login errors, retry with `--browser chrome`.
 

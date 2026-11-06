@@ -1,12 +1,14 @@
 """Transcribe saved reels locally with Whisper (faster-whisper). Free, offline, private.
 
-  transcribe.py [--model small] [--language es] [--all] [--limit N]
+  transcribe.py [--model auto] [--language es] [--all] [--limit N]
                 [--browser chrome | --username YOU] [--shortcodes A,B,C]
 
 By default only reels Claude marked relevant or "maybe" are transcribed.
 The audio is deleted right after transcription; only the text is kept.
 The Whisper model is downloaded once (~75 MB tiny ... ~1.5 GB large-v3)
-into the workspace and reused.
+into the workspace and reused. With --model auto (default) it is chosen from
+the computer's RAM: tiny under 4 GB, base under 8 GB, otherwise small, and
+medium on an NVIDIA GPU.
 """
 from __future__ import annotations
 
@@ -18,20 +20,26 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import HOME, load_db, log, save_db  # noqa: E402
+from common import HOME, load_db, log, pick_whisper_model, save_db, total_ram_bytes  # noqa: E402
 from ig import Blocked, Fetcher  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
 
 
+def has_cuda() -> bool:
+    try:
+        import ctranslate2
+        return ctranslate2.get_cuda_device_count() > 0
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def load_model(name: str):
     from faster_whisper import WhisperModel
 
-    try:
-        import ctranslate2
-        cuda = ctranslate2.get_cuda_device_count() > 0
-    except Exception:  # noqa: BLE001
-        cuda = False
+    cuda = has_cuda()
+    if name == "auto":
+        name = pick_whisper_model(total_ram_bytes(), cuda)
     device, ctype = ("cuda", "float16") if cuda else ("cpu", "int8")
     log(f"Loading Whisper '{name}' on {device} (first time downloads the model) ...")
     return WhisperModel(name, device=device, compute_type=ctype,
@@ -47,7 +55,8 @@ def transcribe_file(model, path: Path, language: str | None) -> tuple[str, str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--model", default="small", help="tiny, base, small (default), medium, large-v3")
+    ap.add_argument("--model", default="auto",
+                    help="auto (default, by RAM), tiny, base, small, medium, large-v3")
     ap.add_argument("--language", default=None, help="force a language code (es, en...); default auto")
     ap.add_argument("--all", action="store_true", help="ignore triage, transcribe every video")
     ap.add_argument("--shortcodes", help="comma-separated list to (re)transcribe")

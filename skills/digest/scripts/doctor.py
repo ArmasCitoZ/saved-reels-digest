@@ -19,7 +19,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import HOME  # noqa: E402
+from common import HOME, pick_whisper_model, total_ram_bytes  # noqa: E402
 
 MIN_PYTHON = (3, 9)
 # first run: virtualenv with deps (~600 MB) + Whisper "small" model (~460 MB)
@@ -103,8 +103,21 @@ def check_ffmpeg(which=shutil.which) -> dict:
             "detail": "not installed (optional: audio is decoded without it)"}
 
 
+def check_ram(ram_bytes=None) -> dict:
+    ram_bytes = total_ram_bytes() if ram_bytes is None else ram_bytes
+    if not ram_bytes:
+        return {"name": "ram", "status": WARN, "detail": "could not read; transcribe.py will use 'small'",
+                "whisper_model": pick_whisper_model(None)}
+    model = pick_whisper_model(ram_bytes)
+    gb = ram_bytes / 1024 ** 3
+    status = WARN if gb < 4 else OK
+    return {"name": "ram", "status": status,
+            "detail": f"{gb:.1f} GB; Whisper model on CPU: {model}", "whisper_model": model}
+
+
 def run_checks(home: Path = HOME) -> list:
-    return [check_python(), check_workspace(home), check_disk(home), check_venv(home), check_ffmpeg()]
+    return [check_python(), check_workspace(home), check_disk(home), check_ram(),
+            check_venv(home), check_ffmpeg()]
 
 
 def main(argv=None) -> int:

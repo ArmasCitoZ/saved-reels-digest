@@ -70,5 +70,11 @@ def test_cli_json_output(tmp_path):
                        capture_output=True, text=True, check=False)
     report = json.loads(r.stdout)
     names = [c["name"] for c in report["checks"]]
-    assert names == ["python", "workspace", "disk", "venv", "ffmpeg"]
+    assert names == ["python", "workspace", "disk", "ram", "venv", "ffmpeg"]
     assert r.returncode == (0 if report["ok"] else 1)
+
+
+def test_ram_check_recommends_a_model():
+    assert doctor.check_ram(16 * 1024 * MB)["whisper_model"] == "small"
+    low = doctor.check_ram(3 * 1024 * MB)
+    assert low["status"] == "warn" and low["whisper_model"] == "tiny"

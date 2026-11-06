@@ -13,7 +13,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 ## Instalación
 - [x] Comprobar dependencias al inicio (`doctor.py`): Python, espacio en disco, ffmpeg opcional
 - [ ] Guía paso a paso para Windows con capturas
-- [ ] Elegir modelo Whisper automáticamente según la RAM del equipo
+- [x] Elegir modelo Whisper automáticamente según la RAM del equipo
 
 ## Funciones
 - [ ] `export_digest.py`: exportar `digest.md` a una bóveda de Obsidian (una nota por idea)

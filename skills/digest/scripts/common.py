@@ -73,5 +73,54 @@ def add_reel(db: dict, shortcode: str, **fields) -> bool:
     return True
 
 
+def total_ram_bytes() -> int | None:
+    """Physical memory of this computer, or None if it cannot be read. No dependencies."""
+    try:
+        if sys.platform == "win32":
+            import ctypes
+
+            class MemStatus(ctypes.Structure):
+                _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
+                            ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
+                            ("ullTotalPageFile", ctypes.c_ulonglong),
+                            ("ullAvailPageFile", ctypes.c_ulonglong),
+                            ("ullTotalVirtual", ctypes.c_ulonglong),
+                            ("ullAvailVirtual", ctypes.c_ulonglong),
+                            ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
+
+            st = MemStatus()
+            st.dwLength = ctypes.sizeof(MemStatus)
+            ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st))
+            return int(st.ullTotalPhys) or None
+        if sys.platform == "darwin":
+            import subprocess
+            out = subprocess.run(["sysctl", "-n", "hw.memsize"], capture_output=True,
+                                 text=True, check=True).stdout
+            return int(out.strip())
+        return os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# Whisper model per amount of RAM, on CPU. "small" is the sweet spot for Spanish and
+# English; "medium" and larger are too slow on a laptop CPU to be worth it.
+MODEL_BY_RAM_GB = ((4, "tiny"), (8, "base"))
+DEFAULT_MODEL = "small"
+GPU_MODEL = "medium"
+
+
+def pick_whisper_model(ram_bytes: int | None, cuda: bool = False) -> str:
+    """Choose a Whisper model that fits this computer."""
+    if ram_bytes is None:
+        return DEFAULT_MODEL
+    gb = ram_bytes / 1024 ** 3
+    if cuda and gb >= 8:
+        return GPU_MODEL
+    for limit, name in MODEL_BY_RAM_GB:
+        if gb < limit:
+            return name
+    return DEFAULT_MODEL
+
+
 def log(msg: str) -> None:
     print(msg, file=sys.stderr, flush=True)

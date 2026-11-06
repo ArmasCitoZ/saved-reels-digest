@@ -72,7 +72,8 @@ Con cualquiera de las tres, el paso de transcribir descarga los reels uno a uno 
 ## Costes y requisitos
 
 - **0 €.** No hay API keys ni servicios de terceros.
-- **Espacio en disco:** ~1 GB la primera vez (entorno de Python y el modelo Whisper `small`, de unos 460 MB). Si tu ordenador es lento, puedes usar `base` (~150 MB).
+- **Espacio en disco:** ~1 GB la primera vez (entorno de Python y el modelo Whisper, de unos 460 MB con `small`).
+- **Modelo Whisper:** se elige solo según la RAM: `tiny` con menos de 4 GB, `base` con menos de 8 GB y `small` a partir de ahí (`medium` si hay GPU NVIDIA). Puedes forzar otro con `--model`.
 - **Tiempo:** entre 10 y 30 segundos por reel en un portátil normal (sin GPU). Si tienes una GPU NVIDIA, se usa automáticamente.
 - **Sistemas:** macOS, Linux y Windows.
 - **Uso de Claude:** la clasificación y la fusión consumen mensajes de tu plan de Claude Code, igual que cualquier otra tarea.
@@ -106,7 +107,7 @@ $PY db.py next                               # pendientes de clasificar
 $PY db.py set relevant true CODE1 CODE2      # marcar relevantes
 $PY db.py similar                            # posibles duplicados
 $PY db.py dump                               # todo lo relevante, para fusionar
-$PY transcribe.py --model small
+$PY transcribe.py                            # modelo según la RAM (--model para forzarlo)
 $PY db.py status
 ```
 
