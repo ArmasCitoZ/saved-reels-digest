@@ -8,7 +8,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Tests para `db.py` (next / set / similar / dump)
 - [x] GitHub Actions: lint (ruff) + tests en Linux, macOS y Windows
 - [x] Fixture de exportación de Instagram anonimizada para los tests
-- [ ] Badge de CI y versión en el README
+- [x] Badge de CI y versión en el README
 
 ## Instalación
 - [ ] Comprobar dependencias al inicio (`doctor.py`): Python, espacio en disco, ffmpeg opcional

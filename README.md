@@ -1,5 +1,10 @@
 # Saved Reels Digest
 
+[![CI](https://github.com/ArmasCitoZ/saved-reels-digest/actions/workflows/ci.yml/badge.svg)](https://github.com/ArmasCitoZ/saved-reels-digest/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FArmasCitoZ%2Fsaved-reels-digest%2Fmain%2F.claude-plugin%2Fplugin.json&query=%24.version&label=version&color=blue)](.claude-plugin/plugin.json)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **Claude revisa por ti los reels que tienes guardados en Instagram.** Se queda solo con los del tema que te interesa (por defecto tech, IA y Claude), los transcribe, junta los que cuentan lo mismo y te deja un único documento ordenado por lo que más merece la pena.
 
 > Guardas 200 reels de "este truco de Claude te cambia la vida" y nunca vuelves a verlos. Esto los convierte en una lista que sí vas a usar.
@@ -102,6 +107,14 @@ $PY db.py similar                            # posibles duplicados
 $PY db.py dump                               # todo lo relevante, para fusionar
 $PY transcribe.py --model small
 $PY db.py status
+```
+
+Para correr los tests y el linter igual que en CI:
+
+```bash
+python -m pip install pytest ruff
+python -m pytest -q
+ruff check .
 ```
 
 Se aceptan PRs. Ideas pendientes: soporte para TikTok y YouTube Shorts guardados, y exportar el resumen a Notion u Obsidian.
