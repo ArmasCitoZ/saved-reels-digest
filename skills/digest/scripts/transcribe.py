@@ -106,7 +106,8 @@ def main() -> None:
                              f"Saved {done} transcripts.")
             save_db(db)
             eta = (time.time() - t0) / n * (len(todo) - n) / 60
-            log(f"[{n}/{len(todo)}] {sc} {'ok' if r.get('transcribe') == 'ok' else 'failed'}  (~{eta:.0f} min left)")
+            status = "ok" if r.get("transcribe") == "ok" else "failed"
+            log(f"[{n}/{len(todo)}] {sc} {status}  (~{eta:.0f} min left)")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     print(f"Transcribed {done}/{len(todo)} reels.")

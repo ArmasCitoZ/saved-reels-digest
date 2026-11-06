@@ -92,8 +92,8 @@ def test_dump_shows_relevant_and_filters_undigested(tmp_path):
 
 def test_dump_truncates_long_captions(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True, caption="word " * 100))
-    line = next(l for l in run(tmp_path, "dump", "--chars", "20").splitlines()
-                if l.startswith("CAPTION:"))
+    line = next(ln for ln in run(tmp_path, "dump", "--chars", "20").splitlines()
+                if ln.startswith("CAPTION:"))
     assert line.endswith("…") and len(line) == len("CAPTION: ") + 20
 
 
@@ -110,7 +110,7 @@ def test_similar_groups_reels_with_the_same_wording(tmp_path):
                  caption="claude code subagents parallel refactor huge repository"))
     out = run(tmp_path, "similar")
     assert "1 candidate groups" in out
-    group = next(l for l in out.splitlines() if l.startswith("- "))
+    group = next(ln for ln in out.splitlines() if ln.startswith("- "))
     assert "AAAAA1" in group and "BBBBB2" in group
     assert "CCCCC3" not in out and "DDDDD4" not in out
 

@@ -1,5 +1,6 @@
 """Tests for reading Instagram's official data export (collect.py export)."""
 import json
+import os
 import subprocess
 import sys
 import zipfile
@@ -22,7 +23,7 @@ COLLECTIONS = {"saved_saved_collections": [
 
 def run(home, *args):
     r = subprocess.run([sys.executable, str(SCRIPTS / "collect.py"), *args],
-                       env={"SRD_HOME": str(home), "PATH": ""}, capture_output=True, text=True)
+                       env={**os.environ, "SRD_HOME": str(home)}, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     return json.loads((home / "reels.json").read_text())["reels"]
 
