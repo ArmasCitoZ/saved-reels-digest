@@ -26,6 +26,8 @@
 4. **Junta los duplicados.** Si tres creadores explican el mismo truco, sale una sola entrada con lo mejor de cada uno y los tres enlaces. También marca contradicciones y cosas que suenan a hype o que pueden estar desactualizadas.
 5. **Te entrega `digest.md`** con una sección **"Haz esto primero"** (los 5-10 consejos más útiles) y debajo todo organizado por categorías.
 
+¿Usas Obsidian? Pídele a Claude que exporte el resumen a tu bóveda: crea una nota por idea, con etiquetas por categoría, los reels de origen y enlaces entre ideas relacionadas, más un índice. Si vuelves a exportar, se conserva lo que escribas bajo `## My notes`.
+
 Se puede volver a lanzar cuando quieras: solo procesa lo que hayas guardado desde la última vez y lo integra en el resumen que ya tienes.
 
 ## Instalación (1 minuto)
@@ -109,6 +111,7 @@ $PY db.py similar                            # posibles duplicados
 $PY db.py dump                               # todo lo relevante, para fusionar
 $PY transcribe.py                            # modelo según la RAM (--model para forzarlo)
 $PY db.py status
+$PY export_digest.py --vault ~/Obsidian/MiBoveda   # una nota por idea + INDEX.md
 ```
 
 Para correr los tests y el linter igual que en CI:
@@ -119,7 +122,7 @@ python -m pytest -q
 ruff check .
 ```
 
-Se aceptan PRs. Ideas pendientes: soporte para TikTok y YouTube Shorts guardados, y exportar el resumen a Notion u Obsidian.
+Se aceptan PRs. Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para TikTok y YouTube, y exportar el resumen a Notion.
 
 ---
 

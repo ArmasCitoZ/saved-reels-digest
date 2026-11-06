@@ -128,6 +128,16 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
 5. On later runs, merge new reels into existing entries before creating new ones,
    and refresh the header counts and "Do these first".
 
+## Optional: export to Obsidian
+
+If the user keeps notes in Obsidian (or asks for one note per idea), run
+`PY SCRIPTS/export_digest.py --vault <vault folder>` (`--folder` changes the subfolder,
+default `Saved reels`). It writes one note per `### idea` with frontmatter, tags by
+category, the source reels and links between ideas of the same category, plus an
+`INDEX.md` map of content. Re-running updates the notes and keeps whatever the user wrote
+under `## My notes`; files it did not create are never overwritten. It relies on the
+digest structure above, so keep the `### Title {#slug}` headings.
+
 ## Finish
 
 Tell the user in 2–3 lines: how many saves were read, how many were on topic, how
