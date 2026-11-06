@@ -38,7 +38,10 @@ def _iter_export_files(path: Path):
                     yield name, z.read(name).decode("utf-8", "replace")
     elif path.is_dir():
         for p in sorted(path.rglob("*")):
-            if p.suffix.lower() in (".json", ".html") and "saved" in str(p).lower():
+            # match on the path *inside* the export: the folder it sits in may
+            # itself contain "saved" (e.g. ~/saved-reels-digest/instagram-xxxx)
+            rel = p.relative_to(path).as_posix().lower()
+            if p.suffix.lower() in (".json", ".html") and "saved" in rel:
                 yield str(p), p.read_text("utf-8", "replace")
     elif path.is_file():
         yield str(path), path.read_text("utf-8", "replace")

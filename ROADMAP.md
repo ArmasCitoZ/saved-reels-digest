@@ -7,7 +7,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Tests con pytest para `collect.py` (export JSON, HTML, zip, colecciones)
 - [x] Tests para `db.py` (next / set / similar / dump)
 - [x] GitHub Actions: lint (ruff) + tests en Linux, macOS y Windows
-- [ ] Fixture de exportación de Instagram anonimizada para los tests
+- [x] Fixture de exportación de Instagram anonimizada para los tests
 - [ ] Badge de CI y versión en el README
 
 ## Instalación

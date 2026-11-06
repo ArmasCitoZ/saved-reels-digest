@@ -1,0 +1,40 @@
+{
+  "saved_saved_collections": [
+    {
+      "title": "Collection",
+      "string_map_data": {
+        "Name": {"value": "IA"},
+        "Creation Time": {"timestamp": 1750000000},
+        "Update Time": {"timestamp": 1761868800}
+      }
+    },
+    {
+      "title": "demo_ai_tips",
+      "string_map_data": {
+        "Name": {"value": "demo_ai_tips", "href": "https://www.instagram.com/reel/DFixAi0001/"},
+        "Added Time": {"timestamp": 1761868800}
+      }
+    },
+    {
+      "title": "demo_dev_shorts",
+      "string_map_data": {
+        "Name": {"value": "demo_dev_shorts", "href": "https://www.instagram.com/p/DFixDev003/"},
+        "Added Time": {"timestamp": 1761696000}
+      }
+    },
+    {
+      "title": "Colección",
+      "string_map_data": {
+        "Nombre": {"value": "Recetas"},
+        "Hora de creación": {"timestamp": 1740000000}
+      }
+    },
+    {
+      "title": "demo_kitchen",
+      "string_map_data": {
+        "Nombre": {"value": "demo_kitchen", "href": "https://www.instagram.com/reel/DFixFood04/"},
+        "Hora de adición": {"timestamp": 1761609600}
+      }
+    }
+  ]
+}
