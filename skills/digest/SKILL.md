@@ -120,20 +120,27 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
 1. **<idea>**: one line on why (impact vs effort) → [entry](#slug)
 (top 5–10, ranked by usefulness for this user: concrete, actionable, low effort first)
 
+## Saved this week
+- **<idea>** → [entry](#slug) · new / N more reels
+(only entries with reels saved in the last 7 days, from `db.py recent`; omit if none)
+
 ## <Category, e.g. Claude Code / Prompting / Agents / AI tools / Dev workflow>
 ### <Idea title> {#slug}
 <2–4 sentence summary of the technique or insight, merged from all sources>
 **How to apply:** concrete steps, commands, prompts or settings mentioned.
-**Seen in N reels:** [@creator](url) · [@creator2](url)
+**Seen in N reels** (saved YYYY-MM-DD → YYYY-MM-DD): [@creator](url) · [@creator2](url)
 **Notes:** contradictions, caveats, "probably outdated", "mostly hype" (only if any)
 ```
 
-   Merged entries list every source reel. Entries backed by several creators are a
+   Merged entries list every source reel. Take the save dates from the `SAVED:` line
+   of each reel in `dump` (one date if all are the same day). Entries backed by several creators are a
    signal, not proof; rank by usefulness, not by count.
 4. Record which entry each reel went into (enables incremental runs):
    `PY SCRIPTS/db.py set entry <slug> CODE1 CODE2 ...`
-5. On later runs, merge new reels into existing entries before creating new ones,
-   and refresh the header counts and "Do these first".
+5. Run `PY SCRIPTS/db.py recent --days 7` and rebuild "Saved this week" from it
+   (it shows each recent reel and the entry it went into).
+6. On later runs, merge new reels into existing entries before creating new ones,
+   and refresh the header counts, "Do these first" and "Saved this week".
 
 ## Optional: export to Obsidian
 

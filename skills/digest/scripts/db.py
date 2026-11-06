@@ -8,8 +8,9 @@
   db.py dump [--undigested] [--all]         relevant reels with caption + transcript, for merging
             [--max-total 60000] [--offset N]   output is capped; continue with --offset
   db.py similar [--threshold 0.3]           groups of reels that probably say the same thing
+  db.py recent [--days 7]                   relevant reels saved lately and their digest entry
 
-next, dump and similar accept --collection NAME to work only on one Instagram
+next, dump, similar and recent accept --collection NAME to work only on one Instagram
 collection (as named in the official export, case-insensitive).
   db.py show CODE [CODE ...]                full record
 """
@@ -20,7 +21,9 @@ import json
 import math
 import re
 import sys
+import time
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -119,9 +122,23 @@ def cmd_set(a):
           + (f" Unknown: {', '.join(missing)}" if missing else ""))
 
 
+def saved_ts(r: dict) -> int | None:
+    """When the reel was saved: the export's timestamp, else when we first collected it."""
+    ts = r.get("saved_at") or r.get("added_at")
+    try:
+        return int(ts) if ts else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _day(ts: int | None) -> str:
+    return datetime.fromtimestamp(ts, timezone.utc).strftime("%Y-%m-%d") if ts else "?"
+
+
 def _dump_block(r, chars: int) -> str:
     lines = [f"### {r['shortcode']}  @{r.get('author') or '?'}  {r['url']}"
-             + (f"  [entry: {r['entry']}]" if r.get("entry") else "")]
+             + (f"  [entry: {r['entry']}]" if r.get("entry") else ""),
+             f"SAVED: {_day(saved_ts(r))}"]
     if r.get("caption"):
         lines.append(f"CAPTION: {_short(r['caption'], chars)}")
     if r.get("transcript"):
@@ -204,6 +221,23 @@ def cmd_similar(a):
                                  for i in g))
 
 
+def cmd_recent(a):
+    since = (a.now or time.time()) - a.days * 86400
+    rs = [r for r in load_db()["reels"].values()
+          if r.get("relevant") is True and (saved_ts(r) or 0) >= since
+          and in_collection(r, a.collection)]
+    if not rs:
+        print(f"No relevant reels saved in the last {a.days} days.")
+        return
+    rs.sort(key=lambda r: saved_ts(r) or 0, reverse=True)
+    entries = Counter(r.get("entry") for r in rs if r.get("entry"))
+    print(f"{len(rs)} relevant reels saved in the last {a.days} days"
+          f" ({len(entries)} digest entries):")
+    for r in rs:
+        print(f"  {_day(saved_ts(r))} {r['shortcode']} @{r.get('author') or '?'} "
+              f"-> {r.get('entry') or '(not in digest yet)'}")
+
+
 def cmd_show(a):
     db = load_db()
     for sc in a.codes:
@@ -230,8 +264,11 @@ def main() -> None:
     p.set_defaults(fn=cmd_dump)
     p = sub.add_parser("similar"); p.add_argument("--threshold", type=float, default=0.3)
     p.set_defaults(fn=cmd_similar)
+    p = sub.add_parser("recent"); p.add_argument("--days", type=int, default=7)
+    p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests
+    p.set_defaults(fn=cmd_recent)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
-    for name in ("next", "dump", "similar"):
+    for name in ("next", "dump", "similar", "recent"):
         sub.choices[name].add_argument("--collection", help="only reels from this Instagram collection")
     a = ap.parse_args()
     a.fn(a)
