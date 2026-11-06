@@ -11,7 +11,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Badge de CI y versión en el README
 
 ## Instalación
-- [ ] Comprobar dependencias al inicio (`doctor.py`): Python, espacio en disco, ffmpeg opcional
+- [x] Comprobar dependencias al inicio (`doctor.py`): Python, espacio en disco, ffmpeg opcional
 - [ ] Guía paso a paso para Windows con capturas
 - [ ] Elegir modelo Whisper automáticamente según la RAM del equipo
 

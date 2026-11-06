@@ -24,8 +24,11 @@ in that language too, even if the reels are in English.
 
 ## Step 0: setup (first run only)
 
-Run `python3 SCRIPTS/setup_env.py` (`python` or `py` on Windows). It creates the venv
-and prints `PY`. If `WORK/reels.json` already exists, run `PY SCRIPTS/db.py status`
+Run `python3 SCRIPTS/doctor.py` (`python` or `py` on Windows) first. It needs no
+dependencies and checks the Python version, free disk space, that `WORK` is writable and
+whether the venv is complete. If any line says FAIL, explain the fix to the user in plain
+words and stop until it is solved. Then run `python3 SCRIPTS/setup_env.py`: it creates the
+venv and prints `PY`. If `WORK/reels.json` already exists, run `PY SCRIPTS/db.py status`
 and continue from the first unfinished step instead of starting over.
 
 Topic: use what the user asked for. If they gave none, use **tech: Claude and other AI
