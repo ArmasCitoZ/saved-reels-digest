@@ -80,7 +80,7 @@ def main() -> None:
     else:
         todo = [r for r in reels.values()
                 if "transcript" not in r and r.get("is_video") is not False
-                and r.get("transcribe") != "failed"
+                and r.get("transcribe") != "failed" and r.get("meta") != "unavailable"
                 and (args.all or r.get("relevant") in (True, "maybe"))
                 and in_collection(r, args.collection)]
     if args.limit:

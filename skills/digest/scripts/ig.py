@@ -25,6 +25,38 @@ class Blocked(Exception):
     """Instagram is asking for login / rate limiting: stop the whole run."""
 
 
+class Unavailable(Exception):
+    """The post was deleted, or its account is private: skip it, it will not come back."""
+
+
+BLOCKED_HINTS = ("login", "rate", "429", "401", "checkpoint", "challenge")
+# what yt-dlp / instaloader say when the post itself is gone or hidden
+UNAVAILABLE_HINTS = ("404", "not found", "not available", "unavailable", "does not exist",
+                     "has been removed", "been deleted", "private", "restricted")
+
+
+def classify_error(msg: str) -> str:
+    """'blocked' (stop the run), 'unavailable' (deleted/private post) or 'failed' (anything else).
+
+    Blocked wins: when Instagram rate-limits it often also says "not available".
+    """
+    low = msg.lower()
+    if any(k in low for k in BLOCKED_HINTS):
+        return "blocked"
+    if any(k in low for k in UNAVAILABLE_HINTS):
+        return "unavailable"
+    return "failed"
+
+
+def _raise_for(msg: str):
+    kind = classify_error(msg)
+    if kind == "blocked":
+        raise Blocked(msg)
+    if kind == "unavailable":
+        raise Unavailable(msg)
+    raise RuntimeError(msg)
+
+
 class Fetcher:
     def __init__(self, browser: str | None = None, username: str | None = None,
                  delay: float = 3.0):
@@ -105,10 +137,7 @@ class Fetcher:
                     "is_video": p.is_video, "posted_at": int(p.date_utc.timestamp())}
         except Exception as e:  # noqa: BLE001
             errors.append(f"instaloader: {str(e)[:160]}")
-        msg = " | ".join(errors)
-        if any(k in msg.lower() for k in ("login", "rate", "429", "401", "checkpoint", "challenge")):
-            raise Blocked(msg)
-        raise RuntimeError(msg)
+        _raise_for(" | ".join(errors))
 
     def download_audio(self, shortcode: str, folder: Path) -> Path:
         self._wait()
@@ -128,7 +157,4 @@ class Fetcher:
             return dest
         except Exception as e:  # noqa: BLE001
             errors.append(f"instaloader: {str(e)[:160]}")
-        msg = " | ".join(errors)
-        if any(k in msg.lower() for k in ("login", "rate", "429", "401", "checkpoint", "challenge")):
-            raise Blocked(msg)
-        raise RuntimeError(msg)
+        _raise_for(" | ".join(errors))

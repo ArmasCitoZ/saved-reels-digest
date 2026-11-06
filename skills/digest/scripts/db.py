@@ -2,6 +2,7 @@
 
   db.py status                              counts at every stage
   db.py collections                         Instagram collections and how many reels each has
+  db.py unavailable                         saved posts that were deleted or are private
   db.py next [--limit 40] [--field relevant] posts still waiting for triage, compact
   db.py set FIELD VALUE CODE [CODE ...]     e.g. set relevant true C1 C2 / set topic "Claude Code" C3
   db.py dump [--undigested] [--all]         relevant reels with caption + transcript, for merging
@@ -47,6 +48,7 @@ def cmd_status(_):
         c["total"] += 1
         c["with caption"] += bool(r.get("caption"))
         c["meta failed"] += r.get("meta") == "failed"
+        c["deleted or private"] += r.get("meta") == "unavailable"
         c[f"triage: {r.get('relevant')}"] += 1
         c["transcribed"] += bool(r.get("transcript"))
         c["transcribe failed"] += r.get("transcribe") == "failed"
@@ -54,7 +56,7 @@ def cmd_status(_):
     relevant = [r for r in rs if r.get("relevant") is True]
     c["relevant & not yet in digest"] = sum(1 for r in relevant if not r.get("entry"))
     print(f"Database: {DB_PATH}")
-    for k in ["total", "with caption", "meta failed", "triage: None", "triage: True",
+    for k in ["total", "with caption", "meta failed", "deleted or private", "triage: None", "triage: True",
               "triage: maybe", "triage: False", "transcribed", "transcribe failed",
               "merged into digest", "relevant & not yet in digest"]:
         label = {"triage: None": "not triaged yet", "triage: True": "relevant",
@@ -72,10 +74,20 @@ def cmd_collections(_):
         print(f"  {name or '(no collection)':32} {n}")
 
 
+def cmd_unavailable(_):
+    rs = [r for r in load_db()["reels"].values() if r.get("meta") == "unavailable"]
+    if not rs:
+        print("No deleted or private posts found (so far).")
+        return
+    print(f"{len(rs)} saved posts are deleted or private (left out of the digest):")
+    for r in rs:
+        print(f"  {r['url']}  @{r.get('author') or '?'}  {r.get('collection') or ''}".rstrip())
+
+
 def cmd_next(a):
     rs = [r for r in load_db()["reels"].values()
           if (r.get("relevant") is None or (a.maybe and r.get("relevant") == "maybe"))
-          and in_collection(r, a.collection)]
+          and r.get("meta") != "unavailable" and in_collection(r, a.collection)]
     if not rs:
         print("Nothing left to triage" + (f" in collection {a.collection!r}." if a.collection else "."))
         return
@@ -203,6 +215,7 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("status").set_defaults(fn=cmd_status)
     sub.add_parser("collections").set_defaults(fn=cmd_collections)
+    sub.add_parser("unavailable").set_defaults(fn=cmd_unavailable)
     p = sub.add_parser("next"); p.add_argument("--limit", type=int, default=40)
     p.add_argument("--chars", type=int, default=220)
     p.add_argument("--maybe", action="store_true", help="also list 'maybe' reels with their transcript")

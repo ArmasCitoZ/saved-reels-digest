@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import load_db, log, save_db  # noqa: E402
-from ig import Blocked, Fetcher  # noqa: E402
+from ig import Blocked, Fetcher, Unavailable  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
 
@@ -31,7 +31,7 @@ def main() -> None:
     db = load_db()
     todo = [r for r in db["reels"].values()
             if not r.get("caption") and r.get("meta") != "ok"
-            and (args.retry_failed or r.get("meta") != "failed")]
+            and (args.retry_failed or r.get("meta") not in ("failed", "unavailable"))]
     if args.limit:
         todo = todo[: args.limit]
     if not todo:
@@ -39,7 +39,7 @@ def main() -> None:
         return
 
     f = Fetcher(args.browser, args.username, args.delay)
-    ok = fails = streak = 0
+    ok = fails = gone = streak = 0
     log(f"Fetching metadata for {len(todo)} posts (~{len(todo) * args.delay / 60:.0f} min) ...")
     for n, r in enumerate(todo, 1):
         try:
@@ -52,6 +52,10 @@ def main() -> None:
             sys.exit(f"STOPPED: Instagram is asking for login or rate-limiting ({e}).\n"
                      f"Saved progress ({ok} done). Wait a while, or pass --browser with a "
                      "browser where you are logged in, then run again.")
+        except Unavailable as e:
+            r["meta"], r["meta_error"] = "unavailable", str(e)[:300]
+            gone += 1
+            streak += 1  # still counts: a throttled session can look like "not available"
         except Exception as e:  # noqa: BLE001
             r["meta"], r["meta_error"] = "failed", str(e)[:300]
             fails += 1
@@ -64,7 +68,8 @@ def main() -> None:
             save_db(db)
             log(f"... {n}/{len(todo)}")
     save_db(db)
-    print(f"Metadata: {ok} ok, {fails} failed (deleted posts, private accounts...).")
+    print(f"Metadata: {ok} ok, {gone} deleted or private, {fails} failed."
+          + (" See them with: db.py unavailable" if gone else ""))
 
 
 if __name__ == "__main__":

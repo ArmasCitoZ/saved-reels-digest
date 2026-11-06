@@ -111,6 +111,7 @@ $PY db.py similar                            # posibles duplicados
 $PY db.py dump                               # lo relevante, en páginas de ~60k caracteres (--offset N)
 $PY db.py collections                        # colecciones de Instagram (para --collection "IA")
 $PY transcribe.py                            # modelo según la RAM (--model para forzarlo)
+$PY db.py unavailable                        # guardados borrados o privados
 $PY db.py status
 $PY export_digest.py --vault ~/Obsidian/MiBoveda   # una nota por idea + INDEX.md
 ```

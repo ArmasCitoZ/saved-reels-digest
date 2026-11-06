@@ -160,4 +160,6 @@ items. Offer one next step (e.g. "want me to apply #1 to this project?").
   completely and retry, or use `--browser firefox`, or the official export.
 - Export parse finds 0 links: they chose HTML or the wrong section; any file
   containing instagram.com/p|reel links works: `collect.py export path/to/file`.
-- Private or deleted posts fail metadata; that is expected, they are skipped.
+- Private or deleted posts are marked `unavailable` by `fetch_meta.py` and skipped by
+  triage and transcription. `PY SCRIPTS/db.py unavailable` lists them; mention the count
+  in the final summary so the user knows some saves are gone.
