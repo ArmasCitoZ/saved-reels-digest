@@ -21,7 +21,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [ ] Soporte para posts carrusel: leer el texto de las imágenes (Claude las mira)
 - [ ] Soporte para vídeos guardados de TikTok (exportación oficial de TikTok)
 - [ ] Soporte para YouTube "Ver más tarde" / listas
-- [ ] Filtro por colección de Instagram (`--collection "IA"`)
+- [x] Filtro por colección de Instagram (`--collection "IA"`)
 - [ ] Fecha de guardado en el digest y sección "guardado esta semana"
 - [ ] Marcar ideas como "probado / descartado" y que el digest lo recuerde
 

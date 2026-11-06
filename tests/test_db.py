@@ -128,3 +128,33 @@ def test_show_prints_record_and_flags_unknown(tmp_path):
     out = run(tmp_path, "show", "AAAAA1", "ZZZZZ9")
     assert '"shortcode": "AAAAA1"' in out and "café ñandú" in out
     assert "unknown ZZZZZ9" in out
+
+
+# ------------------------------------------------------------- collections
+def _collection_db(home):
+    make_db(home, reel("AAAAA1", caption="claude tip", collection="IA"),
+            reel("BBBBB2", caption="pasta", collection="Recetas"),
+            reel("CCCCC3", caption="no folder"),
+            reel("DDDDD4", relevant=True, caption="agents", collection="IA"),
+            reel("EEEEE5", relevant=True, caption="cake", collection="Recetas"))
+
+
+def test_collections_lists_counts(tmp_path):
+    _collection_db(tmp_path)
+    out = run(tmp_path, "collections")
+    lines = [ln.split() for ln in out.splitlines()]
+    assert ["IA", "2"] in lines and ["Recetas", "2"] in lines
+    assert "(no collection)" in out
+
+
+def test_next_and_dump_filter_by_collection_case_insensitive(tmp_path):
+    _collection_db(tmp_path)
+    nxt = run(tmp_path, "next", "--collection", "ia")
+    assert "1 waiting" in nxt and "AAAAA1" in nxt and "BBBBB2" not in nxt
+    dump = run(tmp_path, "dump", "--collection", " IA ")
+    assert "DDDDD4" in dump and "EEEEE5" not in dump
+
+
+def test_unknown_collection_says_so(tmp_path):
+    _collection_db(tmp_path)
+    assert "in collection 'Viajes'" in run(tmp_path, "next", "--collection", "Viajes")

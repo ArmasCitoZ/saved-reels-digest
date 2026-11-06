@@ -1,6 +1,6 @@
 """Transcribe saved reels locally with Whisper (faster-whisper). Free, offline, private.
 
-  transcribe.py [--model auto] [--language es] [--all] [--limit N]
+  transcribe.py [--model auto] [--language es] [--all] [--limit N] [--collection NAME]
                 [--browser chrome | --username YOU] [--shortcodes A,B,C]
 
 By default only reels Claude marked relevant or "maybe" are transcribed.
@@ -20,7 +20,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import HOME, load_db, log, pick_whisper_model, save_db, total_ram_bytes  # noqa: E402
+from common import (HOME, in_collection, load_db, log, pick_whisper_model, save_db,  # noqa: E402
+                    total_ram_bytes)
 from ig import Blocked, Fetcher  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
@@ -60,6 +61,7 @@ def main() -> None:
     ap.add_argument("--language", default=None, help="force a language code (es, en...); default auto")
     ap.add_argument("--all", action="store_true", help="ignore triage, transcribe every video")
     ap.add_argument("--shortcodes", help="comma-separated list to (re)transcribe")
+    ap.add_argument("--collection", help="only reels from this Instagram collection")
     ap.add_argument("--file", help="transcribe a local media file and print it (testing)")
     ap.add_argument("--browser"); ap.add_argument("--username")
     ap.add_argument("--limit", type=int, default=0)
@@ -79,7 +81,8 @@ def main() -> None:
         todo = [r for r in reels.values()
                 if "transcript" not in r and r.get("is_video") is not False
                 and r.get("transcribe") != "failed"
-                and (args.all or r.get("relevant") in (True, "maybe"))]
+                and (args.all or r.get("relevant") in (True, "maybe"))
+                and in_collection(r, args.collection)]
     if args.limit:
         todo = todo[: args.limit]
     if not todo:

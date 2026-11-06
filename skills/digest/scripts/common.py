@@ -122,5 +122,15 @@ def pick_whisper_model(ram_bytes: int | None, cuda: bool = False) -> str:
     return DEFAULT_MODEL
 
 
+def in_collection(reel: dict, name: str | None) -> bool:
+    """True when no filter is given or the reel was saved in that Instagram collection.
+
+    Case-insensitive and ignores surrounding spaces ("ia" matches "IA", " Tech " matches "tech").
+    """
+    if not name:
+        return True
+    return (reel.get("collection") or "").strip().casefold() == name.strip().casefold()
+
+
 def log(msg: str) -> None:
     print(msg, file=sys.stderr, flush=True)

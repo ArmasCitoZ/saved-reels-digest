@@ -1,10 +1,14 @@
 """Inspect and update the local reel database (used by Claude during triage and merging).
 
   db.py status                              counts at every stage
+  db.py collections                         Instagram collections and how many reels each has
   db.py next [--limit 40] [--field relevant] posts still waiting for triage, compact
   db.py set FIELD VALUE CODE [CODE ...]     e.g. set relevant true C1 C2 / set topic "Claude Code" C3
   db.py dump [--undigested] [--all]         relevant reels with caption + transcript, for merging
   db.py similar [--threshold 0.3]           groups of reels that probably say the same thing
+
+next, dump and similar accept --collection NAME to work only on one Instagram
+collection (as named in the official export, case-insensitive).
   db.py show CODE [CODE ...]                full record
 """
 from __future__ import annotations
@@ -18,7 +22,7 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import DB_PATH, load_db, save_db  # noqa: E402
+from common import DB_PATH, in_collection, load_db, save_db  # noqa: E402
 
 
 def _short(s: str | None, n: int) -> str:
@@ -54,11 +58,21 @@ def cmd_status(_):
         print(f"  {label:32} {c[k]}")
 
 
+def cmd_collections(_):
+    c = Counter(r.get("collection") or "" for r in load_db()["reels"].values())
+    if not any(c):
+        print("No collections recorded. They come from saved_collections.json in the official export.")
+        return
+    for name, n in sorted(c.items(), key=lambda kv: (-kv[1], kv[0])):
+        print(f"  {name or '(no collection)':32} {n}")
+
+
 def cmd_next(a):
     rs = [r for r in load_db()["reels"].values()
-          if r.get("relevant") is None or (a.maybe and r.get("relevant") == "maybe")]
+          if (r.get("relevant") is None or (a.maybe and r.get("relevant") == "maybe"))
+          and in_collection(r, a.collection)]
     if not rs:
-        print("Nothing left to triage.")
+        print("Nothing left to triage" + (f" in collection {a.collection!r}." if a.collection else "."))
         return
     print(f"{len(rs)} waiting. Showing {min(a.limit, len(rs))}:")
     for r in rs[: a.limit]:
@@ -90,7 +104,8 @@ def cmd_set(a):
 
 def cmd_dump(a):
     rs = [r for r in load_db()["reels"].values()
-          if (a.all or r.get("relevant") is True) and not (a.undigested and r.get("entry"))]
+          if (a.all or r.get("relevant") is True) and not (a.undigested and r.get("entry"))
+          and in_collection(r, a.collection)]
     for r in rs:
         print(f"### {r['shortcode']}  @{r.get('author') or '?'}  {r['url']}"
               + (f"  [entry: {r['entry']}]" if r.get("entry") else ""))
@@ -117,7 +132,8 @@ def _tokens(text: str):
 
 def cmd_similar(a):
     rs = [r for r in load_db()["reels"].values()
-          if r.get("relevant") is True and (r.get("caption") or r.get("transcript"))]
+          if r.get("relevant") is True and (r.get("caption") or r.get("transcript"))
+          and in_collection(r, a.collection)]
     docs = [Counter(_tokens(f"{r.get('caption', '')} {r.get('transcript', '')}")) for r in rs]
     df = Counter(t for d in docs for t in d)
     n = len(docs)
@@ -166,6 +182,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("status").set_defaults(fn=cmd_status)
+    sub.add_parser("collections").set_defaults(fn=cmd_collections)
     p = sub.add_parser("next"); p.add_argument("--limit", type=int, default=40)
     p.add_argument("--chars", type=int, default=220)
     p.add_argument("--maybe", action="store_true", help="also list 'maybe' reels with their transcript")
@@ -178,6 +195,8 @@ def main() -> None:
     p = sub.add_parser("similar"); p.add_argument("--threshold", type=float, default=0.3)
     p.set_defaults(fn=cmd_similar)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
+    for name in ("next", "dump", "similar"):
+        sub.choices[name].add_argument("--collection", help="only reels from this Instagram collection")
     a = ap.parse_args()
     a.fn(a)
 
