@@ -29,7 +29,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [ ] Reanudar transcripción tras cortes de red sin repetir trabajo
 - [ ] Detectar posts borrados o privados y listarlos aparte
 - [ ] Mejorar `similar` con n-gramas para detectar duplicados en distintos idiomas
-- [ ] Límite de tamaño en `dump` para no saturar el contexto de Claude con 500+ reels
+- [x] Límite de tamaño en `dump` para no saturar el contexto de Claude con 500+ reels
 
 ## Comunidad
 - [ ] CONTRIBUTING.md y plantillas de issues

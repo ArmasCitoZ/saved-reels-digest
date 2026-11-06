@@ -103,8 +103,9 @@ set each to `true` or `false`.
 ## Step 5: merge duplicates and write the digest (you do this)
 
 1. `PY SCRIPTS/db.py similar` gives candidate groups with the same wording. Then read
-   everything: `PY SCRIPTS/db.py dump --undigested` (pipe to a file and read it in
-   parts if it is long). Group by **meaning**, not wording: two creators explaining the
+   everything: `PY SCRIPTS/db.py dump --undigested`. Output is capped at ~60,000
+   characters per call; when it ends with `Continue with: dump --offset N`, run that
+   command for the next page and keep going until no such line appears. Group by **meaning**, not wording: two creators explaining the
    same trick, tool, prompt or workflow are one entry, even in different languages.
 2. For each group, keep the most complete and concrete version; add details only the
    other reels mention; flag contradictions; flag hype or likely outdated claims

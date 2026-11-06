@@ -5,6 +5,7 @@
   db.py next [--limit 40] [--field relevant] posts still waiting for triage, compact
   db.py set FIELD VALUE CODE [CODE ...]     e.g. set relevant true C1 C2 / set topic "Claude Code" C3
   db.py dump [--undigested] [--all]         relevant reels with caption + transcript, for merging
+            [--max-total 60000] [--offset N]   output is capped; continue with --offset
   db.py similar [--threshold 0.3]           groups of reels that probably say the same thing
 
 next, dump and similar accept --collection NAME to work only on one Instagram
@@ -23,6 +24,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import DB_PATH, in_collection, load_db, save_db  # noqa: E402
+
+
+# ~15k tokens: a page of dump output Claude can read in one go without flooding its context
+DUMP_BUDGET = 60_000
 
 
 def _short(s: str | None, n: int) -> str:
@@ -102,19 +107,34 @@ def cmd_set(a):
           + (f" Unknown: {', '.join(missing)}" if missing else ""))
 
 
+def _dump_block(r, chars: int) -> str:
+    lines = [f"### {r['shortcode']}  @{r.get('author') or '?'}  {r['url']}"
+             + (f"  [entry: {r['entry']}]" if r.get("entry") else "")]
+    if r.get("caption"):
+        lines.append(f"CAPTION: {_short(r['caption'], chars)}")
+    if r.get("transcript"):
+        lines.append(f"TRANSCRIPT ({r.get('lang', '?')}): {_short(r['transcript'], chars * 3)}")
+    return "\n".join(lines) + "\n\n"
+
+
 def cmd_dump(a):
     rs = [r for r in load_db()["reels"].values()
           if (a.all or r.get("relevant") is True) and not (a.undigested and r.get("entry"))
           and in_collection(r, a.collection)]
-    for r in rs:
-        print(f"### {r['shortcode']}  @{r.get('author') or '?'}  {r['url']}"
-              + (f"  [entry: {r['entry']}]" if r.get("entry") else ""))
-        if r.get("caption"):
-            print(f"CAPTION: {_short(r['caption'], a.chars)}")
-        if r.get("transcript"):
-            print(f"TRANSCRIPT ({r.get('lang', '?')}): {_short(r['transcript'], a.chars * 3)}")
-        print()
-    print(f"({len(rs)} reels)", file=sys.stderr)
+    shown = used = 0
+    for r in rs[a.offset:]:
+        block = _dump_block(r, a.chars)
+        # always print at least one reel, then stop before going over the budget
+        if a.max_total and shown and used + len(block) > a.max_total:
+            break
+        sys.stdout.write(block)
+        used += len(block)
+        shown += 1
+    end = a.offset + shown
+    if end < len(rs):
+        print(f"-- {len(rs) - end} more reels not shown (output limited to ~{a.max_total} chars). "
+              f"Continue with: dump --offset {end}" + (" --undigested" if a.undigested else ""))
+    print(f"(reels {a.offset + 1 if shown else a.offset}-{end} of {len(rs)})", file=sys.stderr)
 
 
 # ---------------------------------------------------------------- similarity
@@ -191,6 +211,9 @@ def main() -> None:
     p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_set)
     p = sub.add_parser("dump"); p.add_argument("--undigested", action="store_true")
     p.add_argument("--all", action="store_true"); p.add_argument("--chars", type=int, default=600)
+    p.add_argument("--max-total", type=int, default=DUMP_BUDGET,
+                   help="stop after about this many characters (0 = no limit)")
+    p.add_argument("--offset", type=int, default=0, help="skip the first N reels (to continue)")
     p.set_defaults(fn=cmd_dump)
     p = sub.add_parser("similar"); p.add_argument("--threshold", type=float, default=0.3)
     p.set_defaults(fn=cmd_similar)

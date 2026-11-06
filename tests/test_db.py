@@ -158,3 +158,38 @@ def test_next_and_dump_filter_by_collection_case_insensitive(tmp_path):
 def test_unknown_collection_says_so(tmp_path):
     _collection_db(tmp_path)
     assert "in collection 'Viajes'" in run(tmp_path, "next", "--collection", "Viajes")
+
+
+# ------------------------------------------------------------- dump budget
+def _many_reels(home, n=10):
+    make_db(home, *[reel(f"CODE{i:03d}", relevant=True, caption=f"idea {i} " + "x" * 300)
+                    for i in range(n)])
+
+
+def test_dump_stops_at_budget_and_tells_how_to_continue(tmp_path):
+    _many_reels(tmp_path)
+    out = run(tmp_path, "dump", "--max-total", "1000")
+    shown = [ln for ln in out.splitlines() if ln.startswith("### ")]
+    assert 0 < len(shown) < 10
+    assert len(out) < 1600
+    assert f"Continue with: dump --offset {len(shown)}" in out
+
+
+def test_dump_offset_pages_through_everything_once(tmp_path):
+    _many_reels(tmp_path)
+    seen, offset = [], 0
+    for _ in range(20):
+        out = run(tmp_path, "dump", "--max-total", "1000", "--offset", str(offset))
+        page = [ln.split()[1] for ln in out.splitlines() if ln.startswith("### ")]
+        seen += page
+        offset += len(page)
+        if "Continue with" not in out:
+            break
+    assert seen == [f"CODE{i:03d}" for i in range(10)]
+
+
+def test_dump_always_shows_at_least_one_reel_and_zero_means_no_limit(tmp_path):
+    _many_reels(tmp_path, 3)
+    assert run(tmp_path, "dump", "--max-total", "10").count("### ") == 1
+    out = run(tmp_path, "dump", "--max-total", "0")
+    assert out.count("### ") == 3 and "Continue with" not in out

@@ -108,7 +108,7 @@ $PY fetch_meta.py
 $PY db.py next                               # pendientes de clasificar
 $PY db.py set relevant true CODE1 CODE2      # marcar relevantes
 $PY db.py similar                            # posibles duplicados
-$PY db.py dump                               # todo lo relevante, para fusionar
+$PY db.py dump                               # lo relevante, en páginas de ~60k caracteres (--offset N)
 $PY db.py collections                        # colecciones de Instagram (para --collection "IA")
 $PY transcribe.py                            # modelo según la RAM (--model para forzarlo)
 $PY db.py status
