@@ -126,7 +126,7 @@ python -m pytest -q
 ruff check .
 ```
 
-Se aceptan PRs. Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para TikTok y YouTube, y exportar el resumen a Notion.
+Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para TikTok y YouTube, y exportar el resumen a Notion.
 
 ---
 

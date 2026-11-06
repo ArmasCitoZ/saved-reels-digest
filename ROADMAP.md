@@ -32,7 +32,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Límite de tamaño en `dump` para no saturar el contexto de Claude con 500+ reels
 
 ## Comunidad
-- [ ] CONTRIBUTING.md y plantillas de issues
+- [x] CONTRIBUTING.md y plantillas de issues
 - [ ] CHANGELOG.md y releases versionadas
 - [ ] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
 - [ ] GIF de demo en el README

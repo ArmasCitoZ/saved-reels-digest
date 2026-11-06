@@ -1,0 +1,49 @@
+name: Bug / algo no funciona
+description: Un script falla o el digest sale mal
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por avisar. **No pegues datos privados** (enlaces de tus guardados, cookies,
+        el contenido de `reels.json` o de `.session`).
+  - type: textarea
+    id: what
+    attributes:
+      label: Qué pasó
+      description: Qué hiciste, qué esperabas y qué ocurrió.
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Comando que falló
+      placeholder: "PY SCRIPTS/fetch_meta.py --browser chrome"
+  - type: textarea
+    id: output
+    attributes:
+      label: Salida o error
+      description: El mensaje de error completo (quita enlaces y nombres de usuario).
+      render: text
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Salida de doctor.py
+      description: "Ejecuta `python3 doctor.py` (en la carpeta `skills/digest/scripts` del plugin) o pídeselo a Claude, y pega el resultado."
+      render: text
+  - type: dropdown
+    id: source
+    attributes:
+      label: Cómo recogiste los guardados
+      options:
+        - Exportación oficial (zip / carpeta)
+        - En vivo con la sesión del navegador (collect.py live)
+        - Herramientas de navegador de Claude (lista de enlaces)
+        - No llegué a ese paso
+  - type: dropdown
+    id: os
+    attributes:
+      label: Sistema operativo
+      options: [Windows, macOS, Linux]
+    validations:
+      required: true

@@ -1,0 +1,31 @@
+name: Idea / mejora
+description: Propón una función o un cambio
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Qué problema resuelve
+      description: "Ej.: \"tengo 800 reels y el digest es demasiado largo para leerlo\"."
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Qué propones
+      description: Cómo te gustaría que funcionara (comando, sección del digest, etc.).
+    validations:
+      required: true
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Encaja con el proyecto
+      description: Mira CONTRIBUTING.md.
+      options:
+        - label: Funciona sin APIs de pago ni claves
+        - label: No necesita más peticiones a Instagram (o van espaciadas y paran si hay bloqueo)
+  - type: dropdown
+    id: help
+    attributes:
+      label: ¿Te animas a hacerlo?
+      options: ["Sí, mando un PR", "Puedo ayudar a probarlo", "Solo la idea"]
