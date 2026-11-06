@@ -9,6 +9,9 @@
             [--max-total 60000] [--offset N]   output is capped; continue with --offset
   db.py similar [--threshold 0.3]           groups of reels that probably say the same thing
   db.py recent [--days 7]                   relevant reels saved lately and their digest entry
+  db.py mark tried|discarded|todo SLUG ... [--note TEXT]
+                                            remember what the user did with a digest idea
+  db.py marks                               every idea marked tried or discarded
 
 next, dump, similar and recent accept --collection NAME to work only on one Instagram
 collection (as named in the official export, case-insensitive).
@@ -238,6 +241,39 @@ def cmd_recent(a):
               f"-> {r.get('entry') or '(not in digest yet)'}")
 
 
+MARKS = ("tried", "discarded", "todo")  # todo = clear the mark
+
+
+def cmd_mark(a):
+    db = load_db()
+    entries = db.setdefault("entries", {})
+    known = {r.get("entry") for r in db["reels"].values() if r.get("entry")}
+    unknown = []
+    for slug in a.slugs:
+        if slug not in known:
+            unknown.append(slug)
+        if a.status == "todo":
+            entries.pop(slug, None)
+            continue
+        e = {"status": a.status, "updated": int(time.time())}
+        if a.note:
+            e["note"] = a.note
+        entries[slug] = e
+    save_db(db)
+    print(f"Marked {len(a.slugs)} entries as {a.status}."
+          + (f" Not linked to any reel yet (typo?): {', '.join(unknown)}" if unknown else ""))
+
+
+def cmd_marks(_):
+    entries = load_db().get("entries") or {}
+    if not entries:
+        print("No ideas marked as tried or discarded yet.")
+        return
+    for slug, e in sorted(entries.items(), key=lambda kv: (kv[1].get("status", ""), kv[0])):
+        print(f"  {e.get('status', '?'):10} {slug:32} {_day(e.get('updated'))}"
+              + (f"  {e['note']}" if e.get("note") else ""))
+
+
 def cmd_show(a):
     db = load_db()
     for sc in a.codes:
@@ -267,6 +303,10 @@ def main() -> None:
     p = sub.add_parser("recent"); p.add_argument("--days", type=int, default=7)
     p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests
     p.set_defaults(fn=cmd_recent)
+    p = sub.add_parser("mark"); p.add_argument("status", choices=MARKS)
+    p.add_argument("slugs", nargs="+"); p.add_argument("--note", help="why, in a few words")
+    p.set_defaults(fn=cmd_mark)
+    sub.add_parser("marks").set_defaults(fn=cmd_marks)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
     for name in ("next", "dump", "similar", "recent"):
         sub.choices[name].add_argument("--collection", help="only reels from this Instagram collection")

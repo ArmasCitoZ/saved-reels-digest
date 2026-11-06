@@ -141,6 +141,16 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    (it shows each recent reel and the entry it went into).
 6. On later runs, merge new reels into existing entries before creating new ones,
    and refresh the header counts, "Do these first" and "Saved this week".
+7. Respect what the user already did: run `PY SCRIPTS/db.py marks`. For each marked
+   entry, make the first line under its `###` heading `**Status:** ✅ Tried: <note>` or
+   `**Status:** 🚫 Discarded: <note>` (keep the heading itself unchanged), and leave both
+   kinds out of "Do these first". Never drop a discarded entry: new reels about it still merge
+   into it, so the user is not pitched the same idea again.
+
+When the user says they tried an idea or it is not for them ("ya probé lo de los
+subagentes", "eso no me sirve"), record it right away:
+`PY SCRIPTS/db.py mark tried <slug> --note "worked for refactors"` (or `discarded`;
+`todo` clears the mark) and update the entry in `digest.md`.
 
 ## Optional: export to Obsidian
 

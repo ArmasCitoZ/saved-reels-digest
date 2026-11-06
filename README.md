@@ -112,6 +112,7 @@ $PY db.py dump                               # lo relevante, en páginas de ~60k
 $PY db.py collections                        # colecciones de Instagram (para --collection "IA")
 $PY transcribe.py                            # modelo según la RAM (--model para forzarlo)
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó
+$PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recuerda
 $PY db.py unavailable                        # guardados borrados o privados
 $PY db.py status
 $PY export_digest.py --vault ~/Obsidian/MiBoveda   # una nota por idea + INDEX.md

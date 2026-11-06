@@ -23,7 +23,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [ ] Soporte para YouTube "Ver más tarde" / listas
 - [x] Filtro por colección de Instagram (`--collection "IA"`)
 - [x] Fecha de guardado en el digest y sección "guardado esta semana"
-- [ ] Marcar ideas como "probado / descartado" y que el digest lo recuerde
+- [x] Marcar ideas como "probado / descartado" y que el digest lo recuerde
 
 ## Robustez
 - [ ] Reanudar transcripción tras cortes de red sin repetir trabajo
