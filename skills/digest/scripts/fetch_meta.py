@@ -43,7 +43,7 @@ def main() -> None:
     log(f"Fetching metadata for {len(todo)} posts (~{len(todo) * args.delay / 60:.0f} min) ...")
     for n, r in enumerate(todo, 1):
         try:
-            r.update({k: v for k, v in f.metadata(r["shortcode"]).items() if v is not None})
+            r.update({k: v for k, v in f.metadata(r["shortcode"], r.get("url")).items() if v is not None})
             r["meta"] = "ok"
             ok += 1
             streak = 0

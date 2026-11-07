@@ -1,6 +1,6 @@
 ---
 name: digest
-description: Turn the user's saved Instagram reels into a deduplicated knowledge base on one topic (default tech, AI, Claude, programming, dev tools). Collects saves (official export, live session or browser), transcribes locally with Whisper, triages by topic, merges reels that say the same thing, and writes a ranked digest.md. Use when the user asks to go through, sort, summarize, filter or "doomscroll" their Instagram saved posts or reels.
+description: Turn the user's saved Instagram reels into a deduplicated knowledge base on one topic (default tech, AI, Claude, programming, dev tools). Collects saves (official export, live session or browser), transcribes locally with Whisper, triages by topic, merges reels that say the same thing, and writes a ranked digest.md. Also reads TikTok favorites from TikTok's data export. Use when the user asks to go through, sort, summarize, filter or "doomscroll" their Instagram saved posts or reels, or their saved/favorite TikToks.
 argument-hint: "[topic, e.g. 'IA y Claude'] [path to Instagram export]"
 ---
 
@@ -53,6 +53,15 @@ Choose with the user (AskUserQuestion if available) and recommend in this order:
 3. **Browser tools in this session** (Claude in Chrome or built-in browser), when
    available and the user prefers it: follow `references/browser-collect.md`, then
    `PY SCRIPTS/collect.py urls FILE`.
+
+**TikTok favorites** can be added too, alone or next to Instagram (same database, same
+digest). Only through TikTok's official export: TikTok app → Profile → ☰ → Settings and
+privacy → Account → Download your data → format **JSON** → Request data, then download the
+zip from the "Download data" tab when it is ready (it can take a few days). Then:
+`PY SCRIPTS/collect.py tiktok PATH_TO_ZIP_OR_FOLDER`. It reads Favorites (TikTok's saved
+videos), not likes. TikTok entries have ids like `tt7400...`; use them with `db.py` exactly
+like shortcodes. Captions and transcripts come from yt-dlp with no login, and
+`--browser` is not needed for them.
 
 Tell the user once, plainly: options 2 and 3 use their own logged-in session the way
 a browser would; Instagram's terms don't allow automated access, so the scripts go

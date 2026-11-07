@@ -98,7 +98,7 @@ def main() -> None:
         for n, r in enumerate(todo, 1):
             sc = r["shortcode"]
             try:
-                media = fetcher.download_audio(sc, tmp)
+                media = fetcher.download_audio(sc, tmp, r.get("url"))
                 text, lang = transcribe_file(model, media, args.language)
                 r.update(transcript=text, lang=lang, transcribe="ok")
                 r.pop("transcribe_error", None)

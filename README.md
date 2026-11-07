@@ -21,6 +21,8 @@
    - con la **exportación oficial** de Instagram, que no tiene ningún riesgo para tu cuenta;
    - con tu **sesión del navegador** (Chrome, Firefox, Edge...), que es al instante;
    - o haciendo que Claude **navegue tu página de guardados**, si tienes Claude in Chrome.
+
+   ¿También guardas en TikTok? Tus **Favoritos** entran en el mismo resumen con la exportación oficial de TikTok (Ajustes y privacidad → Cuenta → Descargar tus datos → formato JSON).
 2. **Lee los textos** de cada publicación y descarta lo que no es de tu tema (recetas, memes, viajes...).
 3. **Transcribe en local** solo los reels que importan. El audio se borra justo después.
 4. **Junta los duplicados.** Si tres creadores explican el mismo truco, sale una sola entrada con lo mejor de cada uno y los tres enlaces. También marca contradicciones y cosas que suenan a hype o que pueden estar desactualizadas.
@@ -106,6 +108,7 @@ python3 setup_env.py                         # crea ~/saved-reels-digest/.venv
 PY=~/saved-reels-digest/.venv/bin/python
 $PY collect.py export ~/Downloads/instagram-xxxx.zip
 $PY collect.py live --browser chrome
+$PY collect.py tiktok ~/Downloads/TikTok_Data.zip   # favoritos de TikTok
 $PY fetch_meta.py
 $PY db.py next                               # pendientes de clasificar
 $PY db.py set relevant true CODE1 CODE2      # marcar relevantes
@@ -129,7 +132,7 @@ python -m pytest -q
 ruff check .
 ```
 
-Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para TikTok y YouTube, y leer el texto de los carruseles.
+Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para YouTube y leer el texto de los carruseles.
 
 ---
 
@@ -145,7 +148,7 @@ It's free: there are no paid APIs or keys. Transcription runs on your machine an
 /saved-reels:digest
 ```
 
-You can connect Instagram with the official data export (no risk), your logged-in browser session, or Claude in Chrome. Instagram's terms forbid automated access, so the live options go slowly and stop at the first rate-limit sign. Only use this with your own account.
+You can connect Instagram with the official data export (no risk), your logged-in browser session, or Claude in Chrome. Instagram's terms forbid automated access, so the live options go slowly and stop at the first rate-limit sign. Only use this with your own account. TikTok favorites can be added from TikTok's official data export (`collect.py tiktok`).
 
 ## License
 

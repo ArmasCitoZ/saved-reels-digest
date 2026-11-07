@@ -19,7 +19,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `export_digest.py`: exportar `digest.md` a una bóveda de Obsidian (una nota por idea)
 - [x] Exportar a Notion (vía el conector de Notion de Claude, sin API keys)
 - [ ] Soporte para posts carrusel: leer el texto de las imágenes (Claude las mira)
-- [ ] Soporte para vídeos guardados de TikTok (exportación oficial de TikTok)
+- [x] Soporte para vídeos guardados de TikTok (exportación oficial de TikTok)
 - [ ] Soporte para YouTube "Ver más tarde" / listas
 - [x] Filtro por colección de Instagram (`--collection "IA"`)
 - [x] Fecha de guardado en el digest y sección "guardado esta semana"

@@ -1,5 +1,8 @@
 """Gentle access to individual posts: yt-dlp first, instaloader session as fallback.
 
+Instagram posts are addressed by shortcode. Other platforms (TikTok favorites)
+pass the post's own URL and only use yt-dlp: instaloader is Instagram-only.
+
 Requests are spaced out and every caller stops after a few consecutive
 failures, so a rate limit or an expired login never turns into hammering
 Instagram with your account.
@@ -81,7 +84,7 @@ class Fetcher:
         opts.update(extra)
         return opts
 
-    def _ydl_info(self, shortcode, download_to: Path | None = None):
+    def _ydl_info(self, shortcode, download_to: Path | None = None, url: str | None = None):
         import yt_dlp
 
         extra = {"skip_download": True}
@@ -89,7 +92,7 @@ class Fetcher:
             extra = {"format": "bestaudio/best[filesize<80M]/best",
                      "outtmpl": str(download_to / f"{shortcode}.%(ext)s")}
         with yt_dlp.YoutubeDL(self._ydl_opts(**extra)) as ydl:
-            info = ydl.extract_info(canonical_url(shortcode), download=bool(download_to))
+            info = ydl.extract_info(url or canonical_url(shortcode), download=bool(download_to))
             if download_to:
                 files = [p for p in download_to.glob(f"{shortcode}.*") if not p.name.endswith(".part")]
                 info["_file"] = files[0] if files else None
@@ -119,17 +122,23 @@ class Fetcher:
         return instaloader.Post.from_shortcode(self._loader().context, shortcode)
 
     # ------------------------------------------------------------- public
-    def metadata(self, shortcode: str) -> dict:
+    @staticmethod
+    def is_instagram(url: str | None) -> bool:
+        return not url or "instagram.com" in url
+
+    def metadata(self, shortcode: str, url: str | None = None) -> dict:
         self._wait()
         errors = []
         try:
-            i = self._ydl_info(shortcode)
+            i = self._ydl_info(shortcode, url=url)
             return {"caption": i.get("description") or i.get("title") or "",
                     "author": i.get("channel") or i.get("uploader_id") or i.get("uploader"),
                     "duration": i.get("duration"), "is_video": bool(i.get("duration")),
                     "posted_at": i.get("timestamp")}
         except Exception as e:  # noqa: BLE001
             errors.append(f"yt-dlp: {str(e)[:160]}")
+            if not self.is_instagram(url):
+                _raise_for(errors[0])
         try:
             p = self._il_post(shortcode)
             return {"caption": p.caption or "", "author": p.owner_username,
@@ -139,15 +148,18 @@ class Fetcher:
             errors.append(f"instaloader: {str(e)[:160]}")
         _raise_for(" | ".join(errors))
 
-    def download_audio(self, shortcode: str, folder: Path) -> Path:
+    def download_audio(self, shortcode: str, folder: Path, url: str | None = None) -> Path:
         self._wait()
         errors = []
         try:
-            f = self._ydl_info(shortcode, download_to=folder).get("_file")
+            f = self._ydl_info(shortcode, download_to=folder, url=url).get("_file")
             if f:
                 return f
+            errors.append("yt-dlp: no file downloaded")
         except Exception as e:  # noqa: BLE001
             errors.append(f"yt-dlp: {str(e)[:160]}")
+        if not self.is_instagram(url):
+            _raise_for(errors[0])
         try:
             p = self._il_post(shortcode)
             if not p.is_video:
