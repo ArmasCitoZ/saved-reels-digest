@@ -32,20 +32,43 @@ class Unavailable(Exception):
     """The post was deleted, or its account is private: skip it, it will not come back."""
 
 
+class NetworkError(RuntimeError):
+    """Our own connection failed (offline, DNS, timeout): the post is fine, try it again later."""
+
+
 BLOCKED_HINTS = ("login", "rate", "429", "401", "checkpoint", "challenge")
 # what yt-dlp / instaloader say when the post itself is gone or hidden
 UNAVAILABLE_HINTS = ("404", "not found", "not available", "unavailable", "does not exist",
                      "has been removed", "been deleted", "private", "restricted")
 
+# what Python / yt-dlp / requests say when the connection itself is the problem
+NETWORK_HINTS = ("timed out", "timeout", "connection reset", "connection refused",
+                 "connection aborted", "connectionerror", "remote end closed",
+                 "temporary failure in name resolution", "name or service not known",
+                 "nodename nor servname", "getaddrinfo failed", "failed to resolve",
+                 "network is unreachable", "no route to host", "urlopen error",
+                 "max retries exceeded", "read error", "incompleteread")
+
+
+def _is_network(part: str) -> bool:
+    low = part.lower()
+    return any(k in low for k in NETWORK_HINTS)
+
 
 def classify_error(msg: str) -> str:
-    """'blocked' (stop the run), 'unavailable' (deleted/private post) or 'failed' (anything else).
+    """'blocked' (stop the run), 'network' (our connection dropped: retry later),
+    'unavailable' (deleted/private post) or 'failed' (anything else).
 
     Blocked wins: when Instagram rate-limits it often also says "not available".
+    Network only when every source failed to connect ("yt-dlp: ... | instaloader: ...");
+    if one of them got a real answer, the problem is the post, not the connection.
     """
     low = msg.lower()
     if any(k in low for k in BLOCKED_HINTS):
         return "blocked"
+    parts = [p for p in msg.split(" | ") if p.strip()]
+    if parts and all(_is_network(p) for p in parts):
+        return "network"
     if any(k in low for k in UNAVAILABLE_HINTS):
         return "unavailable"
     return "failed"
@@ -57,6 +80,8 @@ def _raise_for(msg: str):
         raise Blocked(msg)
     if kind == "unavailable":
         raise Unavailable(msg)
+    if kind == "network":
+        raise NetworkError(msg)
     raise RuntimeError(msg)
 
 

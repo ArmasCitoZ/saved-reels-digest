@@ -5,6 +5,9 @@
 
 By default only reels Claude marked relevant or "maybe" are transcribed.
 The audio is deleted right after transcription; only the text is kept.
+If the connection drops, the run waits and retries the same reel a few times,
+then stops; reels already transcribed are saved, and running it again picks up
+exactly where it left off (network errors never mark a reel as failed).
 The Whisper model is downloaded once (~75 MB tiny ... ~1.5 GB large-v3)
 into the workspace and reused. With --model auto (default) it is chosen from
 the computer's RAM: tiny under 4 GB, base under 8 GB, otherwise small, and
@@ -22,9 +25,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (HOME, in_collection, load_db, log, pick_whisper_model, save_db,  # noqa: E402
                     total_ram_bytes)
-from ig import Blocked, Fetcher  # noqa: E402
+from ig import Blocked, Fetcher, NetworkError, classify_error  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
+# seconds to wait before each retry when our connection drops (then give up for this run)
+NETWORK_WAITS = (15, 60, 180)
 
 
 def has_cuda() -> bool:
@@ -54,6 +59,30 @@ def transcribe_file(model, path: Path, language: str | None) -> tuple[str, str]:
     return text, info.language
 
 
+def needs_transcript(r: dict, everything: bool = False, collection: str | None = None) -> bool:
+    """Still to do. Old runs marked network drops as "failed": those are retried too."""
+    failed = r.get("transcribe") == "failed"
+    if failed and classify_error(r.get("transcribe_error") or "") != "network":
+        return False
+    return ("transcript" not in r and r.get("is_video") is not False
+            and r.get("meta") != "unavailable"
+            and (everything or r.get("relevant") in (True, "maybe"))
+            and in_collection(r, collection))
+
+
+def fetch_with_retry(fetcher, r: dict, folder: Path, waits=NETWORK_WAITS, sleep=time.sleep) -> Path:
+    """Download one reel's audio, waiting out short network drops. Raises NetworkError if it lasts."""
+    for attempt in range(len(waits) + 1):
+        try:
+            return fetcher.download_audio(r["shortcode"], folder, r.get("url"))
+        except NetworkError as e:
+            if attempt == len(waits):
+                raise
+            log(f"  network problem ({str(e)[:80]}); retrying in {waits[attempt]} s ...")
+            sleep(waits[attempt])
+    raise AssertionError("unreachable")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="auto",
@@ -78,11 +107,7 @@ def main() -> None:
     if args.shortcodes:
         todo = [reels[s] for s in args.shortcodes.split(",") if s in reels]
     else:
-        todo = [r for r in reels.values()
-                if "transcript" not in r and r.get("is_video") is not False
-                and r.get("transcribe") != "failed" and r.get("meta") != "unavailable"
-                and (args.all or r.get("relevant") in (True, "maybe"))
-                and in_collection(r, args.collection)]
+        todo = [r for r in reels.values() if needs_transcript(r, args.all, args.collection)]
     if args.limit:
         todo = todo[: args.limit]
     if not todo:
@@ -98,13 +123,18 @@ def main() -> None:
         for n, r in enumerate(todo, 1):
             sc = r["shortcode"]
             try:
-                media = fetcher.download_audio(sc, tmp, r.get("url"))
+                media = fetch_with_retry(fetcher, r, tmp)
                 text, lang = transcribe_file(model, media, args.language)
                 r.update(transcript=text, lang=lang, transcribe="ok")
                 r.pop("transcribe_error", None)
                 media.unlink(missing_ok=True)
                 done += 1
                 streak = 0
+            except NetworkError as e:
+                save_db(db)
+                sys.exit(f"STOPPED: no connection ({str(e)[:120]}). Saved {done} transcripts; "
+                         "run the same command again when you are back online and it will "
+                         "continue with the remaining reels.")
             except Blocked as e:
                 save_db(db)
                 sys.exit(f"STOPPED: Instagram is asking for login or rate-limiting ({e}). "

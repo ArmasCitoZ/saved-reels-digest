@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import load_db, log, save_db  # noqa: E402
-from ig import Blocked, Fetcher, Unavailable  # noqa: E402
+from ig import Blocked, Fetcher, NetworkError, Unavailable  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
 
@@ -52,6 +52,10 @@ def main() -> None:
             sys.exit(f"STOPPED: Instagram is asking for login or rate-limiting ({e}).\n"
                      f"Saved progress ({ok} done). Wait a while, or pass --browser with a "
                      "browser where you are logged in, then run again.")
+        except NetworkError as e:
+            save_db(db)
+            sys.exit(f"STOPPED: no connection ({str(e)[:120]}). Progress saved ({ok} done); "
+                     "run it again when you are back online.")
         except Unavailable as e:
             r["meta"], r["meta_error"] = "unavailable", str(e)[:300]
             gone += 1

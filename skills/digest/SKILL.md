@@ -105,6 +105,9 @@ The model is picked from the computer's RAM (`--model auto`, shown by `doctor.py
 force one with `--model small` etc. if accuracy is poor. Roughly 10–30 s
 per reel on CPU, so run in the background for big batches and report progress.
 If many fail with login errors, retry with `--browser chrome`.
+If it prints `STOPPED: no connection`, the internet dropped for several minutes (it already
+waited and retried). Nothing is lost: tell the user and re-run the same command once they are
+online; it continues with the reels still missing a transcript.
 
 Then resolve maybes: `PY SCRIPTS/db.py next --maybe` shows them with transcripts;
 set each to `true` or `false`.
