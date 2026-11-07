@@ -34,5 +34,5 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
 - [ ] CHANGELOG.md y releases versionadas
-- [ ] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
+- [x] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
 - [ ] GIF de demo en el README
