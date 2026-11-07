@@ -162,6 +162,26 @@ category, the source reels and links between ideas of the same category, plus an
 under `## My notes`; files it did not create are never overwritten. It relies on the
 digest structure above, so keep the `### Title {#slug}` headings.
 
+## Optional: export to Notion
+
+Only through the Notion connector of this Claude session (tools named like
+`notion-create-pages` / `notion-search`); never ask for a Notion API key. If no Notion
+tools are available, say the Notion connector needs to be enabled and offer the Obsidian
+export or the plain `digest.md` instead.
+
+1. `PY SCRIPTS/export_digest.py --json` prints the digest as JSON: `title`, `date`,
+   `top`, `categories` and `ideas` (each with `title`, `slug`, `category`, `status`
+   = todo / tried / discarded, `sources` and the markdown `body`). Use it instead of
+   re-reading `digest.md`.
+2. Ask where it should go (a parent page; search for it by name). Create one page titled
+   like the digest with "Do these first" as a numbered list and every idea grouped under
+   its category, then one child page per idea with the `body` as content, and a first line
+   with category, status and the number of source reels. Link the top list to the child
+   pages.
+3. On later exports, search the parent page for an existing page with the same idea title
+   and update it instead of creating a duplicate. Never delete pages the user made.
+4. Finish with the link to the parent page and how many idea pages were created or updated.
+
 ## Finish
 
 Tell the user in 2–3 lines: how many saves were read, how many were on topic, how

@@ -28,6 +28,8 @@
 
 ¿Usas Obsidian? Pídele a Claude que exporte el resumen a tu bóveda: crea una nota por idea, con etiquetas por categoría, los reels de origen y enlaces entre ideas relacionadas, más un índice. Si vuelves a exportar, se conserva lo que escribas bajo `## My notes`.
 
+¿Prefieres Notion? Si tienes el conector de Notion activado en Claude, pídele *"pásalo a Notion"*: crea una página índice y una subpágina por idea (con categoría, estado y enlaces a los reels). No necesitas API keys: usa el mismo conector que ya autorizaste.
+
 Se puede volver a lanzar cuando quieras: solo procesa lo que hayas guardado desde la última vez y lo integra en el resumen que ya tienes.
 
 ## Instalación (1 minuto)
@@ -116,6 +118,7 @@ $PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recu
 $PY db.py unavailable                        # guardados borrados o privados
 $PY db.py status
 $PY export_digest.py --vault ~/Obsidian/MiBoveda   # una nota por idea + INDEX.md
+$PY export_digest.py --json                  # el resumen como JSON (lo usa Claude para Notion)
 ```
 
 Para correr los tests y el linter igual que en CI:
@@ -126,13 +129,13 @@ python -m pytest -q
 ruff check .
 ```
 
-Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para TikTok y YouTube, y exportar el resumen a Notion.
+Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para TikTok y YouTube, y leer el texto de los carruseles.
 
 ---
 
 ## English
 
-**Claude goes through your saved Instagram reels for you.** It keeps the ones about your topic (tech/AI/Claude by default), transcribes them locally with Whisper, merges reels that say the same thing, and writes one ranked `digest.md` with a "Do these first" list.
+**Claude goes through your saved Instagram reels for you.** It keeps the ones about your topic (tech/AI/Claude by default), transcribes them locally with Whisper, merges reels that say the same thing, and writes one ranked `digest.md` with a "Do these first" list. It can also export that digest to an Obsidian vault (one note per idea) or, with Claude's Notion connector enabled, to Notion pages.
 
 It's free: there are no paid APIs or keys. Transcription runs on your machine and the analysis runs in your normal Claude Code plan.
 
