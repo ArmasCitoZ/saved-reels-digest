@@ -23,6 +23,11 @@ SHORTCODE_RE = re.compile(
     r"instagram\.com/(?:[A-Za-z0-9_.]+/)?(?:p|reel|reels|tv)/([A-Za-z0-9_-]{5,})"
 )
 
+# TikTok video links: tiktok.com/@user/video/<id>, the tiktokv.com/share/video/<id>/ form
+# used by TikTok's data export, and m.tiktok.com/v/<id>.html
+TIKTOK_RE = re.compile(r"tiktokv?\.com/(?:@[\w.-]*/video|share/video|v)/(\d{8,})")
+TIKTOK_PREFIX = "tt"
+
 
 def ensure_home() -> Path:
     HOME.mkdir(parents=True, exist_ok=True)
@@ -32,6 +37,21 @@ def ensure_home() -> Path:
 def shortcode_from_url(url: str) -> str | None:
     m = SHORTCODE_RE.search(url or "")
     return m.group(1) if m else None
+
+
+def tiktok_id_from_url(url: str) -> str | None:
+    m = TIKTOK_RE.search(url or "")
+    return m.group(1) if m else None
+
+
+def tiktok_key(video_id: str) -> str:
+    """Database key for a TikTok video. Prefixed so it never clashes with an Instagram shortcode."""
+    return f"{TIKTOK_PREFIX}{video_id}"
+
+
+def tiktok_url(video_id: str) -> str:
+    # "@" without a username is accepted by tiktok.com and by yt-dlp
+    return f"https://www.tiktok.com/@/video/{video_id}"
 
 
 def canonical_url(shortcode: str) -> str:

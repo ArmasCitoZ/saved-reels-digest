@@ -1,0 +1,14 @@
+{
+ "Profile": {"Profile Info": {"ProfileMap": {"userName": "demo_user"}}},
+ "Your Activity": {
+  "Favorite Videos": {"FavoriteVideoList": [
+   {"Date": "2026-10-30 18:04:11", "Link": "https://www.tiktokv.com/share/video/7400000000000000001/"},
+   {"Date": "2026-10-28 09:00:00", "Link": "https://www.tiktokv.com/share/video/7400000000000000002/"},
+   {"Date": "2026-10-28 09:00:00", "Link": "https://www.tiktokv.com/share/video/7400000000000000002/"},
+   {"Date": "not a date", "Link": "https://www.tiktok.com/@demo_creator/video/7400000000000000003"}
+  ]},
+  "Like List": {"ItemFavoriteList": [
+   {"date": "2026-10-29 10:00:00", "link": "https://www.tiktokv.com/share/video/7400000000000000099/"}
+  ]}
+ }
+}

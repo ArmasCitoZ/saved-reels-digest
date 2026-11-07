@@ -12,10 +12,17 @@ Three sources, pick one:
                                 logged in (or a saved instaloader session).
   collect.py urls FILE|-        Plain list of links, one per line (for example
                                 gathered by Claude from your browser).
+
+TikTok too:
+
+  collect.py tiktok PATH        TikTok's official data export (zip, folder or the
+                                user_data JSON / "Favorite Videos.txt"). Reads your
+                                Favorites, TikTok's equivalent of saved posts.
 """
 from __future__ import annotations
 
 import argparse
+import calendar
 import json
 import random
 import sys
@@ -24,8 +31,8 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import (SESSION_DIR, SHORTCODE_RE, add_reel, ensure_home, load_db,  # noqa: E402
-                    log, save_db, shortcode_from_url)
+from common import (SESSION_DIR, SHORTCODE_RE, TIKTOK_RE, add_reel, ensure_home,  # noqa: E402
+                    load_db, log, save_db, shortcode_from_url, tiktok_key, tiktok_url)
 
 
 # --------------------------------------------------------------------- export
@@ -148,6 +155,96 @@ def cmd_live(args) -> None:
     print(f"Read {seen} saved posts from @{user}, {new} new. Total: {len(db['reels'])}.")
 
 
+# --------------------------------------------------------------------- tiktok
+def _tiktok_files(path: Path):
+    """Yield (name, text) for the TikTok export files that can hold favorites."""
+    def wanted(name: str) -> bool:
+        low = name.lower()
+        return (low.endswith(".json") and "user_data" in low) or (
+            low.endswith(".txt") and "favorite video" in low)
+
+    if path.is_file() and path.suffix.lower() == ".zip":
+        with zipfile.ZipFile(path) as z:
+            for name in z.namelist():
+                if wanted(name):
+                    yield name, z.read(name).decode("utf-8", "replace")
+    elif path.is_dir():
+        for p in sorted(path.rglob("*")):
+            if p.is_file() and wanted(p.relative_to(path).as_posix()):
+                yield str(p), p.read_text("utf-8", "replace")
+    elif path.is_file():
+        yield str(path), path.read_text("utf-8", "replace")
+    else:
+        sys.exit(f"Not found: {path}")
+
+
+def _tiktok_ts(date: str | None) -> int | None:
+    """TikTok writes "2026-10-30 18:04:11" (UTC)."""
+    try:
+        return calendar.timegm(time.strptime((date or "").strip(), "%Y-%m-%d %H:%M:%S"))
+    except ValueError:
+        return None
+
+
+def _find_favorites(node):
+    """The FavoriteVideoList, wherever this version of the export puts it."""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == "FavoriteVideoList" and isinstance(v, list):
+                return v
+            found = _find_favorites(v)
+            if found is not None:
+                return found
+    elif isinstance(node, list):
+        for v in node:
+            found = _find_favorites(v)
+            if found is not None:
+                return found
+    return None
+
+
+def parse_tiktok(name: str, text: str) -> list:
+    """[{"id", "saved_at"}] for every favorite video in one export file."""
+    out = []
+    if name.lower().endswith(".json"):
+        try:
+            favs = _find_favorites(json.loads(text)) or []
+        except json.JSONDecodeError:
+            favs = []
+        for f in favs:
+            if isinstance(f, dict):
+                m = TIKTOK_RE.search(f.get("Link") or f.get("link") or "")
+                if m:
+                    out.append({"id": m.group(1), "saved_at": _tiktok_ts(f.get("Date") or f.get("date"))})
+        return out
+    # TXT export: blocks of "Date: ...\nLink: ..."
+    date = None
+    for line in text.splitlines():
+        key, _, value = line.partition(":")
+        if key.strip().lower() == "date":
+            date = value
+        m = TIKTOK_RE.search(line)
+        if m:
+            out.append({"id": m.group(1), "saved_at": _tiktok_ts(date)})
+            date = None
+    return out
+
+
+def cmd_tiktok(args) -> None:
+    db = load_db()
+    found = []
+    for name, text in _tiktok_files(Path(args.path).expanduser()):
+        found += parse_tiktok(name, text)
+    found = list({f["id"]: f for f in reversed(found)}.values())[::-1]  # dedupe, keep first
+    new = sum(add_reel(db, tiktok_key(f["id"]), url=tiktok_url(f["id"]), platform="tiktok",
+                       source="tiktok", is_video=True, saved_at=f["saved_at"]) for f in found)
+    save_db(db)
+    if not found:
+        print("No favorite videos found. In TikTok pick Settings → Account → Download your data, "
+              "format JSON, and pass the zip or user_data JSON.")
+    print(f"Read {len(found)} TikTok favorites from the export, {new} new. Total: {len(db['reels'])}.")
+
+
 # ----------------------------------------------------------------------- urls
 def cmd_urls(args) -> None:
     text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text("utf-8")
@@ -172,6 +269,7 @@ def main() -> None:
                    help="incremental: stop at the first post already in the database")
     live.set_defaults(fn=cmd_live)
     u = sub.add_parser("urls"); u.add_argument("file"); u.set_defaults(fn=cmd_urls)
+    t = sub.add_parser("tiktok"); t.add_argument("path"); t.set_defaults(fn=cmd_tiktok)
     args = ap.parse_args()
     args.fn(args)
 
