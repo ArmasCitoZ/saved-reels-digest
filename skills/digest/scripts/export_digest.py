@@ -1,6 +1,7 @@
 """Export digest.md to an Obsidian vault: one note per idea plus an index note.
 
   export_digest.py --vault ~/Obsidian/MyVault [--folder "Saved reels"] [--digest PATH]
+  export_digest.py --json [--digest PATH]
 
 Reads the digest written in step 5 (default: WORK/digest.md) and writes into
 VAULT/FOLDER:
@@ -13,10 +14,16 @@ Links are relative markdown links, so the notes also render on GitHub and in
 VS Code. Safe to re-run: notes are rewritten from the digest, but anything you
 write under a "## My notes" heading in a note is kept. Files in the folder that
 this script did not create are never overwritten.
+
+With --json it writes nothing and prints the digest as structured JSON instead
+(title, date, top list and every idea with its category, body, source links and
+tried/discarded status). Claude uses that to fill other tools, such as Notion
+through its connector, without re-parsing the markdown by hand.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from datetime import date
@@ -33,6 +40,7 @@ ENTRY_RE = re.compile(r"^###\s+(?P<title>.+?)\s*(?:\{#(?P<slug>[A-Za-z0-9_-]+)\}
 DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 ANCHOR_LINK_RE = re.compile(r"\]\(#([A-Za-z0-9_-]+)\)")
 URL_RE = re.compile(r"\]\((https?://[^)\s]+)\)")
+STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(?:\S+\s+)?(?P<status>Tried|Discarded)\b", re.I | re.M)
 
 
 def slugify(text: str) -> str:
@@ -184,15 +192,41 @@ def export(digest_text: str, out_dir: Path, today: str | None = None) -> dict:
     return report
 
 
+def to_json(digest_text: str) -> dict:
+    """The digest as plain data, for exporters that are not files (e.g. Notion via a connector)."""
+    digest = parse_digest(digest_text)
+    if not digest["ideas"]:
+        raise ValueError("no ideas found: expected '### Idea title {#slug}' entries under '## Category'")
+    ideas = []
+    for i in digest["ideas"]:
+        m = STATUS_RE.search(i["body"])
+        ideas.append({"title": i["title"], "slug": i["slug"], "category": i["category"],
+                      "status": m["status"].lower() if m else "todo",
+                      "sources": list(dict.fromkeys(URL_RE.findall(i["body"]))),
+                      "body": i["body"]})
+    return {"title": digest["title"], "date": digest["date"], "top": digest["top"],
+            "categories": list(dict.fromkeys(i["category"] for i in ideas)), "ideas": ideas}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--vault", required=True, help="Obsidian vault folder (any folder works)")
+    mode = ap.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--vault", help="Obsidian vault folder (any folder works)")
+    mode.add_argument("--json", action="store_true", help="print the digest as JSON, write nothing")
     ap.add_argument("--folder", default="Saved reels", help="subfolder inside the vault")
     ap.add_argument("--digest", default=str(HOME / "digest.md"), help="digest to export")
     args = ap.parse_args(argv)
     src = Path(args.digest).expanduser()
     if not src.exists():
         sys.exit(f"Not found: {src}. Write the digest first (step 5).")
+    if args.json:
+        try:
+            data = to_json(src.read_text("utf-8"))
+        except ValueError as e:
+            sys.exit(f"Could not export {src}: {e}")
+        sys.stdout.reconfigure(encoding="utf-8")
+        print(json.dumps(data, ensure_ascii=False, indent=1))
+        return 0
     out_dir = Path(args.vault).expanduser() / args.folder
     try:
         report = export(src.read_text("utf-8"), out_dir)

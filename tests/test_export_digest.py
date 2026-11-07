@@ -117,3 +117,40 @@ def test_cli_rejects_a_digest_without_ideas(tmp_path):
                         str(tmp_path / "v"), "--digest", str(src)],
                        capture_output=True, text=True, check=False)
     assert r.returncode != 0 and "no ideas found" in r.stderr
+
+
+# ------------------------------------------------------------------ --json
+def test_to_json_has_ideas_sources_and_status():
+    digest = DIGEST.replace("Write conventions once.",
+                            "**Status:** ✅ Tried: works on every repo\nWrite conventions once.")
+    data = ed.to_json(digest)
+    assert data["title"] == "Tech: my saved reels digest" and data["date"] == "2026-11-01"
+    assert data["categories"] == ["Claude Code", "Prompting"]
+    assert len(data["top"]) == 2
+    by_slug = {i["slug"]: i for i in data["ideas"]}
+    assert by_slug["plan-mode"]["sources"] == ["https://www.instagram.com/reel/DFixAi0001/",
+                                               "https://www.instagram.com/reel/DFixDev003/"]
+    assert by_slug["claude-md"]["status"] == "tried"
+    assert by_slug["plan-mode"]["status"] == "todo"
+    assert ed.to_json(DIGEST.replace("**Notes:**", "**Status:** 🚫 Discarded: meh\n**Notes:**")
+                      )["ideas"][2]["status"] == "discarded"
+
+
+def test_cli_json_prints_and_writes_nothing(tmp_path):
+    import json
+
+    src = tmp_path / "digest.md"
+    src.write_text(DIGEST, encoding="utf-8")
+    r = subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py"), "--json",
+                        "--digest", str(src)], env={**os.environ, "SRD_HOME": str(tmp_path)},
+                       capture_output=True, text=True, encoding="utf-8", check=False)
+    assert r.returncode == 0, r.stderr
+    assert [i["slug"] for i in json.loads(r.stdout)["ideas"]] == [
+        "plan-mode", "claude-md", "give-examples-not-adjectives"]
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["digest.md"]
+
+
+def test_cli_needs_vault_or_json(tmp_path):
+    r = subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py")],
+                       capture_output=True, text=True, check=False)
+    assert r.returncode != 0 and "--vault" in r.stderr
