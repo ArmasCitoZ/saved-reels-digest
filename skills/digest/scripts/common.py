@@ -83,11 +83,24 @@ def canonical_url(shortcode: str) -> str:
     return f"https://www.instagram.com/reel/{shortcode}/"
 
 
+def _damaged_db_message(why: str) -> str:
+    fix = (f"Replace it with the backup: copy {BACKUP_PATH} over it (at most a day of work is lost)."
+           if BACKUP_PATH.exists()
+           else "There is no backup yet. Move the file aside and collect again to start over.")
+    return f"{DB_PATH} is damaged ({why}), so nothing was changed. {fix}"
+
+
 def load_db() -> dict:
     if not DB_PATH.exists():
         return {"version": 1, "reels": {}}
-    with DB_PATH.open(encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        with DB_PATH.open(encoding="utf-8") as f:
+            db = json.load(f)
+    except ValueError as e:  # bad JSON or bad UTF-8
+        sys.exit(_damaged_db_message(str(e)))
+    if not isinstance(db, dict) or not isinstance(db.get("reels"), dict):
+        sys.exit(_damaged_db_message('no "reels" table'))
+    return db
 
 
 def _daily_backup() -> None:

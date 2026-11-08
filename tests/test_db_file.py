@@ -64,3 +64,24 @@ def test_a_failed_backup_does_not_block_the_save(home, monkeypatch):
     monkeypatch.setattr(common.shutil, "copyfile", broken)
     common.save_db(db_with("second"))
     assert caption_in(common.DB_PATH) == "second"
+
+
+@pytest.mark.parametrize("content", ['{"version": 1, "reels": {"AAA', "[1, 2]", '{"version": 1}'])
+def test_damaged_database_points_to_the_backup(home, content):
+    common.BACKUP_PATH.write_text('{"reels": {}}', "utf-8")
+    common.DB_PATH.write_text(content, "utf-8")
+    with pytest.raises(SystemExit) as e:
+        common.load_db()
+    assert "damaged" in str(e.value) and str(common.BACKUP_PATH) in str(e.value)
+    assert common.DB_PATH.read_text("utf-8") == content  # left alone for the user to inspect
+
+
+def test_damaged_database_without_a_backup_says_so(home):
+    common.DB_PATH.write_bytes(b"\xff\xfe not text")
+    with pytest.raises(SystemExit) as e:
+        common.load_db()
+    assert "no backup" in str(e.value)
+
+
+def test_missing_database_is_still_an_empty_one(home):
+    assert common.load_db() == {"version": 1, "reels": {}}

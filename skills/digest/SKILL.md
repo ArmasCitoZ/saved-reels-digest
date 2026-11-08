@@ -223,6 +223,8 @@ items. Offer one next step (e.g. "want me to apply #1 to this project?").
 
 ## Troubleshooting
 
+- `reels.json is damaged`: the message names the fix. Before replacing anything, tell the user
+  and keep the damaged file under another name, in case the backup is older than they expect.
 - `STOPPED ... login/rate-limit`: Instagram wants a login or is throttling. Use
   `--browser <browser where they are logged in>`, or wait an hour. Never lower `--delay`
   below 2.

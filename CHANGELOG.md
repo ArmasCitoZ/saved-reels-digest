@@ -31,6 +31,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `db.py dump` keeps `--collection`, `--all` and the other filters in its "Continue with" line, so later pages no longer skip or repeat reels.
 - `db.py set` refuses unknown fields and invalid triage values, which used to hide reels from every later step without any warning.
 - Scripts always print UTF-8, so a caption with an emoji no longer crashes them on Windows when Claude reads their output.
+- A damaged `reels.json` gives a clear message and the way to restore it, instead of a traceback.
 
 ## [0.1.0] - 2026-11-03
 
