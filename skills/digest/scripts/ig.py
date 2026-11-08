@@ -10,6 +10,7 @@ Instagram with your account.
 from __future__ import annotations
 
 import random
+import shutil
 import time
 import urllib.request
 from pathlib import Path
@@ -172,6 +173,34 @@ class Fetcher:
         except Exception as e:  # noqa: BLE001
             errors.append(f"instaloader: {str(e)[:160]}")
         _raise_for(" | ".join(errors))
+
+    def image_urls(self, shortcode: str) -> list:
+        """Image URLs of a photo or carousel post (videos inside a carousel are skipped)."""
+        self._wait()
+        try:
+            p = self._il_post(shortcode)
+            if p.typename == "GraphSidecar":
+                return [n.display_url for n in p.get_sidecar_nodes() if not n.is_video]
+            return [] if p.is_video else [p.url]
+        except Exception as e:  # noqa: BLE001
+            _raise_for(f"instaloader: {str(e)[:160]}")
+
+    def download_images(self, shortcode: str, folder: Path, max_images: int = 10) -> list:
+        """Save a post's images as 01.jpg, 02.jpg... in folder and return their paths."""
+        urls = self.image_urls(shortcode)[:max_images]
+        folder.mkdir(parents=True, exist_ok=True)
+        paths = []
+        try:
+            for n, url in enumerate(urls, 1):
+                if n > 1:
+                    time.sleep(random.uniform(0.2, 0.6))
+                dest = folder / f"{n:02d}.jpg"
+                urllib.request.urlretrieve(url, dest)  # signed CDN URL, no login needed
+                paths.append(dest)
+        except Exception as e:  # noqa: BLE001
+            shutil.rmtree(folder, ignore_errors=True)  # never leave half a carousel behind
+            _raise_for(f"image: {str(e)[:160]}")
+        return paths
 
     def download_audio(self, shortcode: str, folder: Path, url: str | None = None) -> Path:
         self._wait()
