@@ -37,7 +37,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Salida UTF-8 en Windows para que los emojis de los captions no rompan los scripts
 - [x] Copia de seguridad diaria de `reels.json`
 - [x] Mensaje claro si `reels.json` está dañado, en vez de un traceback
-- [ ] Que los posts borrados sin texto no queden pendientes para siempre
+- [x] Que los posts borrados sin texto no queden pendientes para siempre
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues

@@ -50,6 +50,11 @@ def _parse_value(v: str):
     return {"true": True, "false": False, "null": None, "none": None}.get(low, v)
 
 
+def _has_content(r: dict) -> bool:
+    """False for a deleted or private post nothing was read from: it can never become an idea."""
+    return r.get("meta") != "unavailable" or bool(_full_text(r))
+
+
 def cmd_status(_):
     rs = list(load_db()["reels"].values())
     c = Counter()
@@ -63,8 +68,8 @@ def cmd_status(_):
         c["transcribe failed"] += r.get("transcribe") == "failed"
         c["images read"] += bool(r.get("slides_text"))
         c["merged into digest"] += bool(r.get("entry"))
-    relevant = [r for r in rs if r.get("relevant") is True]
-    c["relevant & not yet in digest"] = sum(1 for r in relevant if not r.get("entry"))
+    c["relevant & not yet in digest"] = sum(1 for r in rs if r.get("relevant") is True
+                                            and not r.get("entry") and _has_content(r))
     print(f"Database: {DB_PATH}")
     for k in ["total", "with caption", "meta failed", "deleted or private", "triage: None", "triage: True",
               "triage: maybe", "triage: False", "transcribed", "transcribe failed", "images read",
@@ -185,7 +190,7 @@ def _dump_again(a, offset: int) -> str:
 def cmd_dump(a):
     rs = [r for r in load_db()["reels"].values()
           if (a.all or r.get("relevant") is True) and not (a.undigested and r.get("entry"))
-          and in_collection(r, a.collection)]
+          and in_collection(r, a.collection) and _has_content(r)]
     shown = used = 0
     for r in rs[a.offset:]:
         block = _dump_block(r, a.chars)

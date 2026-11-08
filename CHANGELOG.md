@@ -33,6 +33,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Scripts always print UTF-8, so a caption with an emoji no longer crashes them on Windows when Claude reads their output.
 - A damaged `reels.json` gives a clear message and the way to restore it, instead of a traceback.
 - The Obsidian and JSON exports find the top list and each idea's status when the digest is in any language, and keep the top list's own heading.
+- Deleted posts that have no text no longer show up in `db.py dump` or stay counted as waiting for the digest.
 
 ## [0.1.0] - 2026-11-03
 

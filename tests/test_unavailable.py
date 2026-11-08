@@ -55,3 +55,13 @@ def test_db_lists_unavailable_and_skips_them_in_triage(tmp_path):
 def test_db_unavailable_when_none(tmp_path):
     make_db(tmp_path, reel("AAAAA1"))
     assert "No deleted or private posts" in run(tmp_path, "unavailable")
+
+
+def test_deleted_post_without_text_is_not_waiting_for_the_digest(tmp_path):
+    make_db(tmp_path, reel("GONE01", relevant=True, meta="unavailable"),
+            reel("GONE02", relevant=True, meta="unavailable", caption="read before it was deleted"),
+            reel("LIVE01", relevant=True, caption="still here"))
+    assert "GONE01" not in run(tmp_path, "dump")
+    assert "GONE02" in run(tmp_path, "dump")
+    pending = [ln for ln in run(tmp_path, "status").splitlines() if "not yet in digest" in ln][0]
+    assert pending.split()[-1] == "2"
