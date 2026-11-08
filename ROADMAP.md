@@ -29,7 +29,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
 - [x] Detectar posts borrados o privados y listarlos aparte
-- [ ] Mejorar `similar` con n-gramas para detectar duplicados en distintos idiomas
+- [x] Mejorar `similar` con n-gramas para detectar duplicados en distintos idiomas
 - [x] Límite de tamaño en `dump` para no saturar el contexto de Claude con 500+ reels
 
 ## Comunidad

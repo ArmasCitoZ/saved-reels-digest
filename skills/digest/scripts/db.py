@@ -7,7 +7,8 @@
   db.py set FIELD VALUE CODE [CODE ...]     e.g. set relevant true C1 C2 / set topic "Claude Code" C3
   db.py dump [--undigested] [--all]         relevant reels with caption + transcript, for merging
             [--max-total 60000] [--offset N]   output is capped; continue with --offset
-  db.py similar [--threshold 0.3]           groups of reels that probably say the same thing
+  db.py similar [--threshold 0.3]           groups of reels that probably say the same thing,
+            [--ngram-threshold 0.1]            also across languages (by similar spellings)
   db.py recent [--days 7]                   relevant reels saved lately and their digest entry
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
@@ -25,6 +26,7 @@ import math
 import re
 import sys
 import time
+import unicodedata
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -191,10 +193,8 @@ def _full_text(r: dict) -> str:
     return " ".join(r.get(k) or "" for k in ("caption", "transcript", "slides_text")).strip()
 
 
-def cmd_similar(a):
-    rs = [r for r in load_db()["reels"].values()
-          if r.get("relevant") is True and _full_text(r) and in_collection(r, a.collection)]
-    docs = [Counter(_tokens(_full_text(r))) for r in rs]
+def _tfidf(docs: list) -> list:
+    """Unit-length TF-IDF vectors for a list of Counters."""
     df = Counter(t for d in docs for t in d)
     n = len(docs)
     vecs = []
@@ -202,6 +202,43 @@ def cmd_similar(a):
         v = {t: (1 + math.log(c)) * math.log((n + 1) / (df[t] + 0.5)) for t, c in d.items()}
         norm = math.sqrt(sum(x * x for x in v.values())) or 1.0
         vecs.append({t: x / norm for t, x in v.items()})
+    return vecs
+
+
+def _cosine(a: dict, b: dict) -> float:
+    a, b = (a, b) if len(a) < len(b) else (b, a)
+    return sum(x * b.get(t, 0.0) for t, x in a.items())
+
+
+NGRAM = 4
+EN_MARKERS = set("the and with this that you your for from have how what".split())
+ES_MARKERS = set("el la los las con este esta que para por una como pero del".split())
+
+
+def _char_ngrams(tokens: list) -> Counter:
+    """Pieces of words, so cognates match: "automatización" and "automation" share "auto", "toma"..."""
+    grams = Counter()
+    for t in tokens:
+        w = "_" + "".join(c for c in unicodedata.normalize("NFD", t) if not unicodedata.combining(c)) + "_"
+        grams.update(w[i:i + NGRAM] for i in range(max(1, len(w) - NGRAM + 1)))
+    return grams
+
+
+def _language(r: dict) -> str | None:
+    """Whisper's language if there is a transcript, else a guess from the most common words."""
+    if r.get("lang"):
+        return r["lang"]
+    words = re.findall(r"[a-záéíóúñü]+", _full_text(r).lower())
+    en, es = sum(w in EN_MARKERS for w in words), sum(w in ES_MARKERS for w in words)
+    return None if en == es else ("en" if en > es else "es")
+
+
+def cmd_similar(a):
+    rs = [r for r in load_db()["reels"].values()
+          if r.get("relevant") is True and _full_text(r) and in_collection(r, a.collection)]
+    tokens = [_tokens(_full_text(r)) for r in rs]
+    vecs = _tfidf([Counter(t) for t in tokens])
+    n = len(rs)
     parent = list(range(n))
 
     def find(i):
@@ -210,26 +247,39 @@ def cmd_similar(a):
             i = parent[i]
         return i
 
-    pairs = []
     for i in range(n):
         for j in range(i + 1, n):
-            vi, vj = (vecs[i], vecs[j]) if len(vecs[i]) < len(vecs[j]) else (vecs[j], vecs[i])
-            s = sum(x * vj.get(t, 0.0) for t, x in vi.items())
-            if s >= a.threshold:
-                pairs.append((s, i, j))
+            if _cosine(vecs[i], vecs[j]) >= a.threshold:
                 parent[find(i)] = find(j)
     groups = {}
     for i in range(n):
         groups.setdefault(find(i), []).append(i)
     groups = [g for g in groups.values() if len(g) > 1]
-    if not groups:
+
+    def label(i):
+        return f"{rs[i]['shortcode']} @{rs[i].get('author') or '?'}: {_short(_full_text(rs[i]), 60)}"
+
+    # Second pass, only between reels in different languages: there, shared words are rare.
+    cross = []
+    if a.ngram_threshold:
+        langs = [_language(r) for r in rs]
+        grams = _tfidf([_char_ngrams(t) for t in tokens])
+        for i in range(n):
+            for j in range(i + 1, n):
+                if (langs[i] and langs[j] and langs[i] != langs[j] and find(i) != find(j)
+                        and _cosine(grams[i], grams[j]) >= a.ngram_threshold):
+                    cross.append((i, j))
+    if not groups and not cross:
         print("No obvious duplicates by wording. Still compare meaning when merging.")
         return
-    print(f"{len(groups)} candidate groups (same wording; confirm by meaning):")
-    for g in sorted(groups, key=len, reverse=True):
-        print("- " + " | ".join(f"{rs[i]['shortcode']} @{rs[i].get('author') or '?'}: "
-                                 f"{_short(_full_text(rs[i]), 60)}"
-                                 for i in g))
+    if groups:
+        print(f"{len(groups)} candidate groups (same wording; confirm by meaning):")
+        for g in sorted(groups, key=len, reverse=True):
+            print("- " + " | ".join(label(i) for i in g))
+    if cross:
+        print(f"{len(cross)} possible matches across languages (similar spellings; confirm by meaning):")
+        for i, j in cross:
+            print(f"- {label(i)} | {label(j)}")
 
 
 def cmd_recent(a):
@@ -307,6 +357,8 @@ def main() -> None:
     p.add_argument("--offset", type=int, default=0, help="skip the first N reels (to continue)")
     p.set_defaults(fn=cmd_dump)
     p = sub.add_parser("similar"); p.add_argument("--threshold", type=float, default=0.3)
+    p.add_argument("--ngram-threshold", type=float, default=0.1,
+                   help="for reels in different languages (0 = skip that pass)")
     p.set_defaults(fn=cmd_similar)
     p = sub.add_parser("recent"); p.add_argument("--days", type=int, default=7)
     p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests

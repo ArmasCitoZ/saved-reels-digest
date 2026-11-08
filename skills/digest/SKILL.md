@@ -134,7 +134,8 @@ text; set each to `true` or `false`.
 
 ## Step 5: merge duplicates and write the digest (you do this)
 
-1. `PY SCRIPTS/db.py similar` gives candidate groups with the same wording. Then read
+1. `PY SCRIPTS/db.py similar` gives candidate groups with the same wording, plus possible
+   matches between reels in different languages. Treat both as hints. Then read
    everything: `PY SCRIPTS/db.py dump --undigested`. Output is capped at ~60,000
    characters per call; when it ends with `Continue with: dump --offset N`, run that
    command for the next page and keep going until no such line appears. Group by **meaning**, not wording: two creators explaining the
