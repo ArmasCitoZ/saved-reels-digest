@@ -215,3 +215,16 @@ def test_an_idea_called_index_does_not_replace_the_index(tmp_path):
 def test_names_windows_cannot_create_are_avoided():
     assert _names("CON", "aux", "Nul", "Com1", "Console") == [
         "CON (s0).md", "aux (s1).md", "Nul (s2).md", "Com1 (s3).md", "Console.md"]
+
+
+def test_slugs_can_have_accents(tmp_path):
+    digest = ("# D\n\n## Hazlo ya\n1. **Automatiza** → [entrada](#automatización)\n\n"
+              "## Herramientas\n### Automatiza tus tareas {#automatización}\nMira [otra](#revisión).\n\n"
+              "### Revisa antes de publicar {#revisión}\nTexto.\n")
+    ideas = ed.parse_digest(digest)["ideas"]
+    assert [(i["title"], i["slug"]) for i in ideas] == [
+        ("Automatiza tus tareas", "automatización"), ("Revisa antes de publicar", "revisión")]
+    ed.export(digest, tmp_path, today="2026-11-08")
+    note = (tmp_path / "Automatiza tus tareas.md").read_text("utf-8")
+    assert "](Revisa%20antes%20de%20publicar.md)" in note
+    assert "](Automatiza%20tus%20tareas.md)" in (tmp_path / "INDEX.md").read_text("utf-8")

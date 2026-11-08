@@ -38,9 +38,9 @@ MY_NOTES = "## My notes"
 FIRST_SECTION = "Do these first"
 # the digest is written in the user's language, so the heading may be translated
 TOP_HEADINGS = {FIRST_SECTION.casefold(), "haz esto primero"}
-ENTRY_RE = re.compile(r"^###\s+(?P<title>.+?)\s*(?:\{#(?P<slug>[A-Za-z0-9_-]+)\})?\s*$")
+ENTRY_RE = re.compile(r"^###\s+(?P<title>.+?)\s*(?:\{#(?P<slug>[\w-]+)\})?\s*$")
 DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
-ANCHOR_LINK_RE = re.compile(r"\]\(#([A-Za-z0-9_-]+)\)")
+ANCHOR_LINK_RE = re.compile(r"\]\(#([\w-]+)\)")
 URL_RE = re.compile(r"\]\((https?://[^)\s]+)\)")
 STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(?:\S+\s+)?(?P<status>Tried|Discarded)\b", re.I | re.M)
 NUMBERED_RE = re.compile(r"^\s*\d+\.\s")

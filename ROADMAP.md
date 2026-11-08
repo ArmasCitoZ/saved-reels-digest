@@ -28,7 +28,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Exportadores: reconocer la lista principal y el estado aunque el digest esté en otro idioma
 - [x] Reconocer las colecciones de Instagram aunque la exportación esté en otro idioma
 - [x] Exportador: que una idea llamada "Index" no pise `INDEX.md`, y evitar nombres reservados de Windows
-- [ ] Exportador: aceptar slugs con acentos (`{#automatización}`)
+- [x] Exportador: aceptar slugs con acentos (`{#automatización}`)
 - [ ] Exportador: ignorar los `##` y `###` que haya dentro de bloques de código
 - [ ] `db.py similar`: que funcione con cualquier alfabeto (portugués, francés, cirílico...)
 - [ ] `db.py recent`: no listar los posts borrados sin texto

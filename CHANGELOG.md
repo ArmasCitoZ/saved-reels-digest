@@ -11,6 +11,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - A half-downloaded export zip now gets a clear message in every collector, and an export with no saved posts says what to request.
 - Instagram collections are recognized whatever language the export is in, not just English and Spanish.
 - An idea called "Index" no longer replaces the vault's `INDEX.md`, and titles Windows cannot use as file names (CON, NUL...) get a safe one.
+- The exporters accept slugs with accents (`{#automatización}`), which used to end up inside the idea's title and break its links.
 
 ## [0.2.0] - 2026-11-08
 
