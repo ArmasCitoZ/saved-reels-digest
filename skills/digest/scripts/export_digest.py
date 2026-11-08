@@ -122,8 +122,13 @@ def safe_filename(title: str) -> str:
     return name[:120] or "idea"
 
 
+# device names Windows refuses as file names, with any extension
+WINDOWS_RESERVED = {"con", "prn", "aux", "nul", *(f"com{n}" for n in range(1, 10)),
+                    *(f"lpt{n}" for n in range(1, 10))}
+
+
 def assign_filenames(ideas: list) -> None:
-    used = set()
+    used = {"index", *WINDOWS_RESERVED}  # "index" is the map of content, INDEX.md
     for i in ideas:
         base = safe_filename(i["title"])
         name = base

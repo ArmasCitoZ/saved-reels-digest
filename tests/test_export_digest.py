@@ -195,3 +195,23 @@ def test_status_marks_work_in_any_language():
 def test_index_keeps_the_digest_heading(tmp_path):
     ed.export(PORTUGUESE, tmp_path, today="2026-11-08")
     assert "## Faça isto primeiro" in (tmp_path / "INDEX.md").read_text("utf-8")
+
+
+def _names(*titles):
+    ideas = [{"title": t, "slug": f"s{n}"} for n, t in enumerate(titles)]
+    ed.assign_filenames(ideas)
+    return [i["file"] for i in ideas]
+
+
+def test_an_idea_called_index_does_not_replace_the_index(tmp_path):
+    digest = "# D\n\n## Tools\n### Index {#the-index}\nKeep an index.\n\n### Other {#other}\nText.\n"
+    report = ed.export(digest, tmp_path / "out", today="2026-11-08")
+    index = (tmp_path / "out" / "INDEX.md").read_text("utf-8")
+    assert "](Index%20%28the-index%29.md)" in index  # still the map of content, linking to the idea
+    assert (tmp_path / "out" / "Index (the-index).md").exists()
+    assert not report["skipped"]
+
+
+def test_names_windows_cannot_create_are_avoided():
+    assert _names("CON", "aux", "Nul", "Com1", "Console") == [
+        "CON (s0).md", "aux (s1).md", "Nul (s2).md", "Com1 (s3).md", "Console.md"]
