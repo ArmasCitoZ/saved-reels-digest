@@ -19,7 +19,7 @@ in that language too, even if the reels are in English.
 
 - `SCRIPTS` = the `scripts/` folder next to this SKILL.md (use its absolute path).
 - `WORK` = `~/saved-reels-digest` (override: env var `SRD_HOME`). Holds `reels.json`
-  (the database), `digest.md` (the output), `.venv`, `.models`, `.session`.
+  (the database), `digest.md` (the output), `.venv`, `.models`, `.session`, `.slides`.
 - `PY` = the Python inside `WORK/.venv` (`bin/python`, or `Scripts\python.exe` on Windows).
 
 ## Step 0: setup (first run only)
@@ -109,8 +109,20 @@ If it prints `STOPPED: no connection`, the internet dropped for several minutes 
 waited and retried). Nothing is lost: tell the user and re-run the same command once they are
 online; it continues with the reels still missing a transcript.
 
-Then resolve maybes: `PY SCRIPTS/db.py next --maybe` shows them with transcripts;
-set each to `true` or `false`.
+Photo and carousel posts have no audio, and their caption often says little. If
+`PY SCRIPTS/slides.py pending` lists any, read them yourself:
+
+1. `PY SCRIPTS/slides.py fetch --limit 10` downloads the images and prints one `IMAGE:`
+   path per image, grouped by post (`--browser chrome` if posts fail with login errors).
+2. Open each image with your file reading tool and write down what it says: the text,
+   plus anything in a screenshot or diagram that matters. Leave out decoration.
+3. Save it, which also deletes that post's images: `PY SCRIPTS/slides.py save CODE`,
+   passing the text on stdin. Save an empty text if an image says nothing useful.
+4. Repeat until `pending` is empty. If it prints `STOPPED`, relay the reason; do not loop.
+   If you cannot open images in this session, run `slides.py clean` and skip this.
+
+Then resolve maybes: `PY SCRIPTS/db.py next --maybe` shows them with transcripts and image
+text; set each to `true` or `false`.
 
 ## Step 5: merge duplicates and write the digest (you do this)
 

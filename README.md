@@ -24,7 +24,7 @@
 
    ¿También guardas en TikTok? Tus **Favoritos** entran en el mismo resumen con la exportación oficial de TikTok (Ajustes y privacidad → Cuenta → Descargar tus datos → formato JSON).
 2. **Lee los textos** de cada publicación y descarta lo que no es de tu tema (recetas, memes, viajes...).
-3. **Transcribe en local** solo los reels que importan. El audio se borra justo después.
+3. **Transcribe en local** solo los reels que importan. El audio se borra justo después. Los **carruseles** y las fotos no tienen audio, así que Claude mira las imágenes y se queda con el texto; las imágenes también se borran.
 4. **Junta los duplicados.** Si tres creadores explican el mismo truco, sale una sola entrada con lo mejor de cada uno y los tres enlaces. También marca contradicciones y cosas que suenan a hype o que pueden estar desactualizadas.
 5. **Te entrega `digest.md`** con una sección **"Haz esto primero"** (los 5-10 consejos más útiles) y debajo todo organizado por categorías. Mira un [ejemplo con datos inventados](examples/digest.md).
 
@@ -96,6 +96,7 @@ digest.md    tu resumen
 .venv/       entorno de Python aislado (no toca tu sistema)
 .models/     modelo Whisper
 .session/    sesión de Instagram (trátala como una contraseña)
+.slides/     imágenes de carruseles, solo hasta que Claude las lee
 ```
 
 Para borrarlo todo, elimina esa carpeta.
@@ -118,6 +119,7 @@ $PY db.py similar                            # posibles duplicados
 $PY db.py dump                               # lo relevante, en páginas de ~60k caracteres (--offset N)
 $PY db.py collections                        # colecciones de Instagram (para --collection "IA")
 $PY transcribe.py                            # modelo según la RAM (--model para forzarlo)
+$PY slides.py pending                        # carruseles y fotos por leer (fetch / save)
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó
 $PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recuerda
 $PY db.py unavailable                        # guardados borrados o privados
@@ -134,7 +136,7 @@ python -m pytest -q
 ruff check .
 ```
 
-Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md): soporte para YouTube y leer el texto de los carruseles.
+Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md).
 
 ---
 
