@@ -51,6 +51,8 @@ Reinicia Claude Code y escribe:
 
 También puedes pedirlo con tus palabras: *"revisa mis reels guardados de Instagram y quédate con los de IA"*. Claude te guía en lo demás: crea su propio entorno de Python, te pregunta cómo quieres conectar Instagram y empieza.
 
+¿Estás en Windows? Tienes una [guía paso a paso](docs/windows.md), desde instalar Python hasta los errores más típicos.
+
 Para elegir otro tema basta con decirlo: `/saved-reels:digest marketing y negocios`. Si ya ordenas tus guardados en colecciones de Instagram, puedes pedirle que use solo una: *"solo mi colección IA"*.
 
 <details>
