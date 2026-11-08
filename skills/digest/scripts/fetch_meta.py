@@ -60,6 +60,12 @@ def main() -> None:
             r["meta"], r["meta_error"] = "unavailable", str(e)[:300]
             gone += 1
             streak += 1  # still counts: a throttled session can look like "not available"
+            if streak >= MAX_CONSECUTIVE_FAILS:
+                save_db(db)
+                sys.exit(f"STOPPED: {streak} posts in a row look deleted or private, which is more "
+                         f"often Instagram throttling than real deletions. Progress saved ({ok} done). "
+                         "Wait a while and run it again; when it finishes, --retry-failed checks "
+                         "those posts once more.")
         except Exception as e:  # noqa: BLE001
             r["meta"], r["meta_error"] = "failed", str(e)[:300]
             fails += 1
