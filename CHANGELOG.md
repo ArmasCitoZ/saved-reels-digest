@@ -12,6 +12,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Instagram collections are recognized whatever language the export is in, not just English and Spanish.
 - An idea called "Index" no longer replaces the vault's `INDEX.md`, and titles Windows cannot use as file names (CON, NUL...) get a safe one.
 - The exporters accept slugs with accents (`{#automatización}`), which used to end up inside the idea's title and break its links.
+- The exporters leave `##` and `###` lines inside code blocks alone, instead of treating them as new categories and ideas.
 
 ## [0.2.0] - 2026-11-08
 

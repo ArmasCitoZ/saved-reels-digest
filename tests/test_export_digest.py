@@ -228,3 +228,36 @@ def test_slugs_can_have_accents(tmp_path):
     note = (tmp_path / "Automatiza tus tareas.md").read_text("utf-8")
     assert "](Revisa%20antes%20de%20publicar.md)" in note
     assert "](Automatiza%20tus%20tareas.md)" in (tmp_path / "INDEX.md").read_text("utf-8")
+
+
+FENCED = """# D
+
+## Tools
+### Set up the hook {#hook}
+Paste this:
+```markdown
+## Not a category
+### Not an idea
+```
+**How to apply:** done.
+
+### Second idea {#second}
+Text.
+"""
+
+
+def test_headings_inside_code_blocks_stay_in_the_idea():
+    d = ed.parse_digest(FENCED)
+    assert [i["slug"] for i in d["ideas"]] == ["hook", "second"]
+    assert [i["category"] for i in d["ideas"]] == ["Tools", "Tools"]
+    assert "### Not an idea" in d["ideas"][0]["body"] and "How to apply" in d["ideas"][0]["body"]
+
+
+def test_tilde_fences_count_too():
+    text = FENCED.replace("```markdown", "~~~").replace("```", "~~~")
+    assert [i["slug"] for i in ed.parse_digest(text)["ideas"]] == ["hook", "second"]
+
+
+def test_a_fence_never_closed_does_not_swallow_the_rest():
+    d = ed.parse_digest("# D\n\n## Tools\n### One {#one}\n```\ncode\n\n### Two {#two}\nText.\n")
+    assert [i["slug"] for i in d["ideas"]] == ["one", "two"]

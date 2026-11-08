@@ -55,9 +55,28 @@ def slugify(text: str) -> str:
     return re.sub(r"[\s_]+", "-", s).strip("-") or "idea"
 
 
-def _top_section(lines: list) -> str | None:
+def _in_code(lines: list) -> list:
+    """For each line, whether it is part of a fenced code block. An unclosed fence does not count."""
+    out, opened = [], None
+    for n, line in enumerate(lines):
+        text = line.strip()
+        marker = text[:3] if text.startswith(("```", "~~~")) else None
+        if opened is not None:
+            out.append(True)
+            if marker == lines[opened].strip()[:3] and not text.strip(marker[0]):
+                opened = None
+        else:
+            out.append(bool(marker))
+            if marker:
+                opened = n
+    if opened is not None:
+        out[opened:] = [False] * (len(lines) - opened)
+    return out
+
+
+def _top_section(lines: list, in_code: list) -> str | None:
     """The first ## section is the top list if it is numbered and holds no ideas, in any language."""
-    headings = [n for n, line in enumerate(lines) if line.startswith("## ")]
+    headings = [n for n, line in enumerate(lines) if line.startswith("## ") and not in_code[n]]
     if not headings:
         return None
     end = headings[1] if len(headings) > 1 else len(lines)
@@ -81,14 +100,19 @@ def parse_digest(text: str) -> dict:
     """Split digest.md into title, update date, the top list and ideas by category."""
     out = {"title": "Saved reels digest", "date": None, "top": [], "top_heading": FIRST_SECTION, "ideas": []}
     lines = text.splitlines()
-    top = _top_section(lines)
+    in_code = _in_code(lines)
+    top = _top_section(lines, in_code)
 
     def is_top(name: str) -> bool:
         return name == top or name.casefold() in TOP_HEADINGS
 
     section = None
     idea = None
-    for line in lines:
+    for n, line in enumerate(lines):
+        if in_code[n]:  # a "## comment" in a code sample is not a heading
+            if idea is not None:
+                idea["body"].append(line)
+            continue
         if line.startswith("# ") and not out["ideas"] and section is None:
             out["title"] = line[2:].strip()
             continue
