@@ -25,7 +25,7 @@ def run(home, *args):
     r = subprocess.run([sys.executable, str(SCRIPTS / "collect.py"), *args],
                        env={**os.environ, "SRD_HOME": str(home)}, capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
-    return json.loads((home / "reels.json").read_text())["reels"]
+    return json.loads((home / "reels.json").read_text(encoding="utf-8"))["reels"]
 
 
 def make_export(root):
