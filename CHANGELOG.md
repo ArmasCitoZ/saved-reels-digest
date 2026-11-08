@@ -5,6 +5,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-08
+
 ### Added
 - Read the text inside photo and carousel posts: `slides.py` fetches the images and Claude looks at them.
 - YouTube Watch Later and playlists, from Google Takeout or a playlist link (`collect.py youtube`).
