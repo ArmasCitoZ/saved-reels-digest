@@ -9,6 +9,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `fetch_meta.py` stops after 5 posts in a row look deleted or private, instead of marking a throttled session's whole list as gone.
 - `collect.py live` keeps what it read and explains why when Instagram or the connection cuts the read short, instead of a traceback.
 - A half-downloaded export zip now gets a clear message in every collector, and an export with no saved posts says what to request.
+- Instagram collections are recognized whatever language the export is in, not just English and Spanish.
 
 ## [0.2.0] - 2026-11-08
 

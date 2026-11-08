@@ -82,6 +82,16 @@ def _iter_export_files(path: Path):
         sys.exit(f"Not found: {path}")
 
 
+def _collection_header(fields) -> str | None:
+    """The collection's name if this entry is a header. Told by shape: the keys are translated."""
+    if not isinstance(fields, dict):
+        return None
+    entries = [v for v in fields.values() if isinstance(v, dict)]
+    if any(e.get("href") for e in entries):
+        return None  # a saved post, not a header
+    return next((e["value"] for e in entries if isinstance(e.get("value"), str) and e["value"]), None)
+
+
 def _walk_json(node, collection, out, author=None):
     """Find every saved link in Instagram's (frequently changing) JSON layout.
 
@@ -92,10 +102,7 @@ def _walk_json(node, collection, out, author=None):
     if isinstance(node, list):
         for item in node:
             if isinstance(item, dict):
-                smd = item.get("string_map_data") or {}
-                name = smd.get("Name") or smd.get("Nombre") or {}
-                if isinstance(name, dict) and name.get("value") and not name.get("href"):
-                    collection = name["value"]
+                collection = _collection_header(item.get("string_map_data")) or collection
             _walk_json(item, collection, out, author)
         return
     if not isinstance(node, dict):

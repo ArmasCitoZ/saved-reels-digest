@@ -88,3 +88,20 @@ def test_export_without_saved_posts_says_what_to_request(tmp_path):
     r = subprocess.run([sys.executable, str(SCRIPTS / "collect.py"), "export", str(empty)],
                        env={**os.environ, "SRD_HOME": str(tmp_path / "home")}, capture_output=True, text=True)
     assert r.returncode == 0 and "No saved posts found" in r.stdout
+
+
+def test_collections_are_found_in_any_export_language(tmp_path):
+    d = tmp_path / "export" / "saved"
+    d.mkdir(parents=True)
+    (d / "saved_collections.json").write_text(json.dumps({"saved_saved_collections": [
+        {"title": "Coleção", "string_map_data": {"Nome": {"value": "Ideias"},
+                                                 "Hora de criação": {"timestamp": 1750000000}}},
+        {"title": "criador", "string_map_data": {"Nome": {
+            "value": "criador", "href": "https://www.instagram.com/reel/DPort0001/"}}},
+        {"title": "Sammlung", "string_map_data": {"Name": {"value": "Küche"}}},
+        {"title": "koch", "string_map_data": {"Name": {
+            "value": "koch", "href": "https://www.instagram.com/p/DGerm0002/"}}},
+    ]}))
+    reels = run(tmp_path / "home", "export", str(tmp_path / "export"))
+    assert reels["DPort0001"]["collection"] == "Ideias" and reels["DPort0001"]["author"] == "criador"
+    assert reels["DGerm0002"]["collection"] == "Küche"
