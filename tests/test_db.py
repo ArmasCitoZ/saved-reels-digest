@@ -219,3 +219,32 @@ def test_following_the_continue_line_reads_each_reel_once(tmp_path):
         args = ["dump", "--offset", out.split("--offset ")[1].split()[0], "--collection", "IA",
                 "--max-total", "300"]
     assert seen == [f"PAGE{i:02d}" for i in range(5)]
+
+
+# ------------------------------------------------------------------- set validation
+def run_failing(home, *args):
+    env = {**os.environ, "SRD_HOME": str(home), "PYTHONIOENCODING": "utf-8"}
+    r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), *args], env=env,
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode != 0
+    return r.stderr
+
+
+def test_set_refuses_a_misspelled_field(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"))
+    assert "relevent" in run_failing(tmp_path, "set", "relevent", "true", "AAAAA1")
+    assert "relevent" not in load(tmp_path)["AAAAA1"]
+
+
+def test_set_refuses_an_invalid_triage_value(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"))
+    assert "maybe" in run_failing(tmp_path, "set", "relevant", "yes", "AAAAA1")
+    assert load(tmp_path)["AAAAA1"]["relevant"] is None
+    assert "1 waiting" in run(tmp_path, "next")  # still reachable by triage
+
+
+def test_set_accepts_every_triage_value(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"))
+    for value, stored in (("TRUE", True), ("false", False), ("maybe", "maybe"), ("none", None)):
+        run(tmp_path, "set", "relevant", value, "AAAAA1")
+        assert load(tmp_path)["AAAAA1"]["relevant"] == stored

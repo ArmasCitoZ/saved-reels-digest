@@ -112,9 +112,18 @@ def cmd_next(a):
               f"{_short(text, a.chars) or '(no caption)'}")
 
 
+# Fields the digest steps are meant to write by hand; the rest belong to the collectors.
+SETTABLE = ("relevant", "entry", "topic", "caption", "author", "collection")
+TRIAGE_VALUES = (True, False, "maybe", None)
+
+
 def cmd_set(a):
-    db = load_db()
     val = _parse_value(a.value)
+    if a.field not in SETTABLE:
+        sys.exit(f"Unknown field {a.field!r}. Can be set: {', '.join(SETTABLE)}.")
+    if a.field == "relevant" and val not in TRIAGE_VALUES:
+        sys.exit(f"Invalid value {a.value!r} for relevant. Use: true, false, maybe or none.")
+    db = load_db()
     missing, done = [], 0
     for sc in a.codes:
         for s in sc.split(","):

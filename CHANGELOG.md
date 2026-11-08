@@ -28,6 +28,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Exporters keep the top list of Spanish digests ("Haz esto primero").
 - Exporting from a folder whose own path contains "saved" no longer reads unrelated files.
 - `db.py dump` keeps `--collection`, `--all` and the other filters in its "Continue with" line, so later pages no longer skip or repeat reels.
+- `db.py set` refuses unknown fields and invalid triage values, which used to hide reels from every later step without any warning.
 
 ## [0.1.0] - 2026-11-03
 
