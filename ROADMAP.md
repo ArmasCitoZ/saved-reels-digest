@@ -44,4 +44,4 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] CHANGELOG.md y releases versionadas por etiqueta (`release.yml`)
 - [ ] Publicar la primera versión con novedades (v0.2.0)
 - [x] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
-- [ ] GIF de demo en el README
+- [x] GIF de demo en el README

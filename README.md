@@ -9,6 +9,8 @@
 
 > Guardas 200 reels de "este truco de Claude te cambia la vida" y nunca vuelves a verlos. Esto los convierte en una lista que sí vas a usar.
 
+![Demo: el estado de la base de datos, los duplicados que encuentra y el digest final (datos inventados)](docs/demo/demo.gif)
+
 **Gratis de verdad:** no usa APIs de pago ni claves. La transcripción se hace en tu ordenador con [Whisper](https://github.com/SYSTRAN/faster-whisper) y el análisis lo hace Claude Code con tu suscripción normal. Tus datos se quedan en tu ordenador.
 
 [English below](#english)
