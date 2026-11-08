@@ -34,6 +34,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
-- [ ] CHANGELOG.md y releases versionadas
+- [x] CHANGELOG.md y releases versionadas por etiqueta (`release.yml`)
+- [ ] Publicar la primera versión con novedades (v0.2.0)
 - [x] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
 - [ ] GIF de demo en el README

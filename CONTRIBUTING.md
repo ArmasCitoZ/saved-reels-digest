@@ -49,3 +49,12 @@ también lo puede usar a mano, añádelo a la lista de comandos del README.
 2. `python -m pytest -q` y `ruff check .` en verde (CI los corre en los tres sistemas).
 3. Si cierras una tarea del roadmap, márcala en `ROADMAP.md` en el mismo PR.
 4. Nunca subas datos reales: ni exportaciones de Instagram, ni `reels.json`, ni sesiones.
+
+## Publicar una versión
+
+1. Añade tus cambios a `## [Unreleased]` en `CHANGELOG.md` a medida que los hagas.
+2. Para publicar, renombra esa sección a `## [X.Y.Z] - AAAA-MM-DD`, crea otra `Unreleased`
+   vacía y sube `version` en `.claude-plugin/plugin.json`.
+3. `git tag vX.Y.Z && git push origin vX.Y.Z`. El workflow `release.yml` pasa los tests,
+   comprueba que la etiqueta coincide con `plugin.json` y crea la release en GitHub con el
+   texto de esa sección del changelog.
