@@ -226,7 +226,6 @@ def main(argv=None) -> int:
             data = to_json(src.read_text("utf-8"))
         except ValueError as e:
             sys.exit(f"Could not export {src}: {e}")
-        sys.stdout.reconfigure(encoding="utf-8")
         print(json.dumps(data, ensure_ascii=False, indent=1))
         return 0
     out_dir = Path(args.vault).expanduser() / args.folder

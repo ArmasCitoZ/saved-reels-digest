@@ -34,7 +34,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Límite de tamaño en `dump` para no saturar el contexto de Claude con 500+ reels
 - [x] `dump`: que la línea "Continue with" conserve los filtros (`--collection`, `--all`...)
 - [x] `db.py set`: rechazar campos desconocidos y valores de triaje inválidos
-- [ ] Salida UTF-8 en Windows para que los emojis de los captions no rompan los scripts
+- [x] Salida UTF-8 en Windows para que los emojis de los captions no rompan los scripts
 - [ ] Copia de seguridad diaria de `reels.json`
 - [ ] Mensaje claro si `reels.json` está dañado, en vez de un traceback
 - [ ] Que los posts borrados sin texto no queden pendientes para siempre

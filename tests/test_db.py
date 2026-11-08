@@ -248,3 +248,12 @@ def test_set_accepts_every_triage_value(tmp_path):
     for value, stored in (("TRUE", True), ("false", False), ("maybe", "maybe"), ("none", None)):
         run(tmp_path, "set", "relevant", value, "AAAAA1")
         assert load(tmp_path)["AAAAA1"]["relevant"] == stored
+
+
+# ------------------------------------------------------------------- output encoding
+def test_emoji_captions_print_on_a_windows_style_pipe(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", caption="prueba 🤖 automatización"))
+    env = {**os.environ, "SRD_HOME": str(tmp_path), "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}
+    r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), "next"], env=env, capture_output=True)
+    assert r.returncode == 0, r.stderr
+    assert "🤖 automatización" in r.stdout.decode("utf-8")

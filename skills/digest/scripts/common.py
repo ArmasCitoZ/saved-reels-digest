@@ -14,6 +14,17 @@ import tempfile
 import time
 from pathlib import Path
 
+
+
+def _utf8_output() -> None:
+    """Captions are full of emoji, and on Windows a piped stdout is cp1252, which cannot print them."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
+_utf8_output()
+
 HOME = Path(os.environ.get("SRD_HOME", Path.home() / "saved-reels-digest")).expanduser()
 DB_PATH = HOME / "reels.json"
 SESSION_DIR = HOME / ".session"
