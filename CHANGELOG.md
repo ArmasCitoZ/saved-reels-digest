@@ -17,6 +17,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `doctor.py` checks the computer before setup; the Whisper model is picked from the available RAM.
 - Step-by-step Windows guide (`docs/windows.md`) and a sample digest (`examples/digest.md`).
 - CI on Linux, macOS and Windows, `CONTRIBUTING.md`, issue templates and this changelog.
+- `reels.backup.json`: a copy of the database refreshed at most once a day, so hours of transcription survive a bad run.
 
 ### Changed
 - `db.py dump` is capped at about 60,000 characters per call; continue with `--offset`.

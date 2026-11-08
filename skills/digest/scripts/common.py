@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 import time
@@ -27,6 +28,8 @@ _utf8_output()
 
 HOME = Path(os.environ.get("SRD_HOME", Path.home() / "saved-reels-digest")).expanduser()
 DB_PATH = HOME / "reels.json"
+BACKUP_PATH = HOME / "reels.backup.json"
+BACKUP_EVERY = 24 * 3600  # seconds
 SESSION_DIR = HOME / ".session"
 
 # instagram.com/p/<code>, /reel/<code>, /reels/<code>, /tv/<code>, optionally /<user>/reel/<code>
@@ -87,9 +90,24 @@ def load_db() -> dict:
         return json.load(f)
 
 
+def _daily_backup() -> None:
+    """Copy the database before overwriting it, at most once a day. Never blocks a save."""
+    try:
+        if not DB_PATH.exists() or not DB_PATH.stat().st_size:
+            return
+        if BACKUP_PATH.exists() and time.time() - BACKUP_PATH.stat().st_mtime < BACKUP_EVERY:
+            return
+        tmp = BACKUP_PATH.with_suffix(".tmp")
+        shutil.copyfile(DB_PATH, tmp)
+        os.replace(tmp, BACKUP_PATH)
+    except OSError as e:
+        log(f"Could not back up {DB_PATH}: {e}")
+
+
 def save_db(db: dict) -> None:
     """Atomic write so an interrupted run never corrupts the database."""
     ensure_home()
+    _daily_backup()
     fd, tmp = tempfile.mkstemp(dir=HOME, prefix=".reels.", suffix=".json")
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(db, f, ensure_ascii=False, indent=1)

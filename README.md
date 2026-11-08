@@ -94,6 +94,7 @@ Todo se guarda en `~/saved-reels-digest/`. Puedes cambiar la carpeta con la vari
 
 ```
 reels.json   base de datos local: enlace, autor, texto, transcripción y en qué idea acabó cada reel
+reels.backup.json  copia de esa base de datos, como mucho de hace un día
 digest.md    tu resumen
 .venv/       entorno de Python aislado (no toca tu sistema)
 .models/     modelo Whisper
