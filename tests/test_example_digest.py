@@ -18,6 +18,7 @@ def test_example_parses_and_header_counts_match():
     assert data["date"] == "2026-11-01"
     assert data["categories"] == ["Claude Code", "Prompting", "Herramientas de IA"]
     assert {i["status"] for i in data["ideas"]} == {"todo", "tried", "discarded"}
+    assert len(data["top"]) == 4  # the translated "Haz esto primero" heading is recognized
 
 
 def test_every_anchor_points_to_an_idea_and_every_idea_has_sources():

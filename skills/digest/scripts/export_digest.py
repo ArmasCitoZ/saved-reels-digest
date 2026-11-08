@@ -36,6 +36,8 @@ from common import HOME  # noqa: E402
 MARKER = "saved-reels-digest"  # frontmatter `generator:` value identifying our notes
 MY_NOTES = "## My notes"
 FIRST_SECTION = "Do these first"
+# the digest is written in the user's language, so the heading may be translated
+TOP_HEADINGS = {FIRST_SECTION.casefold(), "haz esto primero"}
 ENTRY_RE = re.compile(r"^###\s+(?P<title>.+?)\s*(?:\{#(?P<slug>[A-Za-z0-9_-]+)\})?\s*$")
 DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 ANCHOR_LINK_RE = re.compile(r"\]\(#([A-Za-z0-9_-]+)\)")
@@ -62,14 +64,14 @@ def parse_digest(text: str) -> dict:
             idea = None
             continue
         m = ENTRY_RE.match(line)
-        if m and section and section != FIRST_SECTION:
+        if m and section and section.casefold() not in TOP_HEADINGS:
             idea = {"title": m["title"], "slug": m["slug"] or slugify(m["title"]),
                     "category": section, "body": []}
             out["ideas"].append(idea)
             continue
         if section is None and out["date"] is None and DATE_RE.search(line):
             out["date"] = DATE_RE.search(line).group(1)
-        elif section == FIRST_SECTION and re.match(r"^\s*\d+\.\s", line):
+        elif section and section.casefold() in TOP_HEADINGS and re.match(r"^\s*\d+\.\s", line):
             out["top"].append(re.sub(r"^\s*\d+\.\s*", "", line).strip())
         elif idea is not None:
             idea["body"].append(line)
