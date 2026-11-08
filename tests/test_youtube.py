@@ -87,7 +87,7 @@ ENTRIES = [{"id": "aaaaaaaaaa1", "title": "Cursor vs Claude", "channel": "demo_d
            {"id": "bbbbbbbbbb2", "title": "[Private video]"},
            {"id": "cccccccccc3", "title": "[Deleted video]"},
            None,
-           {"id": "not-a-video", "title": "x"}]
+           {"id": "PLnested", "title": "not a video id"}]
 
 
 @pytest.fixture
