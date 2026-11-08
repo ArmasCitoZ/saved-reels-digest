@@ -26,6 +26,12 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Fecha de guardado en el digest y sección "guardado esta semana"
 - [x] Marcar ideas como "probado / descartado" y que el digest lo recuerde
 - [x] Exportadores: reconocer la lista principal y el estado aunque el digest esté en otro idioma
+- [ ] Reconocer las colecciones de Instagram aunque la exportación esté en otro idioma
+- [ ] Exportador: que una idea llamada "Index" no pise `INDEX.md`, y evitar nombres reservados de Windows
+- [ ] Exportador: aceptar slugs con acentos (`{#automatización}`)
+- [ ] Exportador: ignorar los `##` y `###` que haya dentro de bloques de código
+- [ ] `db.py similar`: que funcione con cualquier alfabeto (portugués, francés, cirílico...)
+- [ ] `db.py recent`: no listar los posts borrados sin texto
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
@@ -38,6 +44,11 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Copia de seguridad diaria de `reels.json`
 - [x] Mensaje claro si `reels.json` está dañado, en vez de un traceback
 - [x] Que los posts borrados sin texto no queden pendientes para siempre
+- [ ] `fetch_meta.py`: parar si muchos posts seguidos parecen borrados (puede ser un bloqueo disfrazado)
+- [ ] `collect.py live`: guardar el progreso y explicar el error si Instagram corta la lectura
+- [ ] Mensaje claro si el zip de la exportación está dañado o a medio descargar
+- [ ] `save_db`: no dejar ficheros temporales si el disco se llena
+- [ ] `transcribe.py --shortcodes`: avisar de los códigos que no existen
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
