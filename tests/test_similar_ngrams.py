@@ -61,3 +61,18 @@ def test_language_uses_whisper_then_common_words():
     assert db._language({"caption": "this is how you use the tool"}) == "en"
     assert db._language({"caption": "esta es la forma de usar la herramienta"}) == "es"
     assert db._language({"caption": "Claude Code MCP"}) is None
+
+
+def test_duplicates_are_found_in_other_alphabets(tmp_path):
+    out = run(tmp_path, ("RU0001", "Как настроить автоматизацию задач с помощью нейросети"),
+              ("RU0002", "Настроить автоматизацию задач нейросети очень просто"),
+              ("RU0003", "Лучшие рецепты пасты для ужина всей семьи"))
+    assert "1 candidate groups" in out
+    group = next(ln for ln in out.splitlines() if ln.startswith("- "))
+    assert "RU0001" in group and "RU0002" in group and "RU0003" not in group
+
+
+def test_words_with_other_accents_stay_whole():
+    assert "automação" in db._tokens("A automação de tarefas")
+    assert "créer" in db._tokens("Créer un agent")
+    assert "c++" in db._tokens("Aprende C++ gratis")  # symbols inside tech words still count

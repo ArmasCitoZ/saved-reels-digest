@@ -30,7 +30,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Exportador: que una idea llamada "Index" no pise `INDEX.md`, y evitar nombres reservados de Windows
 - [x] Exportador: aceptar slugs con acentos (`{#automatización}`)
 - [x] Exportador: ignorar los `##` y `###` que haya dentro de bloques de código
-- [ ] `db.py similar`: que funcione con cualquier alfabeto (portugués, francés, cirílico...)
+- [x] `db.py similar`: que funcione con cualquier alfabeto (portugués, francés, cirílico...)
 - [ ] `db.py recent`: no listar los posts borrados sin texto
 
 ## Robustez

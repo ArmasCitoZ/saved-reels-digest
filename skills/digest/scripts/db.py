@@ -216,7 +216,7 @@ will then them they their which who really very want need make use using""".spli
 
 
 def _tokens(text: str):
-    words = re.findall(r"[a-záéíóúñü0-9][a-záéíóúñü0-9+#.-]{1,}", text.lower())
+    words = re.findall(r"[^\W_][\w+#.-]+", text.lower())  # letters of any alphabet
     return [w.strip(".-") for w in words if w not in STOP and not w.isdigit()]
 
 
