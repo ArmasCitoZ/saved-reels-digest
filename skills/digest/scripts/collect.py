@@ -18,21 +18,33 @@ TikTok too:
   collect.py tiktok PATH        TikTok's official data export (zip, folder or the
                                 user_data JSON / "Favorite Videos.txt"). Reads your
                                 Favorites, TikTok's equivalent of saved posts.
+
+And YouTube:
+
+  collect.py youtube PATH [--playlist NAME]
+                                Google Takeout of "YouTube and YouTube Music" (zip,
+                                folder or one playlist CSV). Each playlist becomes
+                                a collection, so --collection works on it later.
 """
 from __future__ import annotations
 
 import argparse
 import calendar
+import csv
+import io
 import json
 import random
+import re
 import sys
 import time
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (SESSION_DIR, SHORTCODE_RE, TIKTOK_RE, add_reel, ensure_home,  # noqa: E402
-                    load_db, log, save_db, shortcode_from_url, tiktok_key, tiktok_url)
+                    load_db, log, save_db, shortcode_from_url, tiktok_key, tiktok_url,
+                    youtube_key, youtube_url)
 
 
 # --------------------------------------------------------------------- export
@@ -245,6 +257,82 @@ def cmd_tiktok(args) -> None:
     print(f"Read {len(found)} TikTok favorites from the export, {new} new. Total: {len(db['reels'])}.")
 
 
+# -------------------------------------------------------------------- youtube
+YOUTUBE_ID_RE = re.compile(r"[A-Za-z0-9_-]{11}")
+
+
+def _is_playlist_csv(name: str) -> bool:
+    """Takeout folders and files are named in the account's language."""
+    low = name.lower().replace("\\", "/")
+    return low.endswith(".csv") and not low.endswith("/playlists.csv") and low != "playlists.csv" and any(
+        k in low for k in ("playlist", "lista", "watch later", "ver m"))
+
+
+def _youtube_files(path: Path):
+    """Yield (name, text) for every playlist CSV in a Takeout zip, folder or single file."""
+    if path.is_file() and path.suffix.lower() == ".zip":
+        with zipfile.ZipFile(path) as z:
+            for name in z.namelist():
+                if _is_playlist_csv(name):
+                    yield name, z.read(name).decode("utf-8-sig", "replace")
+    elif path.is_dir():
+        for p in sorted(path.rglob("*")):
+            # the folder's own name counts: the user may point straight at "playlists/"
+            if p.is_file() and _is_playlist_csv(f"{path.name}/{p.relative_to(path).as_posix()}"):
+                yield str(p), p.read_text("utf-8-sig", "replace")
+    elif path.is_file():
+        yield str(path), path.read_text("utf-8-sig", "replace")
+    else:
+        sys.exit(f"Not found: {path}")
+
+
+def _iso_ts(value: str) -> int | None:
+    """Takeout timestamps: 2026-10-20T09:15:00+00:00, sometimes ending in Z or " UTC"."""
+    value = re.sub(r"(Z| UTC)$", "+00:00", value.strip())
+    try:
+        d = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    return int((d if d.tzinfo else d.replace(tzinfo=timezone.utc)).timestamp())
+
+
+def playlist_name(file_name: str) -> str:
+    """"Watch later-videos.csv" -> "Watch later"; "Ideas de IA-vídeos.csv" -> "Ideas de IA"."""
+    stem = Path(file_name.replace("\\", "/")).stem
+    return re.sub(r"[-\s]*v[ií]deos$", "", stem, flags=re.I).strip() or stem
+
+
+def parse_youtube_csv(text: str) -> list:
+    """[{"id", "saved_at"}]. Rows are matched by shape: the headers change with the language."""
+    out = []
+    for row in csv.reader(io.StringIO(text)):
+        cells = [c.strip() for c in row]
+        if len(cells) >= 2 and YOUTUBE_ID_RE.fullmatch(cells[0]):
+            ts = _iso_ts(cells[1])
+            if ts is not None:
+                out.append({"id": cells[0], "saved_at": ts})
+    return out
+
+
+def cmd_youtube(args) -> None:
+    db = load_db()
+    found = {}
+    for name, text in _youtube_files(Path(args.path).expanduser()):
+        plist = playlist_name(name)
+        if args.playlist and plist.casefold() != args.playlist.strip().casefold():
+            continue
+        for v in parse_youtube_csv(text):
+            found.setdefault(v["id"], {**v, "collection": plist})
+    new = sum(add_reel(db, youtube_key(v["id"]), url=youtube_url(v["id"]), platform="youtube",
+                       source="youtube", is_video=True, saved_at=v["saved_at"],
+                       collection=v["collection"]) for v in found.values())
+    save_db(db)
+    if not found:
+        print("No playlist videos found. In Google Takeout pick \"YouTube and YouTube Music\", "
+              "keep playlists selected, and pass the zip or a playlist CSV.")
+    print(f"Read {len(found)} YouTube videos from the export, {new} new. Total: {len(db['reels'])}.")
+
+
 # ----------------------------------------------------------------------- urls
 def cmd_urls(args) -> None:
     text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text("utf-8")
@@ -270,6 +358,9 @@ def main() -> None:
     live.set_defaults(fn=cmd_live)
     u = sub.add_parser("urls"); u.add_argument("file"); u.set_defaults(fn=cmd_urls)
     t = sub.add_parser("tiktok"); t.add_argument("path"); t.set_defaults(fn=cmd_tiktok)
+    y = sub.add_parser("youtube"); y.add_argument("path")
+    y.add_argument("--playlist", help="only this playlist, by name (case-insensitive)")
+    y.set_defaults(fn=cmd_youtube)
     args = ap.parse_args()
     args.fn(args)
 

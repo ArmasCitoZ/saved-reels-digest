@@ -28,6 +28,8 @@ SHORTCODE_RE = re.compile(
 TIKTOK_RE = re.compile(r"tiktokv?\.com/(?:@[\w.-]*/video|share/video|v)/(\d{8,})")
 TIKTOK_PREFIX = "tt"
 
+YOUTUBE_PREFIX = "yt"
+
 
 def ensure_home() -> Path:
     HOME.mkdir(parents=True, exist_ok=True)
@@ -52,6 +54,15 @@ def tiktok_key(video_id: str) -> str:
 def tiktok_url(video_id: str) -> str:
     # "@" without a username is accepted by tiktok.com and by yt-dlp
     return f"https://www.tiktok.com/@/video/{video_id}"
+
+
+def youtube_key(video_id: str) -> str:
+    """Database key for a YouTube video, kept apart from Instagram shortcodes like TikTok's."""
+    return f"{YOUTUBE_PREFIX}{video_id}"
+
+
+def youtube_url(video_id: str) -> str:
+    return f"https://www.youtube.com/watch?v={video_id}"
 
 
 def canonical_url(shortcode: str) -> str:
