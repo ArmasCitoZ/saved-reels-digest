@@ -31,7 +31,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Exportador: aceptar slugs con acentos (`{#automatización}`)
 - [x] Exportador: ignorar los `##` y `###` que haya dentro de bloques de código
 - [x] `db.py similar`: que funcione con cualquier alfabeto (portugués, francés, cirílico...)
-- [ ] `db.py recent`: no listar los posts borrados sin texto
+- [x] `db.py recent`: no listar los posts borrados sin texto
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

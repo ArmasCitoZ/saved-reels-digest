@@ -14,6 +14,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - The exporters accept slugs with accents (`{#automatización}`), which used to end up inside the idea's title and break its links.
 - The exporters leave `##` and `###` lines inside code blocks alone, instead of treating them as new categories and ideas.
 - `db.py similar` finds duplicates in any alphabet; words with letters outside Spanish (ç, è, Cyrillic...) used to be cut up or ignored.
+- `db.py recent` no longer lists deleted posts nothing was read from as waiting for the digest.
 
 ## [0.2.0] - 2026-11-08
 

@@ -317,7 +317,7 @@ def cmd_recent(a):
     since = (a.now or time.time()) - a.days * 86400
     rs = [r for r in load_db()["reels"].values()
           if r.get("relevant") is True and (saved_ts(r) or 0) >= since
-          and in_collection(r, a.collection)]
+          and in_collection(r, a.collection) and _has_content(r)]
     if not rs:
         print(f"No relevant reels saved in the last {a.days} days.")
         return

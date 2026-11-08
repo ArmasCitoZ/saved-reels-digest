@@ -59,3 +59,12 @@ Run tasks in parallel.
     assert [i["slug"] for i in d["ideas"]] == ["subagents"]
     assert d["ideas"][0]["category"] == "Claude Code"
     assert "saved 2025-10-01" in d["ideas"][0]["body"]
+
+
+def test_recent_leaves_out_deleted_posts_nothing_was_read_from(tmp_path):
+    make_db(tmp_path, reel("GONE01", relevant=True, meta="unavailable", saved_at=NOW - 3600),
+            reel("KEPT01", relevant=True, meta="unavailable", caption="a tip", saved_at=NOW - 3600),
+            reel("LIVE01", relevant=True, caption="a tip", saved_at=NOW - 3600))
+    out = run(tmp_path, "recent", "--now", str(NOW))
+    assert "GONE01" not in out
+    assert "KEPT01" in out and "LIVE01" in out and out.startswith("2 relevant reels")
