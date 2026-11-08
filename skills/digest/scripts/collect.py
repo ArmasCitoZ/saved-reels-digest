@@ -41,6 +41,7 @@ import re
 import sys
 import time
 import zipfile
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -51,14 +52,23 @@ from common import (SESSION_DIR, SHORTCODE_RE, TIKTOK_RE, add_reel, ensure_home,
 from ig import classify_error  # noqa: E402
 
 
+def _zip_texts(path: Path, wanted, encoding: str = "utf-8"):
+    """Yield (name, text) for the wanted files of a zip. Exports are big and often half-downloaded."""
+    try:
+        with zipfile.ZipFile(path) as z:
+            for name in z.namelist():
+                if wanted(name):
+                    yield name, z.read(name).decode(encoding, "replace")
+    except (zipfile.BadZipFile, zlib.error) as e:
+        sys.exit(f"{path} is not a complete zip ({e}). It was probably not fully downloaded: "
+                 "download it again and retry. Nothing was changed.")
+
+
 # --------------------------------------------------------------------- export
 def _iter_export_files(path: Path):
     """Yield (name, text) for every .json/.html inside a zip, folder or file."""
     if path.is_file() and path.suffix.lower() == ".zip":
-        with zipfile.ZipFile(path) as z:
-            for name in z.namelist():
-                if name.lower().endswith((".json", ".html")) and "saved" in name.lower():
-                    yield name, z.read(name).decode("utf-8", "replace")
+        yield from _zip_texts(path, lambda n: n.lower().endswith((".json", ".html")) and "saved" in n.lower())
     elif path.is_dir():
         for p in sorted(path.rglob("*")):
             # match on the path *inside* the export: the folder it sits in may
@@ -119,6 +129,9 @@ def cmd_export(args) -> None:
         sc = f.pop("shortcode")
         new += add_reel(db, sc, source="export", **f)
     save_db(db)
+    if not found:
+        print("No saved posts found in that export. In Instagram request \"Saved\" under "
+              "\"Download your information\", format JSON, and pass the zip or its folder.")
     print(f"Read {len(found)} saved links from the export, {new} new. Total: {len(db['reels'])}.")
 
 
@@ -197,10 +210,7 @@ def _tiktok_files(path: Path):
             low.endswith(".txt") and "favorite video" in low)
 
     if path.is_file() and path.suffix.lower() == ".zip":
-        with zipfile.ZipFile(path) as z:
-            for name in z.namelist():
-                if wanted(name):
-                    yield name, z.read(name).decode("utf-8", "replace")
+        yield from _zip_texts(path, wanted)
     elif path.is_dir():
         for p in sorted(path.rglob("*")):
             if p.is_file() and wanted(p.relative_to(path).as_posix()):
@@ -292,10 +302,7 @@ def _is_playlist_csv(name: str) -> bool:
 def _youtube_files(path: Path):
     """Yield (name, text) for every playlist CSV in a Takeout zip, folder or single file."""
     if path.is_file() and path.suffix.lower() == ".zip":
-        with zipfile.ZipFile(path) as z:
-            for name in z.namelist():
-                if _is_playlist_csv(name):
-                    yield name, z.read(name).decode("utf-8-sig", "replace")
+        yield from _zip_texts(path, _is_playlist_csv, "utf-8-sig")
     elif path.is_dir():
         for p in sorted(path.rglob("*")):
             # the folder's own name counts: the user may point straight at "playlists/"

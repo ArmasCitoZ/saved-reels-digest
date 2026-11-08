@@ -29,7 +29,8 @@ def live(monkeypatch):
         fake = types.SimpleNamespace(Profile=types.SimpleNamespace(from_username=lambda *_: profile))
         db, saves = {"reels": {}}, []
         monkeypatch.setitem(sys.modules, "instaloader", fake)
-        monkeypatch.setattr(collect, "_instaloader_session", lambda _a: (types.SimpleNamespace(context=None), "me"))
+        session = (types.SimpleNamespace(context=None), "me")
+        monkeypatch.setattr(collect, "_instaloader_session", lambda _a: session)
         monkeypatch.setattr(collect, "load_db", lambda: db)
         monkeypatch.setattr(collect, "save_db", lambda d: saves.append(set(d["reels"])))
         monkeypatch.setattr(collect.time, "sleep", lambda _s: None)

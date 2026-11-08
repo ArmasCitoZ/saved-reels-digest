@@ -61,3 +61,30 @@ def test_html_export_falls_back_to_link_scan(tmp_path):
     page.write_text('<a href="https://www.instagram.com/reel/DHtml0001/">x</a>'
                     '<a href="https://www.instagram.com/someone/p/DHtml0002/?igsh=1">y</a>')
     assert set(run(tmp_path / "home", "export", str(page))) == {"DHtml0001", "DHtml0002"}
+
+
+def fails(home, *args):
+    r = subprocess.run([sys.executable, str(SCRIPTS / "collect.py"), *args],
+                       env={**os.environ, "SRD_HOME": str(home)}, capture_output=True, text=True)
+    assert r.returncode != 0
+    return r.stderr
+
+
+def test_half_downloaded_zip_is_explained(tmp_path):
+    good = tmp_path / "good.zip"
+    with zipfile.ZipFile(good, "w") as z:
+        z.writestr("your_instagram_activity/saved/saved_posts.json", json.dumps(SAVED_POSTS))
+    cut = tmp_path / "instagram.zip"
+    cut.write_bytes(good.read_bytes()[:40])
+    for command in ("export", "tiktok", "youtube"):
+        err = fails(tmp_path / "home", command, str(cut))
+        assert "not a complete zip" in err and "download it again" in err and "Traceback" not in err
+    assert not (tmp_path / "home" / "reels.json").exists()
+
+
+def test_export_without_saved_posts_says_what_to_request(tmp_path):
+    empty = tmp_path / "export"
+    empty.mkdir()
+    r = subprocess.run([sys.executable, str(SCRIPTS / "collect.py"), "export", str(empty)],
+                       env={**os.environ, "SRD_HOME": str(tmp_path / "home")}, capture_output=True, text=True)
+    assert r.returncode == 0 and "No saved posts found" in r.stdout
