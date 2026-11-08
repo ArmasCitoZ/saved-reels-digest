@@ -37,7 +37,7 @@ class NetworkError(RuntimeError):
     """Our own connection failed (offline, DNS, timeout): the post is fine, try it again later."""
 
 
-BLOCKED_HINTS = ("login", "rate", "429", "401", "checkpoint", "challenge")
+BLOCKED_HINTS = ("login", "rate", "429", "401", "checkpoint", "challenge", "sign in to confirm")
 # what yt-dlp / instaloader say when the post itself is gone or hidden
 UNAVAILABLE_HINTS = ("404", "not found", "not available", "unavailable", "does not exist",
                      "has been removed", "been deleted", "private", "restricted")

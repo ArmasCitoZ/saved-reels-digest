@@ -15,6 +15,8 @@ SCRIPTS = ROOT / "skills" / "digest" / "scripts"
 FIXTURE = ROOT / "tests" / "fixtures" / "youtube_export"
 sys.path.insert(0, str(SCRIPTS))
 import collect  # noqa: E402
+import ig  # noqa: E402
+import transcribe  # noqa: E402
 
 
 def run(home, *args):
@@ -149,3 +151,15 @@ def test_path_and_url_are_exclusive():
         collect.cmd_youtube(Namespace(path="x", url="WL", browser=None, playlist=None))
     with pytest.raises(SystemExit, match="either"):
         collect.cmd_youtube(Namespace(path=None, url=None, browser=None, playlist=None))
+
+
+# ------------------------------------------------------------------ robustness
+def test_youtube_bot_check_stops_the_run():
+    assert ig.classify_error("yt-dlp: Sign in to confirm you're not a bot") == "blocked"
+
+
+def test_long_videos_are_skipped_only_with_a_known_duration():
+    assert transcribe.too_long({"duration": 3700}, 30)
+    assert not transcribe.too_long({"duration": 1800}, 30)
+    assert not transcribe.too_long({}, 30)  # no metadata yet: try it
+    assert not transcribe.too_long({"duration": 3700}, 0)  # 0 turns the limit off

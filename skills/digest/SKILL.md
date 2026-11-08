@@ -1,6 +1,6 @@
 ---
 name: digest
-description: Turn the user's saved Instagram reels into a deduplicated knowledge base on one topic (default tech, AI, Claude, programming, dev tools). Collects saves (official export, live session or browser), transcribes locally with Whisper, triages by topic, merges reels that say the same thing, and writes a ranked digest.md. Also reads TikTok favorites from TikTok's data export. Use when the user asks to go through, sort, summarize, filter or "doomscroll" their Instagram saved posts or reels, or their saved/favorite TikToks.
+description: Turn the user's saved Instagram reels into a deduplicated knowledge base on one topic (default tech, AI, Claude, programming, dev tools). Collects saves (official export, live session or browser), transcribes locally with Whisper, triages by topic, merges reels that say the same thing, and writes a ranked digest.md. Also reads TikTok favorites from TikTok's data export and YouTube Watch Later or playlists. Use when the user asks to go through, sort, summarize, filter or "doomscroll" their Instagram saved posts or reels, their saved/favorite TikToks, or their YouTube Watch Later.
 argument-hint: "[topic, e.g. 'IA y Claude'] [path to Instagram export]"
 ---
 
@@ -62,6 +62,14 @@ zip from the "Download data" tab when it is ready (it can take a few days). Then
 videos), not likes. TikTok entries have ids like `tt7400...`; use them with `db.py` exactly
 like shortcodes. Captions and transcripts come from yt-dlp with no login, and
 `--browser` is not needed for them.
+
+**YouTube Watch Later and playlists** go in the same way. Use Google Takeout
+(takeout.google.com → deselect all → "YouTube and YouTube Music" → keep playlists):
+`PY SCRIPTS/collect.py youtube PATH_TO_ZIP_OR_FOLDER` (`--playlist "<name>"` for only one).
+To read one list right now: `PY SCRIPTS/collect.py youtube --url PLAYLIST_URL`; Watch Later is
+private, so that one is `--url WL --browser chrome`. Entries have ids like `ytdQw4w9WgXcQ`, and
+each playlist becomes a collection, so `--collection "<name>"` works later. `transcribe.py`
+skips videos over 30 minutes (`--max-minutes 0` includes them); say so if any were skipped.
 
 Tell the user once, plainly: options 2 and 3 use their own logged-in session the way
 a browser would; Instagram's terms don't allow automated access, so the scripts go

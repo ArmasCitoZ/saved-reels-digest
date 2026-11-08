@@ -1,6 +1,7 @@
 """Transcribe saved reels locally with Whisper (faster-whisper). Free, offline, private.
 
   transcribe.py [--model auto] [--language es] [--all] [--limit N] [--collection NAME]
+                [--max-minutes 30]
                 [--browser chrome | --username YOU] [--shortcodes A,B,C]
 
 By default only reels Claude marked relevant or "maybe" are transcribed.
@@ -70,6 +71,11 @@ def needs_transcript(r: dict, everything: bool = False, collection: str | None =
             and in_collection(r, collection))
 
 
+def too_long(r: dict, max_minutes: float) -> bool:
+    """Long YouTube videos can take longer to transcribe than a whole batch of reels."""
+    return bool(max_minutes and (r.get("duration") or 0) > max_minutes * 60)
+
+
 def fetch_with_retry(fetcher, r: dict, folder: Path, waits=NETWORK_WAITS, sleep=time.sleep) -> Path:
     """Download one reel's audio, waiting out short network drops. Raises NetworkError if it lasts."""
     for attempt in range(len(waits) + 1):
@@ -95,6 +101,8 @@ def main() -> None:
     ap.add_argument("--browser"); ap.add_argument("--username")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--delay", type=float, default=3.0)
+    ap.add_argument("--max-minutes", type=float, default=30,
+                    help="skip videos longer than this (0 = no limit; --shortcodes ignores it)")
     args = ap.parse_args()
 
     if args.file:
@@ -108,6 +116,11 @@ def main() -> None:
         todo = [reels[s] for s in args.shortcodes.split(",") if s in reels]
     else:
         todo = [r for r in reels.values() if needs_transcript(r, args.all, args.collection)]
+        long_ones = [r for r in todo if too_long(r, args.max_minutes)]
+        if long_ones:
+            todo = [r for r in todo if not too_long(r, args.max_minutes)]
+            log(f"Skipping {len(long_ones)} videos longer than {args.max_minutes:g} min "
+                "(--max-minutes 0 to include them; their captions are still used).")
     if args.limit:
         todo = todo[: args.limit]
     if not todo:
@@ -137,7 +150,7 @@ def main() -> None:
                          "continue with the remaining reels.")
             except Blocked as e:
                 save_db(db)
-                sys.exit(f"STOPPED: Instagram is asking for login or rate-limiting ({e}). "
+                sys.exit(f"STOPPED: the site is asking for login or rate-limiting ({e}). "
                          f"Saved {done} transcripts. Retry later or pass --browser.")
             except Exception as e:  # noqa: BLE001
                 r.update(transcribe="failed", transcribe_error=str(e)[:300])

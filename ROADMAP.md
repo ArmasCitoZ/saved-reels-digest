@@ -21,7 +21,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Exportar a Notion (vía el conector de Notion de Claude, sin API keys)
 - [x] Soporte para posts carrusel: leer el texto de las imágenes (Claude las mira)
 - [x] Soporte para vídeos guardados de TikTok (exportación oficial de TikTok)
-- [ ] Soporte para YouTube "Ver más tarde" / listas
+- [x] Soporte para YouTube "Ver más tarde" / listas
 - [x] Filtro por colección de Instagram (`--collection "IA"`)
 - [x] Fecha de guardado en el digest y sección "guardado esta semana"
 - [x] Marcar ideas como "probado / descartado" y que el digest lo recuerde

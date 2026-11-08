@@ -49,7 +49,7 @@ def main() -> None:
             streak = 0
         except Blocked as e:
             save_db(db)
-            sys.exit(f"STOPPED: Instagram is asking for login or rate-limiting ({e}).\n"
+            sys.exit(f"STOPPED: the site is asking for login or rate-limiting ({e}).\n"
                      f"Saved progress ({ok} done). Wait a while, or pass --browser with a "
                      "browser where you are logged in, then run again.")
         except NetworkError as e:

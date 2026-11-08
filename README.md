@@ -23,6 +23,8 @@
    - o haciendo que Claude **navegue tu página de guardados**, si tienes Claude in Chrome.
 
    ¿También guardas en TikTok? Tus **Favoritos** entran en el mismo resumen con la exportación oficial de TikTok (Ajustes y privacidad → Cuenta → Descargar tus datos → formato JSON).
+
+   ¿Y **YouTube**? Tu lista *Ver más tarde* y tus listas de reproducción también entran, con [Google Takeout](https://takeout.google.com) (YouTube y YouTube Music) o leyendo una lista directamente.
 2. **Lee los textos** de cada publicación y descarta lo que no es de tu tema (recetas, memes, viajes...).
 3. **Transcribe en local** solo los reels que importan. El audio se borra justo después. Los **carruseles** y las fotos no tienen audio, así que Claude mira las imágenes y se queda con el texto; las imágenes también se borran.
 4. **Junta los duplicados.** Si tres creadores explican el mismo truco, sale una sola entrada con lo mejor de cada uno y los tres enlaces. También marca contradicciones y cosas que suenan a hype o que pueden estar desactualizadas.
@@ -112,13 +114,15 @@ PY=~/saved-reels-digest/.venv/bin/python
 $PY collect.py export ~/Downloads/instagram-xxxx.zip
 $PY collect.py live --browser chrome
 $PY collect.py tiktok ~/Downloads/TikTok_Data.zip   # favoritos de TikTok
+$PY collect.py youtube ~/Downloads/takeout.zip       # listas de YouTube (Google Takeout)
+$PY collect.py youtube --url WL --browser chrome   # o tu Ver más tarde, al momento
 $PY fetch_meta.py
 $PY db.py next                               # pendientes de clasificar
 $PY db.py set relevant true CODE1 CODE2      # marcar relevantes
 $PY db.py similar                            # posibles duplicados
 $PY db.py dump                               # lo relevante, en páginas de ~60k caracteres (--offset N)
 $PY db.py collections                        # colecciones de Instagram (para --collection "IA")
-$PY transcribe.py                            # modelo según la RAM (--model para forzarlo)
+$PY transcribe.py                            # modelo según la RAM; omite vídeos de más de 30 min
 $PY slides.py pending                        # carruseles y fotos por leer (fetch / save)
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó
 $PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recuerda
@@ -152,7 +156,7 @@ It's free: there are no paid APIs or keys. Transcription runs on your machine an
 /saved-reels:digest
 ```
 
-You can connect Instagram with the official data export (no risk), your logged-in browser session, or Claude in Chrome. Instagram's terms forbid automated access, so the live options go slowly and stop at the first rate-limit sign. Only use this with your own account. TikTok favorites can be added from TikTok's official data export (`collect.py tiktok`).
+You can connect Instagram with the official data export (no risk), your logged-in browser session, or Claude in Chrome. Instagram's terms forbid automated access, so the live options go slowly and stop at the first rate-limit sign. Only use this with your own account. TikTok favorites can be added from TikTok's official data export (`collect.py tiktok`). YouTube Watch Later and playlists come from Google Takeout or straight from a playlist link (`collect.py youtube`).
 
 ## License
 
