@@ -25,12 +25,19 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Filtro por colección de Instagram (`--collection "IA"`)
 - [x] Fecha de guardado en el digest y sección "guardado esta semana"
 - [x] Marcar ideas como "probado / descartado" y que el digest lo recuerde
+- [ ] Exportadores: reconocer la lista principal y el estado aunque el digest esté en otro idioma
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
 - [x] Detectar posts borrados o privados y listarlos aparte
 - [x] Mejorar `similar` con n-gramas para detectar duplicados en distintos idiomas
 - [x] Límite de tamaño en `dump` para no saturar el contexto de Claude con 500+ reels
+- [ ] `dump`: que la línea "Continue with" conserve los filtros (`--collection`, `--all`...)
+- [ ] `db.py set`: rechazar campos desconocidos y valores de triaje inválidos
+- [ ] Salida UTF-8 en Windows para que los emojis de los captions no rompan los scripts
+- [ ] Copia de seguridad diaria de `reels.json`
+- [ ] Mensaje claro si `reels.json` está dañado, en vez de un traceback
+- [ ] Que los posts borrados sin texto no queden pendientes para siempre
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
