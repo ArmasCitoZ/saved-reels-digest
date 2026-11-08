@@ -45,7 +45,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Mensaje claro si `reels.json` está dañado, en vez de un traceback
 - [x] Que los posts borrados sin texto no queden pendientes para siempre
 - [x] `fetch_meta.py`: parar si muchos posts seguidos parecen borrados (puede ser un bloqueo disfrazado)
-- [ ] `collect.py live`: guardar el progreso y explicar el error si Instagram corta la lectura
+- [x] `collect.py live`: guardar el progreso y explicar el error si Instagram corta la lectura
 - [ ] Mensaje claro si el zip de la exportación está dañado o a medio descargar
 - [ ] `save_db`: no dejar ficheros temporales si el disco se llena
 - [ ] `transcribe.py --shortcodes`: avisar de los códigos que no existen

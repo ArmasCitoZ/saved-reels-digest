@@ -7,6 +7,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - `fetch_meta.py` stops after 5 posts in a row look deleted or private, instead of marking a throttled session's whole list as gone.
+- `collect.py live` keeps what it read and explains why when Instagram or the connection cuts the read short, instead of a traceback.
 
 ## [0.2.0] - 2026-11-08
 

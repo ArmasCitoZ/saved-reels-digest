@@ -48,6 +48,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (SESSION_DIR, SHORTCODE_RE, TIKTOK_RE, add_reel, ensure_home,  # noqa: E402
                     load_db, log, save_db, shortcode_from_url, tiktok_key, tiktok_url,
                     youtube_key, youtube_url)
+from ig import classify_error  # noqa: E402
 
 
 # --------------------------------------------------------------------- export
@@ -144,28 +145,45 @@ def _instaloader_session(args):
     return L, user
 
 
+def _live_stopped(error: Exception, new: int) -> str:
+    """Why the read ended early. Everything read so far has been saved by then."""
+    kept = f"Saved the {new} new posts read so far."
+    detail = str(error)[:160]
+    kind = classify_error(detail)
+    if kind == "blocked":
+        return (f"STOPPED: Instagram is asking for login or rate-limiting ({detail}). {kept} "
+                "Wait a few hours before running it again, or use the official export.")
+    if kind == "network":
+        return f"STOPPED: no connection ({detail}). {kept} Run it again when you are back online."
+    return f"STOPPED: could not keep reading your saved posts ({detail}). {kept}"
+
+
 def cmd_live(args) -> None:
     import instaloader
 
     L, user = _instaloader_session(args)
     db = load_db()
-    profile = instaloader.Profile.from_username(L.context, user)
     new = seen = 0
-    for post in profile.get_saved_posts():
-        seen += 1
-        caption = post.caption or ""
-        added = add_reel(db, post.shortcode, source="live", author=post.owner_username,
-                         caption=caption, is_video=post.is_video,
-                         duration=post.video_duration if post.is_video else None)
-        new += added
-        if added and new % 25 == 0:
-            save_db(db)
-            log(f"... {seen} read, {new} new")
-        if args.limit and seen >= args.limit:
-            break
-        if args.stop_at_known and not added:
-            break  # saved feed is newest-first: everything after this is known
-        time.sleep(random.uniform(0.3, 0.9))
+    try:
+        profile = instaloader.Profile.from_username(L.context, user)
+        for post in profile.get_saved_posts():
+            seen += 1
+            caption = post.caption or ""
+            added = add_reel(db, post.shortcode, source="live", author=post.owner_username,
+                             caption=caption, is_video=post.is_video,
+                             duration=post.video_duration if post.is_video else None)
+            new += added
+            if added and new % 25 == 0:
+                save_db(db)
+                log(f"... {seen} read, {new} new")
+            if args.limit and seen >= args.limit:
+                break
+            if args.stop_at_known and not added:
+                break  # saved feed is newest-first: everything after this is known
+            time.sleep(random.uniform(0.3, 0.9))
+    except Exception as e:  # noqa: BLE001
+        save_db(db)
+        sys.exit(_live_stopped(e, new))
     save_db(db)
     print(f"Read {seen} saved posts from @{user}, {new} new. Total: {len(db['reels'])}.")
 
