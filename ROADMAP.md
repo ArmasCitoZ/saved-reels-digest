@@ -25,7 +25,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Filtro por colección de Instagram (`--collection "IA"`)
 - [x] Fecha de guardado en el digest y sección "guardado esta semana"
 - [x] Marcar ideas como "probado / descartado" y que el digest lo recuerde
-- [ ] Exportadores: reconocer la lista principal y el estado aunque el digest esté en otro idioma
+- [x] Exportadores: reconocer la lista principal y el estado aunque el digest esté en otro idioma
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

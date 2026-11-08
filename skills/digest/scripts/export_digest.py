@@ -43,6 +43,11 @@ DATE_RE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 ANCHOR_LINK_RE = re.compile(r"\]\(#([A-Za-z0-9_-]+)\)")
 URL_RE = re.compile(r"\]\((https?://[^)\s]+)\)")
 STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(?:\S+\s+)?(?P<status>Tried|Discarded)\b", re.I | re.M)
+NUMBERED_RE = re.compile(r"^\s*\d+\.\s")
+# the marks are the same in every language, even when "Status: Tried" gets translated:
+# "**Estado:** ✅ Probado: nota" (one word after the mark, so "✅ follow these steps" is not one)
+STATUS_MARK_RE = re.compile(r"^\*\*[^*\n]+:\*\*\s*(?P<mark>✅|🚫)\ufe0f?\s*\S+\s*(?::|$)")
+STATUS_MARKS = {"✅": "tried", "🚫": "discarded"}
 
 
 def slugify(text: str) -> str:
@@ -50,28 +55,58 @@ def slugify(text: str) -> str:
     return re.sub(r"[\s_]+", "-", s).strip("-") or "idea"
 
 
+def _top_section(lines: list) -> str | None:
+    """The first ## section is the top list if it is numbered and holds no ideas, in any language."""
+    headings = [n for n, line in enumerate(lines) if line.startswith("## ")]
+    if not headings:
+        return None
+    end = headings[1] if len(headings) > 1 else len(lines)
+    body = lines[headings[0] + 1:end]
+    if any(ENTRY_RE.match(line) for line in body) or not any(NUMBERED_RE.match(line) for line in body):
+        return None
+    return lines[headings[0]][3:].strip()
+
+
+def idea_status(body: str) -> str:
+    """todo, tried or discarded, from the line the digest puts first under an idea's heading."""
+    first = next((line for line in body.splitlines() if line.strip()), "")
+    m = STATUS_MARK_RE.match(first)
+    if m:
+        return STATUS_MARKS[m["mark"]]
+    m = STATUS_RE.search(body)
+    return m["status"].lower() if m else "todo"
+
+
 def parse_digest(text: str) -> dict:
     """Split digest.md into title, update date, the top list and ideas by category."""
-    out = {"title": "Saved reels digest", "date": None, "top": [], "ideas": []}
+    out = {"title": "Saved reels digest", "date": None, "top": [], "top_heading": FIRST_SECTION, "ideas": []}
+    lines = text.splitlines()
+    top = _top_section(lines)
+
+    def is_top(name: str) -> bool:
+        return name == top or name.casefold() in TOP_HEADINGS
+
     section = None
     idea = None
-    for line in text.splitlines():
+    for line in lines:
         if line.startswith("# ") and not out["ideas"] and section is None:
             out["title"] = line[2:].strip()
             continue
         if line.startswith("## "):
             section = line[3:].strip()
             idea = None
+            if is_top(section):
+                out["top_heading"] = section
             continue
         m = ENTRY_RE.match(line)
-        if m and section and section.casefold() not in TOP_HEADINGS:
+        if m and section and not is_top(section):
             idea = {"title": m["title"], "slug": m["slug"] or slugify(m["title"]),
                     "category": section, "body": []}
             out["ideas"].append(idea)
             continue
         if section is None and out["date"] is None and DATE_RE.search(line):
             out["date"] = DATE_RE.search(line).group(1)
-        elif section and section.casefold() in TOP_HEADINGS and re.match(r"^\s*\d+\.\s", line):
+        elif section and is_top(section) and NUMBERED_RE.match(line):
             out["top"].append(re.sub(r"^\s*\d+\.\s*", "", line).strip())
         elif idea is not None:
             idea["body"].append(line)
@@ -143,7 +178,7 @@ def render_index(digest: dict, by_slug: dict, day: str) -> str:
              f"# {digest['title']}", "",
              f"_Exported from digest.md on {day} · {len(digest['ideas'])} ideas_", ""]
     if digest["top"]:
-        lines += [f"## {FIRST_SECTION}", ""]
+        lines += [f"## {digest['top_heading']}", ""]
         lines += [f"{n}. {rewrite_anchors(t, by_slug)}" for n, t in enumerate(digest["top"], 1)]
         lines.append("")
     categories = list(dict.fromkeys(i["category"] for i in digest["ideas"]))
@@ -201,9 +236,8 @@ def to_json(digest_text: str) -> dict:
         raise ValueError("no ideas found: expected '### Idea title {#slug}' entries under '## Category'")
     ideas = []
     for i in digest["ideas"]:
-        m = STATUS_RE.search(i["body"])
         ideas.append({"title": i["title"], "slug": i["slug"], "category": i["category"],
-                      "status": m["status"].lower() if m else "todo",
+                      "status": idea_status(i["body"]),
                       "sources": list(dict.fromkeys(URL_RE.findall(i["body"]))),
                       "body": i["body"]})
     return {"title": digest["title"], "date": digest["date"], "top": digest["top"],

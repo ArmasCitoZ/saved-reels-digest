@@ -154,3 +154,44 @@ def test_cli_needs_vault_or_json(tmp_path):
     r = subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py")],
                        capture_output=True, text=True, check=False)
     assert r.returncode != 0 and "--vault" in r.stderr
+
+
+PORTUGUESE = """# Meus reels
+
+## Faça isto primeiro
+1. **Plano curto** → [entrada](#plano)
+
+## Ferramentas
+### Plano curto {#plano}
+**Estado:** ✅ Testado: funcionou
+Resumo.
+
+### Sem marca {#sem-marca}
+**Como aplicar:** ✅ siga os passos
+Outro resumo.
+
+### Descartada {#descartada}
+**Estado:** 🚫 Descartado
+Resumo.
+"""
+
+
+def test_top_list_is_found_in_any_language():
+    d = ed.parse_digest(PORTUGUESE)
+    assert len(d["top"]) == 1 and d["top_heading"] == "Faça isto primeiro"
+    assert [i["category"] for i in d["ideas"]] == ["Ferramentas"] * 3
+
+
+def test_a_first_category_of_ideas_is_not_mistaken_for_the_top_list():
+    d = ed.parse_digest("# T\n\n## Tools\n### One {#one}\n1. a numbered step\n")
+    assert d["top"] == [] and d["ideas"][0]["slug"] == "one"
+
+
+def test_status_marks_work_in_any_language():
+    ideas = {i["slug"]: i["status"] for i in ed.to_json(PORTUGUESE)["ideas"]}
+    assert ideas == {"plano": "tried", "sem-marca": "todo", "descartada": "discarded"}
+
+
+def test_index_keeps_the_digest_heading(tmp_path):
+    ed.export(PORTUGUESE, tmp_path, today="2026-11-08")
+    assert "## Faça isto primeiro" in (tmp_path / "INDEX.md").read_text("utf-8")
