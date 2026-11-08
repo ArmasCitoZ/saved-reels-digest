@@ -32,7 +32,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Detectar posts borrados o privados y listarlos aparte
 - [x] Mejorar `similar` con n-gramas para detectar duplicados en distintos idiomas
 - [x] Límite de tamaño en `dump` para no saturar el contexto de Claude con 500+ reels
-- [ ] `dump`: que la línea "Continue with" conserve los filtros (`--collection`, `--all`...)
+- [x] `dump`: que la línea "Continue with" conserve los filtros (`--collection`, `--all`...)
 - [ ] `db.py set`: rechazar campos desconocidos y valores de triaje inválidos
 - [ ] Salida UTF-8 en Windows para que los emojis de los captions no rompan los scripts
 - [ ] Copia de seguridad diaria de `reels.json`

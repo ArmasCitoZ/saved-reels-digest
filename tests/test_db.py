@@ -193,3 +193,29 @@ def test_dump_always_shows_at_least_one_reel_and_zero_means_no_limit(tmp_path):
     assert run(tmp_path, "dump", "--max-total", "10").count("### ") == 1
     out = run(tmp_path, "dump", "--max-total", "0")
     assert out.count("### ") == 3 and "Continue with" not in out
+
+
+# ------------------------------------------------------------------- dump paging
+def test_dump_continue_line_keeps_every_filter(tmp_path):
+    make_db(tmp_path, *[reel(f"PAGE{i:02d}", relevant=True, collection="IA", caption="x" * 200)
+                        for i in range(4)], reel("OTHER9", relevant=True, collection="Viajes", caption="y"))
+    out = run(tmp_path, "dump", "--collection", "IA", "--all", "--undigested",
+              "--chars", "150", "--max-total", "300")
+    hint = out.split("Continue with: ")[1].strip()
+    assert hint.startswith("dump --offset 1")
+    for piece in ('--collection "IA"', "--all", "--undigested", "--chars 150", "--max-total 300"):
+        assert piece in hint
+
+
+def test_following_the_continue_line_reads_each_reel_once(tmp_path):
+    make_db(tmp_path, reel("OTHER1", relevant=True, collection="Viajes", caption="z"),
+            *[reel(f"PAGE{i:02d}", relevant=True, collection="IA", caption="x" * 200) for i in range(5)])
+    args, seen = ["dump", "--collection", "IA", "--max-total", "300"], []
+    while True:
+        out = run(tmp_path, *args)
+        seen += [line.split()[1] for line in out.splitlines() if line.startswith("### ")]
+        if "Continue with: " not in out:
+            break
+        args = ["dump", "--offset", out.split("--offset ")[1].split()[0], "--collection", "IA",
+                "--max-total", "300"]
+    assert seen == [f"PAGE{i:02d}" for i in range(5)]

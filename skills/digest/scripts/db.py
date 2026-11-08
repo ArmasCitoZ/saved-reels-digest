@@ -37,6 +37,7 @@ from common import DB_PATH, in_collection, load_db, save_db  # noqa: E402
 
 # ~15k tokens: a page of dump output Claude can read in one go without flooding its context
 DUMP_BUDGET = 60_000
+DUMP_CHARS = 600
 
 
 def _short(s: str | None, n: int) -> str:
@@ -156,6 +157,22 @@ def _dump_block(r, chars: int) -> str:
     return "\n".join(lines) + "\n\n"
 
 
+def _dump_again(a, offset: int) -> str:
+    """The command that shows the next page: the same filters, or the offsets would not line up."""
+    parts = [f"dump --offset {offset}"]
+    if a.undigested:
+        parts.append("--undigested")
+    if a.all:
+        parts.append("--all")
+    if a.collection:
+        parts.append(f'--collection "{a.collection}"')
+    if a.chars != DUMP_CHARS:
+        parts.append(f"--chars {a.chars}")
+    if a.max_total != DUMP_BUDGET:
+        parts.append(f"--max-total {a.max_total}")
+    return " ".join(parts)
+
+
 def cmd_dump(a):
     rs = [r for r in load_db()["reels"].values()
           if (a.all or r.get("relevant") is True) and not (a.undigested and r.get("entry"))
@@ -172,7 +189,7 @@ def cmd_dump(a):
     end = a.offset + shown
     if end < len(rs):
         print(f"-- {len(rs) - end} more reels not shown (output limited to ~{a.max_total} chars). "
-              f"Continue with: dump --offset {end}" + (" --undigested" if a.undigested else ""))
+              f"Continue with: {_dump_again(a, end)}")
     print(f"(reels {a.offset + 1 if shown else a.offset}-{end} of {len(rs)})", file=sys.stderr)
 
 
@@ -351,7 +368,7 @@ def main() -> None:
     p = sub.add_parser("set"); p.add_argument("field"); p.add_argument("value")
     p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_set)
     p = sub.add_parser("dump"); p.add_argument("--undigested", action="store_true")
-    p.add_argument("--all", action="store_true"); p.add_argument("--chars", type=int, default=600)
+    p.add_argument("--all", action="store_true"); p.add_argument("--chars", type=int, default=DUMP_CHARS)
     p.add_argument("--max-total", type=int, default=DUMP_BUDGET,
                    help="stop after about this many characters (0 = no limit)")
     p.add_argument("--offset", type=int, default=0, help="skip the first N reels (to continue)")

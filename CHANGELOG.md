@@ -27,6 +27,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Deleted and private posts are detected and listed apart (`db.py unavailable`).
 - Exporters keep the top list of Spanish digests ("Haz esto primero").
 - Exporting from a folder whose own path contains "saved" no longer reads unrelated files.
+- `db.py dump` keeps `--collection`, `--all` and the other filters in its "Continue with" line, so later pages no longer skip or repeat reels.
 
 ## [0.1.0] - 2026-11-03
 
