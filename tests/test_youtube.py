@@ -3,8 +3,12 @@ import json
 import os
 import subprocess
 import sys
+import types
 import zipfile
+from argparse import Namespace
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills" / "digest" / "scripts"
@@ -76,3 +80,72 @@ def test_export_without_playlists_explains_what_to_download(tmp_path):
     (tmp_path / "empty").mkdir()
     out, reels = run(tmp_path / "home", "youtube", str(tmp_path / "empty"))
     assert reels == {} and "No playlist videos found" in out
+
+
+# --------------------------------------------------------------- --url (yt-dlp)
+ENTRIES = [{"id": "aaaaaaaaaa1", "title": "Cursor vs Claude", "channel": "demo_dev", "duration": 300},
+           {"id": "bbbbbbbbbb2", "title": "[Private video]"},
+           {"id": "cccccccccc3", "title": "[Deleted video]"},
+           None,
+           {"id": "not-a-video", "title": "x"}]
+
+
+@pytest.fixture
+def fake_ytdlp(monkeypatch):
+    calls = {}
+
+    class YDL:
+        def __init__(self, opts):
+            calls["opts"] = opts
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def extract_info(self, url, download):
+            calls["url"], calls["download"] = url, download
+            if calls.get("error"):
+                raise RuntimeError(calls["error"])
+            return {"title": "Watch later", "entries": ENTRIES}
+
+    monkeypatch.setitem(sys.modules, "yt_dlp", types.SimpleNamespace(YoutubeDL=YDL))
+    return calls
+
+
+def test_url_lists_without_downloading_and_skips_gone_videos(fake_ytdlp):
+    title, entries = collect.read_youtube_playlist("https://www.youtube.com/playlist?list=PLx")
+    assert title == "Watch later" and [e["id"] for e in entries] == ["aaaaaaaaaa1"]
+    assert fake_ytdlp["download"] is False and fake_ytdlp["opts"]["extract_flat"] == "in_playlist"
+    assert "cookiesfrombrowser" not in fake_ytdlp["opts"]
+
+
+def test_wl_shortcut_uses_the_browser_login(fake_ytdlp):
+    collect.read_youtube_playlist("wl", "firefox")
+    assert fake_ytdlp["url"].endswith("list=WL")
+    assert fake_ytdlp["opts"]["cookiesfrombrowser"] == ("firefox",)
+
+
+def test_url_failure_explains_login(fake_ytdlp):
+    fake_ytdlp["error"] = "This playlist is private"
+    with pytest.raises(SystemExit, match="--browser"):
+        collect.read_youtube_playlist("WL")
+
+
+def test_url_adds_videos_to_the_database(fake_ytdlp, monkeypatch, capsys):
+    db = {"version": 1, "reels": {}}
+    monkeypatch.setattr(collect, "load_db", lambda: db)
+    monkeypatch.setattr(collect, "save_db", lambda d: None)
+    collect.cmd_youtube(Namespace(path=None, url="WL", browser="chrome", playlist=None))
+    r = db["reels"]["ytaaaaaaaaaa1"]
+    assert r["url"] == "https://www.youtube.com/watch?v=aaaaaaaaaa1" and r["author"] == "demo_dev"
+    assert r["collection"] == "Watch later" and r["duration"] == 300 and "saved_at" not in r
+    assert "1 new" in capsys.readouterr().out
+
+
+def test_path_and_url_are_exclusive():
+    with pytest.raises(SystemExit, match="either"):
+        collect.cmd_youtube(Namespace(path="x", url="WL", browser=None, playlist=None))
+    with pytest.raises(SystemExit, match="either"):
+        collect.cmd_youtube(Namespace(path=None, url=None, browser=None, playlist=None))

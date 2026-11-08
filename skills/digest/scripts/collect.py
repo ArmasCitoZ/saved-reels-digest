@@ -25,6 +25,9 @@ And YouTube:
                                 Google Takeout of "YouTube and YouTube Music" (zip,
                                 folder or one playlist CSV). Each playlist becomes
                                 a collection, so --collection works on it later.
+  collect.py youtube --url URL [--browser chrome]
+                                Read one playlist directly with yt-dlp. Use --url WL
+                                with --browser for your Watch Later, which is private.
 """
 from __future__ import annotations
 
@@ -314,7 +317,47 @@ def parse_youtube_csv(text: str) -> list:
     return out
 
 
+WATCH_LATER_URL = "https://www.youtube.com/playlist?list=WL"
+GONE_TITLES = ("[private video]", "[deleted video]")
+
+
+def read_youtube_playlist(url: str, browser: str | None = None) -> tuple:
+    """(title, entries) of a playlist. Lists it only: no video is downloaded."""
+    import yt_dlp
+
+    from ig import Fetcher
+
+    url = WATCH_LATER_URL if url.strip().upper() == "WL" else url
+    opts = Fetcher(browser)._ydl_opts(extract_flat="in_playlist", skip_download=True)
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as e:  # noqa: BLE001
+        sys.exit(f"Could not read that playlist ({str(e)[:200]}). Private lists such as Watch "
+                 "Later need --browser with a browser where you are logged into YouTube.")
+    entries = [e for e in info.get("entries") or []
+               if e and YOUTUBE_ID_RE.fullmatch(e.get("id") or "")
+               and (e.get("title") or "").lower() not in GONE_TITLES]
+    return info.get("title") or "YouTube", entries
+
+
+def cmd_youtube_url(args) -> None:
+    title, entries = read_youtube_playlist(args.url, args.browser)
+    db = load_db()
+    new = sum(add_reel(db, youtube_key(e["id"]), url=youtube_url(e["id"]), platform="youtube",
+                       source="youtube", is_video=True, collection=title,
+                       author=e.get("channel") or e.get("uploader"),
+                       duration=e.get("duration")) for e in entries)
+    save_db(db)
+    print(f"Read {len(entries)} videos from {title!r}, {new} new. Total: {len(db['reels'])}.")
+
+
 def cmd_youtube(args) -> None:
+    if bool(args.path) == bool(args.url):
+        sys.exit("Pass either a Takeout PATH or --url URL.")
+    if args.url:
+        cmd_youtube_url(args)
+        return
     db = load_db()
     found = {}
     for name, text in _youtube_files(Path(args.path).expanduser()):
@@ -358,7 +401,9 @@ def main() -> None:
     live.set_defaults(fn=cmd_live)
     u = sub.add_parser("urls"); u.add_argument("file"); u.set_defaults(fn=cmd_urls)
     t = sub.add_parser("tiktok"); t.add_argument("path"); t.set_defaults(fn=cmd_tiktok)
-    y = sub.add_parser("youtube"); y.add_argument("path")
+    y = sub.add_parser("youtube"); y.add_argument("path", nargs="?")
+    y.add_argument("--url", help="read this playlist with yt-dlp instead (WL = your Watch Later)")
+    y.add_argument("--browser", help="with --url: reuse this browser's YouTube login")
     y.add_argument("--playlist", help="only this playlist, by name (case-insensitive)")
     y.set_defaults(fn=cmd_youtube)
     args = ap.parse_args()
