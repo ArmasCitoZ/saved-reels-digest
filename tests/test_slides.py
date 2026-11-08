@@ -166,3 +166,28 @@ def test_single_photo_post(monkeypatch):
     post = SimpleNamespace(typename="GraphImage", is_video=False, url="u")
     monkeypatch.setattr(f, "_il_post", lambda sc: post)
     assert f.image_urls("AAAAA1") == ["u"]
+
+
+# ------------------------------------------------------------- db.py integration
+def run_db(home, *args):
+    r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), *args],
+                       env={**os.environ, "SRD_HOME": str(home), "PYTHONIOENCODING": "utf-8"},
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+    return r.stdout
+
+
+def test_dump_and_maybe_triage_show_the_text_of_the_images(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", caption="desliza", slides_text="Paso 1: instala uv"),
+            reel("BBBBB2", relevant="maybe", slides_text="Cinco atajos de Claude Code"))
+    assert "IMAGES: Paso 1: instala uv" in run_db(tmp_path, "dump")
+    assert "IMAGES: Cinco atajos" in run_db(tmp_path, "next", "--maybe")
+
+
+def test_similar_compares_image_text_and_status_counts_it(tmp_path):
+    text = "instala uv para gestionar entornos python rapido sin complicaciones"
+    make_db(tmp_path, reel("AAAAA1", slides_text=text), reel("BBBBB2", transcript=text),
+            reel("CCCCC3", caption="receta de lentejas con chorizo y pimentón"))
+    out = run_db(tmp_path, "similar")
+    assert "AAAAA1" in out and "BBBBB2" in out and "CCCCC3" not in out
+    assert any(line.split() == ["images", "read", "1"] for line in run_db(tmp_path, "status").splitlines())

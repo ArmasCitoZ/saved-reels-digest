@@ -58,12 +58,13 @@ def cmd_status(_):
         c[f"triage: {r.get('relevant')}"] += 1
         c["transcribed"] += bool(r.get("transcript"))
         c["transcribe failed"] += r.get("transcribe") == "failed"
+        c["images read"] += bool(r.get("slides_text"))
         c["merged into digest"] += bool(r.get("entry"))
     relevant = [r for r in rs if r.get("relevant") is True]
     c["relevant & not yet in digest"] = sum(1 for r in relevant if not r.get("entry"))
     print(f"Database: {DB_PATH}")
     for k in ["total", "with caption", "meta failed", "deleted or private", "triage: None", "triage: True",
-              "triage: maybe", "triage: False", "transcribed", "transcribe failed",
+              "triage: maybe", "triage: False", "transcribed", "transcribe failed", "images read",
               "merged into digest", "relevant & not yet in digest"]:
         label = {"triage: None": "not triaged yet", "triage: True": "relevant",
                  "triage: maybe": "maybe (decide after transcript)",
@@ -102,6 +103,8 @@ def cmd_next(a):
         text = r.get("caption") or ""
         if a.maybe and r.get("transcript"):
             text = f"{text} || TRANSCRIPT: {r['transcript']}"
+        if a.maybe and r.get("slides_text"):
+            text = f"{text} || IMAGES: {r['slides_text']}"
         print(f"{r['shortcode']} | @{r.get('author') or '?'} | {r.get('collection') or ''} | "
               f"{_short(text, a.chars) or '(no caption)'}")
 
@@ -146,6 +149,8 @@ def _dump_block(r, chars: int) -> str:
         lines.append(f"CAPTION: {_short(r['caption'], chars)}")
     if r.get("transcript"):
         lines.append(f"TRANSCRIPT ({r.get('lang', '?')}): {_short(r['transcript'], chars * 3)}")
+    if r.get("slides_text"):
+        lines.append(f"IMAGES: {_short(r['slides_text'], chars * 3)}")
     return "\n".join(lines) + "\n\n"
 
 
@@ -182,11 +187,14 @@ def _tokens(text: str):
     return [w.strip(".-") for w in words if w not in STOP and not w.isdigit()]
 
 
+def _full_text(r: dict) -> str:
+    return " ".join(r.get(k) or "" for k in ("caption", "transcript", "slides_text")).strip()
+
+
 def cmd_similar(a):
     rs = [r for r in load_db()["reels"].values()
-          if r.get("relevant") is True and (r.get("caption") or r.get("transcript"))
-          and in_collection(r, a.collection)]
-    docs = [Counter(_tokens(f"{r.get('caption', '')} {r.get('transcript', '')}")) for r in rs]
+          if r.get("relevant") is True and _full_text(r) and in_collection(r, a.collection)]
+    docs = [Counter(_tokens(_full_text(r))) for r in rs]
     df = Counter(t for d in docs for t in d)
     n = len(docs)
     vecs = []
@@ -220,7 +228,7 @@ def cmd_similar(a):
     print(f"{len(groups)} candidate groups (same wording; confirm by meaning):")
     for g in sorted(groups, key=len, reverse=True):
         print("- " + " | ".join(f"{rs[i]['shortcode']} @{rs[i].get('author') or '?'}: "
-                                 f"{_short(rs[i].get('caption') or rs[i].get('transcript'), 60)}"
+                                 f"{_short(_full_text(rs[i]), 60)}"
                                  for i in g))
 
 
