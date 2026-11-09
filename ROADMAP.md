@@ -49,6 +49,9 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Mensaje claro si el zip de la exportación está dañado o a medio descargar
 - [x] `save_db`: no dejar ficheros temporales si el disco se llena
 - [x] `transcribe.py --shortcodes`: avisar de los códigos que no existen
+- [ ] `slides.py save`: no borrar las imágenes descargadas si el texto llega vacío
+- [ ] `fetch_meta.py`: guardar lo ya leído al pulsar Ctrl+C (ahora se pierden hasta 9 posts)
+- [ ] `db.py set` y `show`: aceptar enlaces pegados y terminar con error si ningún código existe
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
