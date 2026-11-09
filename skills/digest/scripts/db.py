@@ -17,6 +17,8 @@
 next, dump, similar and recent accept --collection NAME to work only on one Instagram
 collection (as named in the official export, case-insensitive).
   db.py show CODE [CODE ...]                full record
+
+In set and show, a CODE can also be a pasted Instagram or TikTok link.
 """
 from __future__ import annotations
 
@@ -32,7 +34,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import DB_PATH, in_collection, load_db, save_db  # noqa: E402
+from common import DB_PATH, in_collection, load_db, resolve_code, save_db, split_codes  # noqa: E402
 
 
 # ~15k tokens: a page of dump output Claude can read in one go without flooding its context
@@ -130,16 +132,15 @@ def cmd_set(a):
         sys.exit(f"Invalid value {a.value!r} for relevant. Use: true, false, maybe or none.")
     db = load_db()
     missing, done = [], 0
-    for sc in a.codes:
-        for s in sc.split(","):
-            s = s.strip()
-            if not s:
-                continue
-            if s in db["reels"]:
-                db["reels"][s][a.field] = val
-                done += 1
-            else:
-                missing.append(s)
+    for name in split_codes(a.codes):
+        key = resolve_code(db["reels"], name)
+        if key is None:
+            missing.append(name)
+        else:
+            db["reels"][key][a.field] = val
+            done += 1
+    if not done:
+        sys.exit(f"None of these codes are in the database, so nothing was changed: {', '.join(missing)}")
     save_db(db)
     print(f"Set {a.field}={val!r} on {done} reels."
           + (f" Unknown: {', '.join(missing)}" if missing else ""))
@@ -364,9 +365,14 @@ def cmd_marks(_):
 
 
 def cmd_show(a):
-    db = load_db()
-    for sc in a.codes:
-        print(json.dumps(db["reels"].get(sc, {"error": f"unknown {sc}"}), ensure_ascii=False, indent=1))
+    reels = load_db()["reels"]
+    found = 0
+    for name in split_codes(a.codes):
+        key = resolve_code(reels, name)
+        found += key is not None
+        print(json.dumps(reels[key] if key else {"error": f"unknown {name}"}, ensure_ascii=False, indent=1))
+    if not found:
+        sys.exit("None of these codes are in the database.")
 
 
 def main() -> None:

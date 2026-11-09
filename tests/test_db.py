@@ -257,3 +257,28 @@ def test_emoji_captions_print_on_a_windows_style_pipe(tmp_path):
     r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), "next"], env=env, capture_output=True)
     assert r.returncode == 0, r.stderr
     assert "🤖 automatización" in r.stdout.decode("utf-8")
+
+
+# ------------------------------------------------------------- codes as links
+def test_set_accepts_pasted_links(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"), reel("tt7300000000000000001"))
+    out = run(tmp_path, "set", "relevant", "true",
+              "https://www.instagram.com/reel/AAAAA1/?igsh=abc",
+              "https://www.tiktok.com/@ana/video/7300000000000000001")
+    assert "on 2 reels" in out
+    reels = load(tmp_path)
+    assert reels["AAAAA1"]["relevant"] is True and reels["tt7300000000000000001"]["relevant"] is True
+
+
+def test_set_fails_and_changes_nothing_when_no_code_exists(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"))
+    before = (tmp_path / "reels.json").read_text("utf-8")
+    err = run_failing(tmp_path, "set", "relevant", "true", "ZZZZZ9,YYYYY8")
+    assert "nothing was changed" in err and "ZZZZZ9, YYYYY8" in err
+    assert (tmp_path / "reels.json").read_text("utf-8") == before
+
+
+def test_show_accepts_links_and_fails_when_nothing_is_found(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", caption="hola"))
+    assert '"caption": "hola"' in run(tmp_path, "show", "https://instagram.com/p/AAAAA1/")
+    assert "None of these codes" in run_failing(tmp_path, "show", "ZZZZZ9")

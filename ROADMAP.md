@@ -51,7 +51,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `transcribe.py --shortcodes`: avisar de los códigos que no existen
 - [x] `slides.py save`: no borrar las imágenes descargadas si el texto llega vacío
 - [x] `fetch_meta.py`: guardar lo ya leído al pulsar Ctrl+C (ahora se pierden hasta 9 posts)
-- [ ] `db.py set` y `show`: aceptar enlaces pegados y terminar con error si ningún código existe
+- [x] `db.py set` y `show`: aceptar enlaces pegados y terminar con error si ningún código existe
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues

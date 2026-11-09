@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (HOME, in_collection, load_db, log, pick_whisper_model, save_db,  # noqa: E402
-                    shortcode_from_url, tiktok_id_from_url, tiktok_key, total_ram_bytes)
+                    resolve_code, split_codes, total_ram_bytes)
 from ig import Blocked, Fetcher, NetworkError, classify_error  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
@@ -95,15 +95,9 @@ def pick_shortcodes(reels: dict, spec: str) -> tuple[list[dict], list[str]]:
     Spaces around commas are ignored, and pasted Instagram or TikTok links are accepted.
     """
     todo, unknown, seen = [], [], set()
-    for raw in spec.split(","):
-        name = raw.strip()
-        if not name:
-            continue
-        key = name
-        if key not in reels:
-            tiktok_id = tiktok_id_from_url(name)
-            key = shortcode_from_url(name) or (tiktok_key(tiktok_id) if tiktok_id else name)
-        if key not in reels:
+    for name in split_codes([spec]):
+        key = resolve_code(reels, name)
+        if key is None:
             unknown.append(name)
         elif key not in seen:
             seen.add(key)

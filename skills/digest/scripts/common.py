@@ -83,6 +83,21 @@ def canonical_url(shortcode: str) -> str:
     return f"https://www.instagram.com/reel/{shortcode}/"
 
 
+def resolve_code(reels: dict, name: str) -> str | None:
+    """Database key for a code or a pasted Instagram / TikTok link, or None if it is not saved."""
+    name = name.strip()
+    if name in reels:
+        return name
+    tiktok_id = tiktok_id_from_url(name)
+    key = shortcode_from_url(name) or (tiktok_key(tiktok_id) if tiktok_id else None)
+    return key if key in reels else None
+
+
+def split_codes(items) -> list[str]:
+    """Codes from command line arguments, each of which may hold several separated by commas."""
+    return [c.strip() for item in items for c in item.split(",") if c.strip()]
+
+
 def _damaged_db_message(why: str) -> str:
     fix = (f"Replace it with the backup: copy {BACKUP_PATH} over it (at most a day of work is lost)."
            if BACKUP_PATH.exists()

@@ -19,6 +19,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `transcribe.py --shortcodes` names the codes that are not in the database instead of skipping them silently, and accepts spaces after commas and pasted Instagram or TikTok links.
 - `slides.py save` refuses an empty text instead of deleting the downloaded images; `--empty` marks posts whose images say nothing useful.
 - `fetch_meta.py` saves the captions it already read when you press Ctrl+C, instead of losing up to nine posts.
+- `db.py set` and `show` accept pasted Instagram or TikTok links, and fail with a clear message (changing nothing) when none of the codes are in the database.
 
 ## [0.2.0] - 2026-11-08
 
