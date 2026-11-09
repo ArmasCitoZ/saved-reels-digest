@@ -15,6 +15,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - The exporters leave `##` and `###` lines inside code blocks alone, instead of treating them as new categories and ideas.
 - `db.py similar` finds duplicates in any alphabet; words with letters outside Spanish (ç, è, Cyrillic...) used to be cut up or ignored.
 - `db.py recent` no longer lists deleted posts nothing was read from as waiting for the digest.
+- A full disk while saving `reels.json` or its backup no longer leaves half-written temporary files behind, and says the database was not changed.
 
 ## [0.2.0] - 2026-11-08
 

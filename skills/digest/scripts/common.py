@@ -111,10 +111,21 @@ def _daily_backup() -> None:
         if BACKUP_PATH.exists() and time.time() - BACKUP_PATH.stat().st_mtime < BACKUP_EVERY:
             return
         tmp = BACKUP_PATH.with_suffix(".tmp")
-        shutil.copyfile(DB_PATH, tmp)
-        os.replace(tmp, BACKUP_PATH)
+        try:
+            shutil.copyfile(DB_PATH, tmp)
+            os.replace(tmp, BACKUP_PATH)
+        except OSError:
+            _remove_quietly(tmp)
+            raise
     except OSError as e:
         log(f"Could not back up {DB_PATH}: {e}")
+
+
+def _remove_quietly(path) -> None:
+    try:
+        os.remove(path)
+    except OSError:
+        pass
 
 
 def save_db(db: dict) -> None:
@@ -122,9 +133,17 @@ def save_db(db: dict) -> None:
     ensure_home()
     _daily_backup()
     fd, tmp = tempfile.mkstemp(dir=HOME, prefix=".reels.", suffix=".json")
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(db, f, ensure_ascii=False, indent=1)
-    os.replace(tmp, DB_PATH)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(db, f, ensure_ascii=False, indent=1)
+        os.replace(tmp, DB_PATH)
+    except BaseException as e:
+        # A full disk (or Ctrl+C) mid-write must not leave half-written .reels.*.json files behind.
+        _remove_quietly(tmp)
+        if isinstance(e, OSError):
+            sys.exit(f"Could not save {DB_PATH} ({e.strerror or e}). The file was not changed; "
+                     "free some disk space and run the command again.")
+        raise
 
 
 def add_reel(db: dict, shortcode: str, **fields) -> bool:

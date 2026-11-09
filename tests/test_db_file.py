@@ -85,3 +85,40 @@ def test_damaged_database_without_a_backup_says_so(home):
 
 def test_missing_database_is_still_an_empty_one(home):
     assert common.load_db() == {"version": 1, "reels": {}}
+
+
+def disk_full(*_args, **_kwargs):
+    raise OSError(28, "No space left on device")
+
+
+def test_full_disk_leaves_no_temporary_files(home, monkeypatch):
+    common.save_db(db_with("first"))
+    monkeypatch.setattr(common.json, "dump", disk_full)
+    with pytest.raises(SystemExit) as e:
+        common.save_db(db_with("second"))
+    assert "No space left" in str(e.value) and "not changed" in str(e.value)
+    assert caption_in(common.DB_PATH) == "first"
+    assert sorted(p.name for p in home.iterdir()) == ["reels.backup.json", "reels.json"]
+
+
+def test_interrupted_save_leaves_no_temporary_files(home, monkeypatch):
+    def interrupted(*_args, **_kwargs):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(common.json, "dump", interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        common.save_db(db_with("first"))
+    assert list(home.iterdir()) == []
+
+
+def test_full_disk_during_backup_leaves_no_partial_copy(home, monkeypatch):
+    common.save_db(db_with("first"))
+
+    def half_copy(src, dst):
+        Path(dst).write_text("{half", "utf-8")
+        disk_full()
+
+    monkeypatch.setattr(common.shutil, "copyfile", half_copy)
+    common.save_db(db_with("second"))
+    assert caption_in(common.DB_PATH) == "second"
+    assert sorted(p.name for p in home.iterdir()) == ["reels.json"]
