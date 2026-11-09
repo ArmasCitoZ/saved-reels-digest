@@ -48,7 +48,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `collect.py live`: guardar el progreso y explicar el error si Instagram corta la lectura
 - [x] Mensaje claro si el zip de la exportación está dañado o a medio descargar
 - [x] `save_db`: no dejar ficheros temporales si el disco se llena
-- [ ] `transcribe.py --shortcodes`: avisar de los códigos que no existen
+- [x] `transcribe.py --shortcodes`: avisar de los códigos que no existen
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues

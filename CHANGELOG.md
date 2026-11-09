@@ -16,6 +16,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `db.py similar` finds duplicates in any alphabet; words with letters outside Spanish (ç, è, Cyrillic...) used to be cut up or ignored.
 - `db.py recent` no longer lists deleted posts nothing was read from as waiting for the digest.
 - A full disk while saving `reels.json` or its backup no longer leaves half-written temporary files behind, and says the database was not changed.
+- `transcribe.py --shortcodes` names the codes that are not in the database instead of skipping them silently, and accepts spaces after commas and pasted Instagram or TikTok links.
 
 ## [0.2.0] - 2026-11-08
 

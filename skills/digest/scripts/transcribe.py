@@ -2,7 +2,7 @@
 
   transcribe.py [--model auto] [--language es] [--all] [--limit N] [--collection NAME]
                 [--max-minutes 30]
-                [--browser chrome | --username YOU] [--shortcodes A,B,C]
+                [--browser chrome | --username YOU] [--shortcodes A,B,C or links]
 
 By default only reels Claude marked relevant or "maybe" are transcribed.
 The audio is deleted right after transcription; only the text is kept.
@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (HOME, in_collection, load_db, log, pick_whisper_model, save_db,  # noqa: E402
-                    total_ram_bytes)
+                    shortcode_from_url, tiktok_id_from_url, tiktok_key, total_ram_bytes)
 from ig import Blocked, Fetcher, NetworkError, classify_error  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
@@ -89,6 +89,28 @@ def fetch_with_retry(fetcher, r: dict, folder: Path, waits=NETWORK_WAITS, sleep=
     raise AssertionError("unreachable")
 
 
+def pick_shortcodes(reels: dict, spec: str) -> tuple[list[dict], list[str]]:
+    """Reels named in --shortcodes, in order and once each, plus the names not in the database.
+
+    Spaces around commas are ignored, and pasted Instagram or TikTok links are accepted.
+    """
+    todo, unknown, seen = [], [], set()
+    for raw in spec.split(","):
+        name = raw.strip()
+        if not name:
+            continue
+        key = name
+        if key not in reels:
+            tiktok_id = tiktok_id_from_url(name)
+            key = shortcode_from_url(name) or (tiktok_key(tiktok_id) if tiktok_id else name)
+        if key not in reels:
+            unknown.append(name)
+        elif key not in seen:
+            seen.add(key)
+            todo.append(reels[key])
+    return todo, unknown
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="auto",
@@ -113,7 +135,12 @@ def main() -> None:
     db = load_db()
     reels = db["reels"]
     if args.shortcodes:
-        todo = [reels[s] for s in args.shortcodes.split(",") if s in reels]
+        todo, unknown = pick_shortcodes(reels, args.shortcodes)
+        if unknown:
+            log(f"Not in the database, skipped: {', '.join(unknown)}. "
+                "Check for typos, or collect those posts first.")
+        if not todo:
+            sys.exit("None of the --shortcodes are in the database, so there is nothing to transcribe.")
     else:
         todo = [r for r in reels.values() if needs_transcript(r, args.all, args.collection)]
         long_ones = [r for r in todo if too_long(r, args.max_minutes)]
