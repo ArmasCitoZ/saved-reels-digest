@@ -6,6 +6,7 @@
                                                download images and print their paths
   slides.py save CODE [TEXT]                   store what the images say (no TEXT: read stdin)
                                                and delete that post's images
+  slides.py save CODE --empty                  the images say nothing useful: delete them
   slides.py clean                              delete every downloaded image
 
 Works on posts marked relevant or "maybe" that fetch_meta.py found have no video.
@@ -106,7 +107,17 @@ def cmd_save(a) -> None:
     r = db["reels"].get(a.code)
     if r is None:
         sys.exit(f"Unknown post: {a.code}")
-    r["slides_text"] = (sys.stdin.read() if a.text is None else a.text).strip()
+    if a.empty:
+        if a.text and a.text.strip():
+            sys.exit("Pass either a text or --empty, not both.")
+        text = ""
+    else:
+        text = (sys.stdin.read() if a.text is None else a.text).strip()
+        if not text:
+            # Usually a broken pipe or a heredoc that went wrong; deleting the images would lose them.
+            sys.exit(f"No text received for {a.code}, so nothing was saved and its images are kept. "
+                     "If they say nothing useful, run: slides.py save " + a.code + " --empty")
+    r["slides_text"] = text
     r.pop("slides", None)
     r.pop("slides_error", None)
     save_db(db)
@@ -129,6 +140,7 @@ def main() -> None:
     p.add_argument("--browser"); p.add_argument("--username")
     p.add_argument("--collection"); p.set_defaults(fn=cmd_fetch)
     p = sub.add_parser("save"); p.add_argument("code"); p.add_argument("text", nargs="?")
+    p.add_argument("--empty", action="store_true", help="the images say nothing useful")
     p.set_defaults(fn=cmd_save)
     sub.add_parser("clean").set_defaults(fn=cmd_clean)
     a = ap.parse_args()

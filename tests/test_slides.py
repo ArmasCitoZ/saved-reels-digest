@@ -133,6 +133,45 @@ def test_save_reads_stdin_and_pending_shrinks(tmp_path):
     assert "1 image posts" in out and "BBBBB2" in out and "AAAAA1" not in out
 
 
+def run_failing(home, *args, stdin=""):
+    r = subprocess.run([sys.executable, str(SCRIPTS / "slides.py"), *args], input=stdin,
+                       env={**os.environ, "SRD_HOME": str(home), "PYTHONIOENCODING": "utf-8"},
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode != 0
+    return r.stderr
+
+
+def post_with_images(home):
+    make_db(home, reel("AAAAA1"))
+    folder = home / ".slides" / "AAAAA1"
+    folder.mkdir(parents=True)
+    (folder / "01.jpg").write_bytes(b"img")
+    return folder
+
+
+@pytest.mark.parametrize("stdin", ["", "  \n\n"])
+def test_empty_stdin_keeps_the_images_and_saves_nothing(tmp_path, stdin):
+    folder = post_with_images(tmp_path)
+    err = run_failing(tmp_path, "save", "AAAAA1", stdin=stdin)
+    assert "--empty" in err and "kept" in err
+    assert (folder / "01.jpg").exists()
+    assert "slides_text" not in load(tmp_path)["AAAAA1"]
+
+
+def test_empty_flag_marks_the_post_as_read(tmp_path):
+    folder = post_with_images(tmp_path)
+    assert "Saved 0 characters" in run(tmp_path, "save", "AAAAA1", "--empty")
+    assert load(tmp_path)["AAAAA1"]["slides_text"] == ""
+    assert not folder.exists()
+    assert "0 image posts" in run(tmp_path, "pending")
+
+
+def test_text_and_empty_flag_together_are_refused(tmp_path):
+    folder = post_with_images(tmp_path)
+    assert "not both" in run_failing(tmp_path, "save", "AAAAA1", "hola", "--empty")
+    assert folder.exists()
+
+
 def test_download_images_handles_carousels_and_cleans_up(tmp_path, monkeypatch):
     nodes = [SimpleNamespace(is_video=False, display_url="u1"),
              SimpleNamespace(is_video=True, display_url="v"),

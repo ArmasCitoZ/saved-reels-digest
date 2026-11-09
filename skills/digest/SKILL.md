@@ -125,7 +125,8 @@ Photo and carousel posts have no audio, and their caption often says little. If
 2. Open each image with your file reading tool and write down what it says: the text,
    plus anything in a screenshot or diagram that matters. Leave out decoration.
 3. Save it, which also deletes that post's images: `PY SCRIPTS/slides.py save CODE`,
-   passing the text on stdin. Save an empty text if an image says nothing useful.
+   passing the text on stdin. If the images say nothing useful, use `save CODE --empty`
+   (an empty text on its own is refused, so a failed pipe never deletes the images).
 4. Repeat until `pending` is empty. If it prints `STOPPED`, relay the reason; do not loop.
    If you cannot open images in this session, run `slides.py clean` and skip this.
 
