@@ -20,7 +20,7 @@ class FakeFetcher:
     def metadata(self, shortcode, _url=None):
         FakeFetcher.calls.append(shortcode)
         answer = FakeFetcher.answers[len(FakeFetcher.calls) - 1]
-        if isinstance(answer, Exception):
+        if isinstance(answer, BaseException):
             raise answer
         return answer
 
@@ -64,3 +64,15 @@ def test_deleted_posts_mixed_with_good_ones_do_not_stop_it(run, capsys):
     assert len(FakeFetcher.calls) == 15
     assert db["reels"]["C4"]["meta"] == "ok"
     assert "3 ok, 12 deleted or private" in capsys.readouterr().out
+
+
+def test_ctrl_c_saves_what_was_already_read(run, monkeypatch):
+    db = run([OK, OK, OK, KeyboardInterrupt(), OK])
+    saved = []
+    monkeypatch.setattr(fetch_meta, "save_db", lambda d: saved.append(
+        {k: r.get("meta") for k, r in d["reels"].items()}))
+    with pytest.raises(SystemExit) as e:
+        fetch_meta.main()
+    assert "Interrupted" in str(e.value) and "3 done" in str(e.value)
+    assert saved and saved[-1] == {"C0": "ok", "C1": "ok", "C2": "ok", "C3": None, "C4": None}
+    assert db["reels"]["C0"]["caption"] == "a tip"

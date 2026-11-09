@@ -18,6 +18,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - A full disk while saving `reels.json` or its backup no longer leaves half-written temporary files behind, and says the database was not changed.
 - `transcribe.py --shortcodes` names the codes that are not in the database instead of skipping them silently, and accepts spaces after commas and pasted Instagram or TikTok links.
 - `slides.py save` refuses an empty text instead of deleting the downloaded images; `--empty` marks posts whose images say nothing useful.
+- `fetch_meta.py` saves the captions it already read when you press Ctrl+C, instead of losing up to nine posts.
 
 ## [0.2.0] - 2026-11-08
 
