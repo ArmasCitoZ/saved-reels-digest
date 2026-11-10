@@ -163,3 +163,43 @@ def test_long_videos_are_skipped_only_with_a_known_duration():
     assert not transcribe.too_long({"duration": 1800}, 30)
     assert not transcribe.too_long({}, 30)  # no metadata yet: try it
     assert not transcribe.too_long({"duration": 3700}, 0)  # 0 turns the limit off
+
+
+# ------------------------------------------------------------- pasted YouTube links
+def test_youtube_links_in_every_common_form_give_the_video_id():
+    from common import shortcode_from_url, tiktok_id_from_url, youtube_id_from_url
+    for url in ("https://www.youtube.com/watch?v=aaaaaaaaaa1",
+                "https://youtube.com/watch?v=aaaaaaaaaa1&list=WL&index=3",
+                "https://www.youtube.com/watch?feature=shared&v=aaaaaaaaaa1",
+                "https://m.youtube.com/watch?v=aaaaaaaaaa1",
+                "https://music.youtube.com/watch?v=aaaaaaaaaa1",
+                "https://youtu.be/aaaaaaaaaa1?si=AbCdEf",
+                "https://www.youtube.com/shorts/aaaaaaaaaa1",
+                "https://www.youtube.com/embed/aaaaaaaaaa1",
+                "https://www.youtube.com/live/aaaaaaaaaa1?si=x"):
+        assert youtube_id_from_url(url) == "aaaaaaaaaa1", url
+        assert shortcode_from_url(url) is None and tiktok_id_from_url(url) is None, url
+    # a playlist link names no video, and a 12-character id is not a YouTube id
+    assert youtube_id_from_url("https://www.youtube.com/playlist?list=WL") is None
+    assert youtube_id_from_url("https://youtu.be/aaaaaaaaaa1x") is None
+    assert youtube_id_from_url("https://www.instagram.com/reel/aaaaaaaaaa1/") is None
+
+
+def test_db_set_and_transcribe_accept_pasted_youtube_links(tmp_path):
+    from common import resolve_code
+    reels = {"ytaaaaaaaaaa1": {"shortcode": "ytaaaaaaaaaa1"}}
+    assert resolve_code(reels, " https://youtu.be/aaaaaaaaaa1?si=x ") == "ytaaaaaaaaaa1"
+    assert resolve_code(reels, "https://www.youtube.com/watch?v=bbbbbbbbbb2") is None
+    todo, unknown = transcribe.pick_shortcodes(
+        reels, "https://www.youtube.com/shorts/aaaaaaaaaa1,https://youtu.be/bbbbbbbbbb2")
+    assert [r["shortcode"] for r in todo] == ["ytaaaaaaaaaa1"]
+    assert unknown == ["https://youtu.be/bbbbbbbbbb2"]
+
+    run(tmp_path, "youtube", str(FIXTURE))
+    r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), "set", "relevant", "true",
+                        "https://www.youtube.com/watch?v=aaaaaaaaaa1&list=WL"],
+                       env={**os.environ, "SRD_HOME": str(tmp_path), "PYTHONIOENCODING": "utf-8"},
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+    reels = json.loads((tmp_path / "reels.json").read_text(encoding="utf-8"))["reels"]
+    assert reels["ytaaaaaaaaaa1"]["relevant"] is True

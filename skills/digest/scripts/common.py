@@ -44,6 +44,13 @@ TIKTOK_PREFIX = "tt"
 
 YOUTUBE_PREFIX = "yt"
 
+# YouTube video links: youtube.com/watch?v=<id> (v= may come after other parameters),
+# youtu.be/<id>, /shorts/<id>, /embed/<id>, /live/<id>; on www., m. and music. as well
+YOUTUBE_RE = re.compile(
+    r"(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#\s]*&)?v=|shorts/|embed/|live/|v/)|youtu\.be/)"
+    r"([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])"
+)
+
 
 def ensure_home() -> Path:
     HOME.mkdir(parents=True, exist_ok=True)
@@ -57,6 +64,11 @@ def shortcode_from_url(url: str) -> str | None:
 
 def tiktok_id_from_url(url: str) -> str | None:
     m = TIKTOK_RE.search(url or "")
+    return m.group(1) if m else None
+
+
+def youtube_id_from_url(url: str) -> str | None:
+    m = YOUTUBE_RE.search(url or "")
     return m.group(1) if m else None
 
 
@@ -84,12 +96,14 @@ def canonical_url(shortcode: str) -> str:
 
 
 def resolve_code(reels: dict, name: str) -> str | None:
-    """Database key for a code or a pasted Instagram / TikTok link, or None if it is not saved."""
+    """Database key for a code or a pasted Instagram / TikTok / YouTube link, or None if it is not saved."""
     name = name.strip()
     if name in reels:
         return name
     tiktok_id = tiktok_id_from_url(name)
-    key = shortcode_from_url(name) or (tiktok_key(tiktok_id) if tiktok_id else None)
+    youtube_id = youtube_id_from_url(name)
+    key = (shortcode_from_url(name) or (tiktok_key(tiktok_id) if tiktok_id else None)
+           or (youtube_key(youtube_id) if youtube_id else None))
     return key if key in reels else None
 
 

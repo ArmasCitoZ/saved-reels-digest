@@ -20,6 +20,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `slides.py save` refuses an empty text instead of deleting the downloaded images; `--empty` marks posts whose images say nothing useful.
 - `fetch_meta.py` saves the captions it already read when you press Ctrl+C, instead of losing up to nine posts.
 - `db.py set` and `show` accept pasted Instagram or TikTok links, and fail with a clear message (changing nothing) when none of the codes are in the database.
+- Pasted YouTube links (`watch?v=`, `youtu.be`, Shorts, live and embed links) work in `db.py set`, `db.py show` and `transcribe.py --shortcodes`, like Instagram and TikTok links already did; before, saved YouTube videos could only be named by their internal `yt…` code.
 
 ## [0.2.0] - 2026-11-08
 

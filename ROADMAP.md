@@ -32,6 +32,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Exportador: ignorar los `##` y `###` que haya dentro de bloques de código
 - [x] `db.py similar`: que funcione con cualquier alfabeto (portugués, francés, cirílico...)
 - [x] `db.py recent`: no listar los posts borrados sin texto
+- [x] `db.py set`/`show` y `transcribe.py --shortcodes`: aceptar enlaces de YouTube pegados (`watch?v=`, `youtu.be`, Shorts)
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

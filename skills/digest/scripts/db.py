@@ -18,7 +18,7 @@ next, dump, similar and recent accept --collection NAME to work only on one Inst
 collection (as named in the official export, case-insensitive).
   db.py show CODE [CODE ...]                full record
 
-In set and show, a CODE can also be a pasted Instagram or TikTok link.
+In set and show, a CODE can also be a pasted Instagram, TikTok or YouTube link.
 """
 from __future__ import annotations
 

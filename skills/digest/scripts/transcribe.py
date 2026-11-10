@@ -92,7 +92,7 @@ def fetch_with_retry(fetcher, r: dict, folder: Path, waits=NETWORK_WAITS, sleep=
 def pick_shortcodes(reels: dict, spec: str) -> tuple[list[dict], list[str]]:
     """Reels named in --shortcodes, in order and once each, plus the names not in the database.
 
-    Spaces around commas are ignored, and pasted Instagram or TikTok links are accepted.
+    Spaces around commas are ignored, and pasted Instagram, TikTok or YouTube links are accepted.
     """
     todo, unknown, seen = [], [], set()
     for name in split_codes([spec]):
