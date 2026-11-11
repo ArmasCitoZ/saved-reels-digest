@@ -33,6 +33,8 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py similar`: que funcione con cualquier alfabeto (portugués, francés, cirílico...)
 - [x] `db.py recent`: no listar los posts borrados sin texto
 - [x] `db.py set`/`show` y `transcribe.py --shortcodes`: aceptar enlaces de YouTube pegados (`watch?v=`, `youtu.be`, Shorts)
+- [ ] `db.py check`: comparar `digest.md` con la base de datos (ideas sin reels, reels que apuntan a ideas que ya no están)
+- [ ] Usar `db.py check` en el paso 5 de la skill y documentarlo en el README
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
@@ -53,6 +55,8 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `slides.py save`: no borrar las imágenes descargadas si el texto llega vacío
 - [x] `fetch_meta.py`: guardar lo ya leído al pulsar Ctrl+C (ahora se pierden hasta 9 posts)
 - [x] `db.py set` y `show`: aceptar enlaces pegados y terminar con error si ningún código existe
+- [ ] `slides.py save`: aceptar enlaces pegados, como `db.py set`/`show` y `transcribe.py`
+- [ ] `db.py mark`: no guardar marcas cuando ningún slug existe (casi siempre es una errata)
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
