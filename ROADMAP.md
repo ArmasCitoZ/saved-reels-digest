@@ -34,7 +34,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py recent`: no listar los posts borrados sin texto
 - [x] `db.py set`/`show` y `transcribe.py --shortcodes`: aceptar enlaces de YouTube pegados (`watch?v=`, `youtu.be`, Shorts)
 - [x] `db.py check`: comparar `digest.md` con la base de datos (ideas sin reels, reels que apuntan a ideas que ya no están)
-- [ ] Usar `db.py check` en el paso 5 de la skill y documentarlo en el README
+- [x] Usar `db.py check` en el paso 5 de la skill y documentarlo en el README
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

@@ -180,11 +180,18 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    `**Status:** 🚫 Discarded: <note>` (keep the heading itself unchanged), and leave both
    kinds out of "Do these first". Never drop a discarded entry: new reels about it still merge
    into it, so the user is not pitched the same idea again.
+8. Before telling the user it is done, run `PY SCRIPTS/db.py check`. It compares
+   `digest.md` with the database and lists what does not match: ideas no reel points to
+   (run `db.py set entry` for their sources), reels pointing to an idea that was renamed or
+   dropped (point them to the idea they now belong to), repeated `{#slug}`s, `(#slug)` links
+   that go nowhere and relevant reels not merged yet. Fix each one and run it again until it
+   says they agree; otherwise the next run merges new reels into the wrong ideas.
 
 When the user says they tried an idea or it is not for them ("ya probé lo de los
 subagentes", "eso no me sirve"), record it right away:
 `PY SCRIPTS/db.py mark tried <slug> --note "worked for refactors"` (or `discarded`;
-`todo` clears the mark) and update the entry in `digest.md`.
+`todo` clears the mark) and update the entry in `digest.md`. Only slugs some reel points to
+can be marked; if it says nothing was marked, pick the right slug from the list it prints.
 
 ## Optional: export to Obsidian
 
