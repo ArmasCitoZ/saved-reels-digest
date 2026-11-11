@@ -13,6 +13,9 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks                               every idea marked tried or discarded
+  db.py check [--digest PATH]               compare digest.md with the database: ideas no reel
+                                            points to, reels pointing to ideas that are gone,
+                                            repeated slugs and broken (#slug) links
 
 next, dump, similar and recent accept --collection NAME to work only on one Instagram
 collection (as named in the official export, case-insensitive).
@@ -34,7 +37,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import DB_PATH, in_collection, load_db, resolve_code, save_db, split_codes  # noqa: E402
+from common import DB_PATH, HOME, in_collection, load_db, resolve_code, save_db, split_codes  # noqa: E402
 
 
 # ~15k tokens: a page of dump output Claude can read in one go without flooding its context
@@ -373,6 +376,59 @@ def cmd_marks(_):
               + (f"  {e['note']}" if e.get("note") else ""))
 
 
+def check_digest(db: dict, digest_text: str) -> list[str]:
+    """Problems between digest.md and reels.json, as lines to print. Empty when they agree."""
+    from export_digest import ANCHOR_LINK_RE, parse_digest
+
+    ideas = parse_digest(digest_text)["ideas"]
+    slugs = Counter(i["slug"] for i in ideas)
+    linked = {}
+    for r in db["reels"].values():
+        if r.get("entry"):
+            linked.setdefault(r["entry"], []).append(r["shortcode"])
+    problems = []
+    for slug, n in sorted(slugs.items()):
+        if n > 1:
+            problems.append(f"{n} ideas share the slug {{#{slug}}}: give each its own, "
+                            "or their links and reels get mixed up.")
+    for slug in sorted(set(linked) - set(slugs)):
+        codes = linked[slug]
+        problems.append(f"{len(codes)} reels point to {slug!r}, which is not in the digest "
+                        f"(renamed or lost while merging?): {', '.join(codes[:8])}"
+                        + (" ..." if len(codes) > 8 else ""))
+    for slug in sorted(set(slugs) - set(linked)):
+        problems.append(f"No reel points to {{#{slug}}}: record its sources with "
+                        f"db.py set entry {slug} CODE ...")
+    for slug in sorted(set(ANCHOR_LINK_RE.findall(digest_text)) - set(slugs)):
+        problems.append(f"A link goes to (#{slug}), but no idea has that slug.")
+    for slug in sorted(set(db.get("entries") or {}) - set(slugs)):
+        problems.append(f"{slug!r} is marked {db['entries'][slug].get('status', '?')} "
+                        "but is not in the digest.")
+    return problems
+
+
+def cmd_check(a):
+    path = Path(a.digest).expanduser()
+    if not path.exists():
+        sys.exit(f"Not found: {path}. Write the digest first (step 5).")
+    from export_digest import parse_digest
+
+    text = path.read_text("utf-8")
+    db = load_db()
+    ideas = len({i["slug"] for i in parse_digest(text)["ideas"]})
+    problems = check_digest(db, text)
+    waiting = sum(1 for r in db["reels"].values()
+                  if r.get("relevant") is True and not r.get("entry") and _has_content(r))
+    if waiting:
+        problems.append(f"{waiting} relevant reels are not in any idea yet: db.py dump --undigested")
+    if not problems:
+        print(f"digest.md and the database agree ({ideas} ideas).")
+        return
+    print(f"{len(problems)} things to fix in {path.name} ({ideas} ideas):")
+    for p in problems:
+        print(f"- {p}")
+
+
 def cmd_show(a):
     reels = load_db()["reels"]
     found = 0
@@ -413,6 +469,8 @@ def main() -> None:
     p.add_argument("slugs", nargs="+"); p.add_argument("--note", help="why, in a few words")
     p.set_defaults(fn=cmd_mark)
     sub.add_parser("marks").set_defaults(fn=cmd_marks)
+    p = sub.add_parser("check"); p.add_argument("--digest", default=str(HOME / "digest.md"))
+    p.set_defaults(fn=cmd_check)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
     for name in ("next", "dump", "similar", "recent"):
         sub.choices[name].add_argument("--collection", help="only reels from this Instagram collection")

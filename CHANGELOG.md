@@ -5,6 +5,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `db.py check` compares `digest.md` with the database: ideas no reel points to, reels pointing to ideas that were renamed or lost while merging, repeated slugs, `(#slug)` links that go nowhere, marks for ideas no longer in the digest and relevant reels still waiting.
+
 ### Fixed
 - `fetch_meta.py` stops after 5 posts in a row look deleted or private, instead of marking a throttled session's whole list as gone.
 - `collect.py live` keeps what it read and explains why when Instagram or the connection cuts the read short, instead of a traceback.
