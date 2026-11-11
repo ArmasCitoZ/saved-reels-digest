@@ -9,6 +9,8 @@
   slides.py save CODE --empty                  the images say nothing useful: delete them
   slides.py clean                              delete every downloaded image
 
+In save, CODE can also be the post's pasted Instagram link.
+
 Works on posts marked relevant or "maybe" that fetch_meta.py found have no video.
 Images stay in WORK/.slides only until their text is saved. Instagram only, and
 paced like everything else: it stops at the first sign of rate limiting.
@@ -21,7 +23,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import HOME, in_collection, load_db, log, save_db  # noqa: E402
+from common import HOME, in_collection, load_db, log, resolve_code, save_db  # noqa: E402
 from ig import Blocked, Fetcher, NetworkError, Unavailable  # noqa: E402
 
 SLIDES_DIR = HOME / ".slides"
@@ -104,9 +106,10 @@ def cmd_fetch(a) -> None:
 
 def cmd_save(a) -> None:
     db = load_db()
-    r = db["reels"].get(a.code)
-    if r is None:
-        sys.exit(f"Unknown post: {a.code}")
+    code = resolve_code(db["reels"], a.code)
+    if code is None:
+        sys.exit(f"Unknown post: {a.code}. Nothing was saved and no images were deleted.")
+    r = db["reels"][code]
     if a.empty:
         if a.text and a.text.strip():
             sys.exit("Pass either a text or --empty, not both.")
@@ -115,14 +118,15 @@ def cmd_save(a) -> None:
         text = (sys.stdin.read() if a.text is None else a.text).strip()
         if not text:
             # Usually a broken pipe or a heredoc that went wrong; deleting the images would lose them.
-            sys.exit(f"No text received for {a.code}, so nothing was saved and its images are kept. "
-                     "If they say nothing useful, run: slides.py save " + a.code + " --empty")
+            sys.exit(f"No text received for {code}, so nothing was saved and its images are kept. "
+                     "If they say nothing useful, run: slides.py save " + code + " --empty")
     r["slides_text"] = text
     r.pop("slides", None)
     r.pop("slides_error", None)
     save_db(db)
-    shutil.rmtree(SLIDES_DIR / a.code, ignore_errors=True)
-    print(f"Saved {len(r['slides_text'])} characters for {a.code} and deleted its images.")
+    # the folder is named after the code, never the pasted link
+    shutil.rmtree(SLIDES_DIR / code, ignore_errors=True)
+    print(f"Saved {len(r['slides_text'])} characters for {code} and deleted its images.")
 
 
 def cmd_clean(_) -> None:

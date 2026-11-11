@@ -172,6 +172,22 @@ def test_text_and_empty_flag_together_are_refused(tmp_path):
     assert folder.exists()
 
 
+@pytest.mark.parametrize("link", ["https://www.instagram.com/p/AAAAA1/?img_index=2",
+                                  " https://instagram.com/ana/reel/AAAAA1 "])
+def test_save_accepts_a_pasted_link(tmp_path, link):
+    folder = post_with_images(tmp_path)
+    assert "for AAAAA1" in run(tmp_path, "save", link, "hola")
+    assert load(tmp_path)["AAAAA1"]["slides_text"] == "hola"
+    assert not folder.exists()
+
+
+def test_save_unknown_post_changes_nothing(tmp_path):
+    folder = post_with_images(tmp_path)
+    err = run_failing(tmp_path, "save", "https://www.instagram.com/p/ZZZZZ9/", "hola")
+    assert "Unknown post" in err and "no images were deleted" in err
+    assert folder.exists() and "slides_text" not in load(tmp_path)["AAAAA1"]
+
+
 def test_download_images_handles_carousels_and_cleans_up(tmp_path, monkeypatch):
     nodes = [SimpleNamespace(is_video=False, display_url="u1"),
              SimpleNamespace(is_video=True, display_url="v"),

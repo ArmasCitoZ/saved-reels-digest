@@ -55,7 +55,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `slides.py save`: no borrar las imágenes descargadas si el texto llega vacío
 - [x] `fetch_meta.py`: guardar lo ya leído al pulsar Ctrl+C (ahora se pierden hasta 9 posts)
 - [x] `db.py set` y `show`: aceptar enlaces pegados y terminar con error si ningún código existe
-- [ ] `slides.py save`: aceptar enlaces pegados, como `db.py set`/`show` y `transcribe.py`
+- [x] `slides.py save`: aceptar enlaces pegados, como `db.py set`/`show` y `transcribe.py`
 - [ ] `db.py mark`: no guardar marcas cuando ningún slug existe (casi siempre es una errata)
 
 ## Comunidad
