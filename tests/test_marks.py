@@ -1,7 +1,19 @@
 """Marking digest ideas as tried / discarded (db.py mark / marks)."""
 import json
 
-from test_db import make_db, reel, run
+import os
+import subprocess
+import sys
+
+from test_db import SCRIPTS, make_db, reel, run
+
+
+def run_failing(home, *args):
+    env = {**os.environ, "SRD_HOME": str(home), "PYTHONIOENCODING": "utf-8"}
+    r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), *args], env=env,
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode != 0
+    return r.stderr
 
 
 def entries(home):
@@ -24,14 +36,34 @@ def test_mark_records_status_and_note_and_keeps_reels(tmp_path):
     assert '"entry": "subagents"' in run(tmp_path, "show", "AAAAA1")
 
 
-def test_mark_todo_clears_and_unknown_slug_warns(tmp_path):
+def test_mark_todo_clears_and_unknown_slug_is_skipped(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
     run(tmp_path, "mark", "tried", "subagents")
     run(tmp_path, "mark", "todo", "subagents")
     assert entries(tmp_path) == {}
-    out = run(tmp_path, "mark", "discarded", "sub-agents")
-    assert "Not linked to any reel yet (typo?): sub-agents" in out
-    assert entries(tmp_path)["sub-agents"]["status"] == "discarded"
+    out = run(tmp_path, "mark", "discarded", "subagents", "sub-agents")
+    assert "Marked 1 entries" in out and "not linked to any reel (typo?): sub-agents" in out
+    assert list(entries(tmp_path)) == ["subagents"]
+
+
+def test_mark_with_only_unknown_slugs_changes_nothing(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    r = run_failing(tmp_path, "mark", "tried", "sub-agents")
+    assert "nothing was marked" in r and "sub-agents" in r and "Known ideas: subagents" in r
+    assert entries(tmp_path) == {}
+
+
+def test_mark_with_no_entries_yet_explains_the_order(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True))
+    assert "db.py set entry" in run_failing(tmp_path, "mark", "tried", "subagents")
+
+
+def test_todo_clears_a_mark_whose_reels_moved_to_another_idea(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    run(tmp_path, "mark", "tried", "subagents")
+    run(tmp_path, "set", "entry", "agents", "AAAAA1")
+    run(tmp_path, "mark", "todo", "subagents")
+    assert entries(tmp_path) == {}
 
 
 def test_marks_when_empty(tmp_path):

@@ -22,6 +22,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `db.py set` and `show` accept pasted Instagram or TikTok links, and fail with a clear message (changing nothing) when none of the codes are in the database.
 - Pasted YouTube links (`watch?v=`, `youtu.be`, Shorts, live and embed links) work in `db.py set`, `db.py show` and `transcribe.py --shortcodes`, like Instagram and TikTok links already did; before, saved YouTube videos could only be named by their internal `yt…` code.
 - `slides.py save` accepts the post's pasted Instagram link, like `db.py set`/`show` and `transcribe.py`; an unknown post says that nothing was saved and no images were deleted.
+- `db.py mark` only marks ideas that some reel points to: a mistyped slug is skipped and named, and when none of the slugs exist nothing is saved and the known ideas are listed. Before, typos were stored as marks the digest never showed.
 
 ## [0.2.0] - 2026-11-08
 

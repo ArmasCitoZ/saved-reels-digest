@@ -337,11 +337,20 @@ MARKS = ("tried", "discarded", "todo")  # todo = clear the mark
 def cmd_mark(a):
     db = load_db()
     entries = db.setdefault("entries", {})
+    # an idea exists when a reel points to it; a slug only in "entries" can still be cleared
     known = {r.get("entry") for r in db["reels"].values() if r.get("entry")}
-    unknown = []
-    for slug in a.slugs:
-        if slug not in known:
-            unknown.append(slug)
+    if a.status == "todo":
+        known |= set(entries)
+    slugs = list(dict.fromkeys(a.slugs))
+    unknown = [s for s in slugs if s not in known]
+    slugs = [s for s in slugs if s in known]
+    if not slugs:
+        hint = sorted(known)
+        sys.exit("None of these ideas are linked to any reel, so nothing was marked (typo?): "
+                 f"{', '.join(unknown)}. "
+                 + (f"Known ideas: {', '.join(hint[:15])}" + (" ..." if len(hint) > 15 else "")
+                    if hint else "No reel has an entry yet: run db.py set entry SLUG CODE ... first."))
+    for slug in slugs:
         if a.status == "todo":
             entries.pop(slug, None)
             continue
@@ -350,8 +359,8 @@ def cmd_mark(a):
             e["note"] = a.note
         entries[slug] = e
     save_db(db)
-    print(f"Marked {len(a.slugs)} entries as {a.status}."
-          + (f" Not linked to any reel yet (typo?): {', '.join(unknown)}" if unknown else ""))
+    print(f"Marked {len(slugs)} entries as {a.status}."
+          + (f" Skipped, not linked to any reel (typo?): {', '.join(unknown)}" if unknown else ""))
 
 
 def cmd_marks(_):
