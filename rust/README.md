@@ -10,10 +10,29 @@ groups. If they ever disagree, Python is right and the Rust side has a bug.
 | Crate | What it is |
 |---|---|
 | `reels-core` | Library: `find_similar(docs, threshold, ngram_threshold)` returns the duplicate groups and the cross-language pairs |
+| `reels-similar` | Command line tool: reads `reels.json` and prints the groups as JSON |
 
 Nothing here is needed to use the plugin; it is an optional speed-up.
 
 ```bash
 cd rust
 cargo test
+cargo build --release   # the binary ends up in target/release/reels-similar
 ```
+
+## reels-similar
+
+```text
+reels-similar [PATH | -] [--threshold 0.3] [--ngram-threshold 0.1] [--collection NAME]
+```
+
+`PATH` defaults to the database db.py uses (`$SRD_HOME/reels.json`, or
+`~/saved-reels-digest/reels.json`); `-` reads the same format from standard input. Options mean
+the same as in `db.py similar`. Only reels marked relevant and with some text are compared.
+
+```json
+{"reels": 4, "groups": [["AAA", "BBB"]], "cross": [["AAA", "ESP"], ["BBB", "ESP"]]}
+```
+
+`groups` are reels with the same wording, biggest group first; `cross` are pairs in different
+languages with similar spellings. Exit code 1 means the database could not be read, 2 a bad option.

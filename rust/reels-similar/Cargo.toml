@@ -1,0 +1,12 @@
+[package]
+name = "reels-similar"
+version = "0.1.0"
+description = "Reads reels.json and prints the groups of reels that say the same thing, as JSON"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+reels-core = { path = "../reels-core" }
+# preserve_order: keep reels in file order, like Python's json.load, so groups come out the same
+serde_json = { version = "1", features = ["preserve_order"] }
