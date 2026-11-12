@@ -74,7 +74,7 @@ Cada lenguaje entra donde aporta algo concreto; Python sigue siendo la base.
 - [x] Crate `reels-core` en `rust/` que calcula los grupos de duplicados (misma lógica TF-IDF que `db.py similar`), con tests en Rust
 - [x] Binario `reels-similar` que lee `reels.json` y devuelve los grupos en JSON
 - [x] `db.py similar` usa el binario de Rust si está instalado y si no, el Python actual; un test comprueba que ambos dan el mismo resultado
-- [ ] Benchmark Python vs Rust con 2.000 reels sintéticos en `docs/benchmarks.md`
+- [x] Benchmark Python vs Rust con 2.000 reels sintéticos en `docs/benchmarks.md`
 - [ ] CI: compilar y testear el crate en Linux, macOS y Windows, y adjuntar los binarios a cada release
 
 ### TypeScript: visor del digest

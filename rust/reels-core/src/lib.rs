@@ -11,6 +11,8 @@
 //! Python stays the reference: when the two disagree, Python is right and this is a bug.
 
 use std::collections::HashMap;
+use std::hash::{BuildHasherDefault, Hasher};
+use std::thread;
 
 use unicode_general_category::{get_general_category, GeneralCategory as Gc};
 use unicode_normalization::{char::canonical_combining_class, UnicodeNormalization};
@@ -168,14 +170,38 @@ pub fn language(doc: &Doc) -> Option<String> {
     }
 }
 
+/// Multiply-rotate hash for term ids (the FxHash idea): far cheaper than the default SipHash,
+/// and the lookups in `cosine` are where all the time goes.
+#[derive(Default)]
+struct IdHasher(u64);
+
+impl Hasher for IdHasher {
+    fn write(&mut self, bytes: &[u8]) {
+        for &b in bytes {
+            self.write_u64(b as u64);
+        }
+    }
+    fn write_u32(&mut self, n: u32) {
+        self.write_u64(n as u64);
+    }
+    fn write_u64(&mut self, n: u64) {
+        self.0 = (self.0.rotate_left(5) ^ n).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95);
+    }
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+
+type IdMap<V> = HashMap<u32, V, BuildHasherDefault<IdHasher>>;
+
 /// A unit-length TF-IDF vector. `order` keeps Python's dict order so sums add up identically.
 struct Vector {
     order: Vec<(u32, f64)>,
-    lookup: HashMap<u32, f64>,
+    lookup: IdMap<f64>,
 }
 
 fn tfidf(docs: &[Counts]) -> Vec<Vector> {
-    let mut ids: HashMap<&str, u32> = HashMap::new();
+    let mut ids: HashMap<&str, u32> = HashMap::new(); // strings: keep the default hasher
     let mut df: Vec<u32> = Vec::new();
     let docs_ids: Vec<Vec<(u32, u32)>> = docs
         .iter()
@@ -226,6 +252,39 @@ fn cosine(a: &Vector, b: &Vector) -> f64 {
     })
 }
 
+/// Every pair (i, j), i < j, for which `keep(i, j)` holds, in the same order as two nested
+/// loops would give. Rows are shared out between threads; only the comparisons run in parallel.
+fn pairs<F>(n: usize, keep: F) -> Vec<(usize, usize)>
+where
+    F: Fn(usize, usize) -> bool + Sync,
+{
+    let workers = thread::available_parallelism()
+        .map_or(1, |p| p.get())
+        .min(n.max(1));
+    let mut rows: Vec<(usize, Vec<usize>)> = thread::scope(|s| {
+        let handles: Vec<_> = (0..workers)
+            .map(|w| {
+                let keep = &keep;
+                // row i has n-i-1 comparisons: dealing rows round-robin keeps the work even
+                s.spawn(move || {
+                    (w..n)
+                        .step_by(workers)
+                        .map(|i| (i, (i + 1..n).filter(|&j| keep(i, j)).collect()))
+                        .collect::<Vec<(usize, Vec<usize>)>>()
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .flat_map(|h| h.join().unwrap())
+            .collect()
+    });
+    rows.sort_unstable_by_key(|(i, _)| *i);
+    rows.into_iter()
+        .flat_map(|(i, js)| js.into_iter().map(move |j| (i, j)))
+        .collect()
+}
+
 fn find(parent: &mut [usize], mut i: usize) -> usize {
     while parent[i] != i {
         parent[i] = parent[parent[i]];
@@ -247,13 +306,10 @@ pub fn find_similar(docs: &[Doc], threshold: f64, ngram_threshold: f64) -> Simil
     );
     let n = docs.len();
     let mut parent: Vec<usize> = (0..n).collect();
-    for i in 0..n {
-        for j in i + 1..n {
-            if cosine(&vecs[i], &vecs[j]) >= threshold {
-                let (ri, rj) = (find(&mut parent, i), find(&mut parent, j));
-                parent[ri] = rj;
-            }
-        }
+    // Which reels end up together depends only on the pairs, not on the order they are joined.
+    for (i, j) in pairs(n, |i, j| cosine(&vecs[i], &vecs[j]) >= threshold) {
+        let (ri, rj) = (find(&mut parent, i), find(&mut parent, j));
+        parent[ri] = rj;
     }
     let mut roots: Vec<usize> = Vec::new();
     let mut members: HashMap<usize, Vec<usize>> = HashMap::new();
@@ -276,18 +332,13 @@ pub fn find_similar(docs: &[Doc], threshold: f64, ngram_threshold: f64) -> Simil
     if ngram_threshold != 0.0 {
         let langs: Vec<Option<String>> = docs.iter().map(language).collect();
         let grams = tfidf(&toks.iter().map(|t| char_ngrams(t)).collect::<Vec<_>>());
-        for i in 0..n {
-            for j in i + 1..n {
-                if let (Some(li), Some(lj)) = (&langs[i], &langs[j]) {
-                    if li != lj
-                        && find(&mut parent, i) != find(&mut parent, j)
-                        && cosine(&grams[i], &grams[j]) >= ngram_threshold
-                    {
-                        cross.push((i, j));
-                    }
-                }
+        let root: Vec<usize> = (0..n).map(|i| find(&mut parent, i)).collect();
+        cross = pairs(n, |i, j| match (&langs[i], &langs[j]) {
+            (Some(li), Some(lj)) => {
+                li != lj && root[i] != root[j] && cosine(&grams[i], &grams[j]) >= ngram_threshold
             }
-        }
+            _ => false,
+        });
     }
     Similar { groups, cross }
 }

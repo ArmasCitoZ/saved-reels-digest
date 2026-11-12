@@ -17,6 +17,8 @@ Nothing here is needed to use the plugin; it is an optional speed-up. `db.py sim
 back to Python if it is missing or fails. `--engine python` or `--engine rust` picks one.
 `tests/test_similar_rust.py` runs both on made-up collections and checks the output is identical.
 
+How much faster it is: [docs/benchmarks.md](../docs/benchmarks.md) (about 24x with 2,000 reels).
+
 ```bash
 cd rust
 cargo test
