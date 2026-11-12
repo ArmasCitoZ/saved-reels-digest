@@ -8,7 +8,8 @@
   db.py dump [--undigested] [--all]         relevant reels with caption + transcript, for merging
             [--max-total 60000] [--offset N]   output is capped; continue with --offset
   db.py similar [--threshold 0.3]           groups of reels that probably say the same thing,
-            [--ngram-threshold 0.1]            also across languages (by similar spellings)
+            [--ngram-threshold 0.1]            also across languages (by similar spellings);
+            [--engine auto|python|rust]        uses the Rust reels-similar if installed (faster)
   db.py recent [--days 7]                   relevant reels saved lately and their digest entry
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
@@ -28,7 +29,10 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import re
+import shutil
+import subprocess
 import sys
 import time
 import unicodedata
@@ -268,9 +272,33 @@ def _language(r: dict) -> str | None:
     return None if en == es else ("en" if en > es else "es")
 
 
-def cmd_similar(a):
-    rs = [r for r in load_db()["reels"].values()
-          if r.get("relevant") is True and _full_text(r) and in_collection(r, a.collection)]
+RUST_ENV = "SRD_REELS_SIMILAR"
+
+
+def _rust_binary() -> str | None:
+    """The optional Rust duplicate finder (rust/ in the repo): $SRD_REELS_SIMILAR, else on PATH."""
+    path = os.environ.get(RUST_ENV)
+    if path is not None:
+        return path if path and Path(path).is_file() else None
+    return shutil.which("reels-similar")
+
+
+def _similar_rust(binary: str, rs: list, a) -> tuple:
+    """Run reels-similar on these reels; indexes are used as codes so the answer maps back."""
+    reels = {str(i): {"shortcode": str(i), "relevant": True, "caption": _full_text(r),
+                      "lang": r["lang"] if isinstance(r.get("lang"), str) else None}
+             for i, r in enumerate(rs)}
+    out = subprocess.run([binary, "-", "--threshold", str(a.threshold),
+                          "--ngram-threshold", str(a.ngram_threshold)],
+                         input=json.dumps({"reels": reels}), capture_output=True, text=True,
+                         encoding="utf-8", timeout=600)
+    if out.returncode:
+        raise RuntimeError(out.stderr.strip() or f"exit code {out.returncode}")
+    res = json.loads(out.stdout)
+    return ([[int(c) for c in g] for g in res["groups"]], [(int(i), int(j)) for i, j in res["cross"]])
+
+
+def _similar_python(rs: list, a) -> tuple:
     tokens = [_tokens(_full_text(r)) for r in rs]
     vecs = _tfidf([Counter(t) for t in tokens])
     n = len(rs)
@@ -289,10 +317,7 @@ def cmd_similar(a):
     groups = {}
     for i in range(n):
         groups.setdefault(find(i), []).append(i)
-    groups = [g for g in groups.values() if len(g) > 1]
-
-    def label(i):
-        return f"{rs[i]['shortcode']} @{rs[i].get('author') or '?'}: {_short(_full_text(rs[i]), 60)}"
+    groups = sorted((g for g in groups.values() if len(g) > 1), key=len, reverse=True)
 
     # Second pass, only between reels in different languages: there, shared words are rare.
     cross = []
@@ -304,12 +329,36 @@ def cmd_similar(a):
                 if (langs[i] and langs[j] and langs[i] != langs[j] and find(i) != find(j)
                         and _cosine(grams[i], grams[j]) >= a.ngram_threshold):
                     cross.append((i, j))
+    return groups, cross
+
+
+def cmd_similar(a):
+    rs = [r for r in load_db()["reels"].values()
+          if r.get("relevant") is True and _full_text(r) and in_collection(r, a.collection)]
+    binary = _rust_binary() if a.engine != "python" else None
+    if a.engine == "rust" and not binary:
+        sys.exit(f"reels-similar not found: build it in rust/ (cargo build --release) and put it on "
+                 f"PATH, or set {RUST_ENV} to its path.")
+    groups = None
+    if binary:
+        try:
+            groups, cross = _similar_rust(binary, rs, a)
+        except (OSError, ValueError, KeyError, TypeError, RuntimeError, subprocess.TimeoutExpired) as e:
+            if a.engine == "rust":
+                sys.exit(f"reels-similar failed: {e}")
+            print(f"reels-similar failed ({e}); using the Python version.", file=sys.stderr)
+    if groups is None:
+        groups, cross = _similar_python(rs, a)
+
+    def label(i):
+        return f"{rs[i]['shortcode']} @{rs[i].get('author') or '?'}: {_short(_full_text(rs[i]), 60)}"
+
     if not groups and not cross:
         print("No obvious duplicates by wording. Still compare meaning when merging.")
         return
     if groups:
         print(f"{len(groups)} candidate groups (same wording; confirm by meaning):")
-        for g in sorted(groups, key=len, reverse=True):
+        for g in groups:
             print("- " + " | ".join(label(i) for i in g))
     if cross:
         print(f"{len(cross)} possible matches across languages (similar spellings; confirm by meaning):")
@@ -461,6 +510,8 @@ def main() -> None:
     p = sub.add_parser("similar"); p.add_argument("--threshold", type=float, default=0.3)
     p.add_argument("--ngram-threshold", type=float, default=0.1,
                    help="for reels in different languages (0 = skip that pass)")
+    p.add_argument("--engine", choices=("auto", "python", "rust"), default="auto",
+                   help="auto uses the faster Rust reels-similar when it is installed")
     p.set_defaults(fn=cmd_similar)
     p = sub.add_parser("recent"); p.add_argument("--days", type=int, default=7)
     p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests

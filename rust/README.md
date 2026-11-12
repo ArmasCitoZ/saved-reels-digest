@@ -12,7 +12,10 @@ groups. If they ever disagree, Python is right and the Rust side has a bug.
 | `reels-core` | Library: `find_similar(docs, threshold, ngram_threshold)` returns the duplicate groups and the cross-language pairs |
 | `reels-similar` | Command line tool: reads `reels.json` and prints the groups as JSON |
 
-Nothing here is needed to use the plugin; it is an optional speed-up.
+Nothing here is needed to use the plugin; it is an optional speed-up. `db.py similar` uses
+`reels-similar` on its own when it finds it (in `$SRD_REELS_SIMILAR`, or on `PATH`), and falls
+back to Python if it is missing or fails. `--engine python` or `--engine rust` picks one.
+`tests/test_similar_rust.py` runs both on made-up collections and checks the output is identical.
 
 ```bash
 cd rust
