@@ -64,3 +64,25 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [ ] Publicar la primera versión con novedades (v0.2.0)
 - [x] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
 - [x] GIF de demo en el README
+
+## Fase 2: más allá de Python
+
+Cada lenguaje entra donde aporta algo concreto; Python sigue siendo la base.
+
+### Rust: motor de duplicados rápido
+`db.py similar` compara cada reel con todos los demás (n²). Con 2.000+ reels eso tarda; en Rust es casi instantáneo.
+- [ ] Crate `reels-core` en `rust/` que calcula los grupos de duplicados (misma lógica TF-IDF que `db.py similar`), con tests en Rust
+- [ ] Binario `reels-similar` que lee `reels.json` y devuelve los grupos en JSON
+- [ ] `db.py similar` usa el binario de Rust si está instalado y si no, el Python actual; un test comprueba que ambos dan el mismo resultado
+- [ ] Benchmark Python vs Rust con 2.000 reels sintéticos en `docs/benchmarks.md`
+- [ ] CI: compilar y testear el crate en Linux, macOS y Windows, y adjuntar los binarios a cada release
+
+### TypeScript: visor del digest
+Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usable.
+- [ ] `viewer/`: página estática en TypeScript (sin servidor) que abre `reels.json` + `digest.md` y permite buscar y filtrar por categoría
+- [ ] Marcar ideas como probadas / descartadas desde el visor y exportar los cambios para `db.py`
+- [ ] Tests con Vitest y build del visor en CI
+- [ ] Publicar el visor en GitHub Pages con los datos de `examples/`
+
+### PowerShell: instalación en Windows
+- [ ] `install.ps1`: instalación en un comando (comprueba Python, crea el entorno y explica cómo añadir el plugin)
