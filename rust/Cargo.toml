@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = ["reels-core"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/ArmasCitoZ/saved-reels-digest"
+
+[profile.release]
+lto = true
+codegen-units = 1

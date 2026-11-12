@@ -8,3 +8,4 @@ digest.md
 !examples/digest.md
 .session/
 .pytest_cache/
+rust/target/
