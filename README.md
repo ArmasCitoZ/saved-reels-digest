@@ -146,6 +146,8 @@ ruff check .
 
 ¿Tienes miles de reels? `db.py similar` compara cada uno con todos los demás y con 2.000+ tarda. Hay una versión en Rust opcional que da exactamente los mismos grupos mucho más rápido (con 2.000 reels, de un minuto a 2,5 segundos: ver [benchmarks](docs/benchmarks.md)): a partir de la próxima versión puedes descargar el binario ya compilado para Linux, macOS o Windows desde la página de [releases](https://github.com/ArmasCitoZ/saved-reels-digest/releases), renombrarlo a `reels-similar` (`reels-similar.exe` en Windows) y ponerlo en tu PATH (o su ruta en la variable `SRD_REELS_SIMILAR`); o compilarlo tú con `cd rust && cargo build --release` (queda en `rust/target/release/`). `db.py similar` la usa sola si la encuentra; con `--engine python` fuerzas la de siempre. Más detalles en [rust/README.md](rust/README.md).
 
+¿Tu `digest.md` ya es largo? En `viewer/` hay un visor local en TypeScript: `cd viewer && npm install && npm run build` y abre `viewer/dist/index.html` en el navegador. Cargas `digest.md` (y, si quieres, `reels.json` para ver de qué reels sale cada idea y lo que marcaste con `db.py mark`) y puedes buscar sin importar tildes ni mayúsculas y filtrar por categoría o estado. No hay servidor y no se sube nada. Detalles en [viewer/README.md](viewer/README.md).
+
 Se aceptan PRs: lee antes [CONTRIBUTING.md](CONTRIBUTING.md) (principios del proyecto y cómo probar). Ideas pendientes en el [ROADMAP](ROADMAP.md).
 
 ---

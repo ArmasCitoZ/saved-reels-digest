@@ -79,7 +79,7 @@ Cada lenguaje entra donde aporta algo concreto; Python sigue siendo la base.
 
 ### TypeScript: visor del digest
 Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usable.
-- [ ] `viewer/`: página estática en TypeScript (sin servidor) que abre `reels.json` + `digest.md` y permite buscar y filtrar por categoría
+- [x] `viewer/`: página estática en TypeScript (sin servidor) que abre `reels.json` + `digest.md` y permite buscar y filtrar por categoría
 - [ ] Marcar ideas como probadas / descartadas desde el visor y exportar los cambios para `db.py`
 - [ ] Tests con Vitest y build del visor en CI
 - [ ] Publicar el visor en GitHub Pages con los datos de `examples/`

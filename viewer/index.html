@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visor del digest</title>
+<style>
+  :root { --bg: #fafaf8; --fg: #1d1d1b; --muted: #6b6b66; --card: #fff; --line: #e3e2dc;
+          --accent: #3b5bdb; --tried: #2b8a3e; --discarded: #a61e4d; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161615; --fg: #ecebe6; --muted: #9a9993; --card: #1f1f1d; --line: #33322f;
+            --accent: #91a7ff; --tried: #69db7c; --discarded: #f783ac; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, sans-serif; }
+  main { max-width: 52rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+  a { color: var(--accent); }
+  .muted, #date, #count { color: var(--muted); font-size: .9rem; }
+  .open { border: 2px dashed var(--line); border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+  .loaded .open { padding: .5rem 1rem; }
+  .loaded .open p { display: none; }
+  #error { color: var(--discarded); }
+  .controls { display: none; gap: .5rem; flex-wrap: wrap; position: sticky; top: 0; padding: .75rem 0;
+              background: var(--bg); border-bottom: 1px solid var(--line); z-index: 1; }
+  .loaded .controls { display: flex; }
+  .controls input, .controls select { font: inherit; padding: .45rem .6rem; border-radius: 8px;
+              border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  .controls input { flex: 1 1 14rem; }
+  .idea { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+          padding: 1rem 1.25rem; margin: 1rem 0; }
+  .idea h3 { margin: 0 0 .35rem; font-size: 1.15rem; }
+  .tag, .badge { font-size: .8rem; border-radius: 999px; padding: .1rem .55rem; border: 1px solid var(--line); }
+  .status-tried .badge { color: var(--tried); border-color: currentColor; }
+  .status-discarded { opacity: .75; }
+  .status-discarded .badge { color: var(--discarded); border-color: currentColor; }
+  pre { overflow-x: auto; background: var(--bg); padding: .75rem; border-radius: 8px; }
+  code { font-size: .9em; }
+  details summary { cursor: pointer; color: var(--muted); }
+  .reels { columns: 2 14rem; }
+  .empty { color: var(--muted); text-align: center; padding: 2rem 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Visor del digest</h1>
+  <div id="date"></div>
+  <section class="open">
+    <p>Abre tu <code>digest.md</code> y, si quieres ver de qué reels sale cada idea y lo que marcaste con
+      <code>db.py mark</code>, también <code>reels.json</code> (los dos están en <code>~/saved-reels-digest/</code>).
+      También puedes arrastrarlos aquí. Todo se lee en tu navegador: no se sube nada.</p>
+    <input id="files" type="file" accept=".md,.markdown,.json,text/markdown,application/json" multiple>
+    <div id="error" role="alert"></div>
+  </section>
+  <div class="controls">
+    <input id="q" type="search" placeholder="Buscar ideas, texto o autores ( / )" aria-label="Buscar">
+    <select id="category" aria-label="Categoría"></select>
+    <select id="status" aria-label="Estado">
+      <option value="">Cualquier estado</option>
+      <option value="todo">Pendiente</option>
+      <option value="tried">Probado</option>
+      <option value="discarded">Descartado</option>
+    </select>
+    <div id="count"></div>
+  </div>
+  <section id="top"></section>
+  <section id="ideas"></section>
+</main>
+<script>/*VIEWER_JS*/</script>
+</body>
+</html>
