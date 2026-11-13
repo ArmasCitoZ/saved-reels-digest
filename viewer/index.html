@@ -49,6 +49,8 @@
   #changes p { margin: .25rem 0 .5rem; font-size: .9rem; }
   #changes textarea { width: 100%; font: .85rem ui-monospace, monospace; background: var(--bg); color: var(--fg);
           border: 1px solid var(--line); border-radius: 8px; padding: .5rem; }
+  .demo { border-left: 4px solid var(--accent); background: var(--card); padding: .6rem 1rem;
+          border-radius: 8px; font-size: .9rem; }
   .empty { color: var(--muted); text-align: center; padding: 2rem 0; }
 </style>
 </head>
@@ -56,6 +58,9 @@
 <main>
   <h1 id="title">Visor del digest</h1>
   <div id="date"></div>
+  <p id="demo" class="demo" hidden>Ejemplo con datos inventados: así se ve el visor con el
+    <code>digest.md</code> y el <code>reels.json</code> de <code>examples/</code>. Abre tus propios archivos
+    abajo para ver los tuyos; no se sube nada.</p>
   <section class="open">
     <p>Abre tu <code>digest.md</code> y, si quieres ver de qué reels sale cada idea y lo que marcaste con
       <code>db.py mark</code>, también <code>reels.json</code> (los dos están en <code>~/saved-reels-digest/</code>).

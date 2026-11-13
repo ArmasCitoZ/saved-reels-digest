@@ -6,6 +6,9 @@ import { type Change, applyChanges, markCommands, pending } from "./marks";
 import { inline, render, escapeHtml } from "./markdown";
 import { categories, type Database, filterIdeas, joinIdeas, parseDatabase, type Reel, type ViewIdea } from "./reels";
 
+/** The sample files, embedded by `npm run build:demo` (the GitHub Pages copy); null in the normal build. */
+declare const __DEMO__: { digest: string; reels: string } | null;
+
 const STATUS_LABEL: Record<Status, string> = { todo: "Pendiente", tried: "✅ Probado", discarded: "🚫 Descartado" };
 
 const state = {
@@ -105,7 +108,7 @@ function refresh(): void {
   showChanges();
 }
 
-async function openFiles(files: Iterable<File>): Promise<void> {
+async function openFiles(files: Iterable<{ name: string; text(): Promise<string> }>): Promise<void> {
   const error = $("error");
   error.textContent = "";
   try {
@@ -114,6 +117,7 @@ async function openFiles(files: Iterable<File>): Promise<void> {
       if (f.name.toLowerCase().endsWith(".json")) state.db = parseDatabase(text);
       else setDigest(text);
     }
+
     if (!state.digest) error.textContent = "Falta digest.md: ábrelo junto con reels.json.";
     refresh();
   } catch (e) {
@@ -121,9 +125,22 @@ async function openFiles(files: Iterable<File>): Promise<void> {
   }
 }
 
+/** Files the person picked or dropped. The first ones replace the sample entirely, so a
+ * digest.md opened alone never shows the sample's reels or marks. */
+function openOwn(files: FileList): void {
+  const banner = $("demo");
+  if (!banner.hidden) {
+    banner.hidden = true;
+    state.digest = null;
+    state.db = null;
+    state.changes.clear();
+  }
+  void openFiles(files);
+}
+
 function init(): void {
   const input = $<HTMLInputElement>("files");
-  input.addEventListener("change", () => input.files && openFiles(input.files));
+  input.addEventListener("change", () => input.files && openOwn(input.files));
   for (const id of ["q", "category", "status"]) $(id).addEventListener("input", show);
   $("ideas").addEventListener("click", (e) => {
     const button = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-mark]");
@@ -159,7 +176,7 @@ function init(): void {
   document.addEventListener("dragover", (e) => e.preventDefault());
   document.addEventListener("drop", (e) => {
     e.preventDefault();
-    if (e.dataTransfer?.files.length) void openFiles(e.dataTransfer.files);
+    if (e.dataTransfer?.files.length) openOwn(e.dataTransfer.files);
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
@@ -167,6 +184,14 @@ function init(): void {
       $("q").focus();
     }
   });
+  if (typeof __DEMO__ !== "undefined" && __DEMO__) {
+    const demo = __DEMO__;
+    $("demo").hidden = false;
+    void openFiles([
+      { name: "digest.md", text: async () => demo.digest },
+      { name: "reels.json", text: async () => demo.reels },
+    ]);
+  }
 }
 
 init();
