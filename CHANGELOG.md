@@ -7,6 +7,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Optional Rust duplicate finder (`rust/`, binary `reels-similar`). `db.py similar` uses it automatically when it is installed and gives the same groups as before, much faster on large collections; `--engine python|rust` picks one explicitly.
+- Releases attach ready-built `reels-similar` binaries for Linux, macOS and Windows, and CI builds and tests the Rust crate on all three, including the check that both engines give the same groups.
 - `db.py check` compares `digest.md` with the database: ideas no reel points to, reels pointing to ideas that were renamed or lost while merging, repeated slugs, `(#slug)` links that go nowhere, marks for ideas no longer in the digest and relevant reels still waiting.
 
 ### Fixed

@@ -75,7 +75,7 @@ Cada lenguaje entra donde aporta algo concreto; Python sigue siendo la base.
 - [x] Binario `reels-similar` que lee `reels.json` y devuelve los grupos en JSON
 - [x] `db.py similar` usa el binario de Rust si está instalado y si no, el Python actual; un test comprueba que ambos dan el mismo resultado
 - [x] Benchmark Python vs Rust con 2.000 reels sintéticos en `docs/benchmarks.md`
-- [ ] CI: compilar y testear el crate en Linux, macOS y Windows, y adjuntar los binarios a cada release
+- [x] CI: compilar y testear el crate en Linux, macOS y Windows, y adjuntar los binarios a cada release
 
 ### TypeScript: visor del digest
 Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usable.

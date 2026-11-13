@@ -16,8 +16,13 @@ Nothing here is needed to use the plugin; it is an optional speed-up. `db.py sim
 `reels-similar` on its own when it finds it (in `$SRD_REELS_SIMILAR`, or on `PATH`), and falls
 back to Python if it is missing or fails. `--engine python` or `--engine rust` picks one.
 `tests/test_similar_rust.py` runs both on made-up collections and checks the output is identical.
+CI runs `cargo fmt`, `clippy`, the Rust tests and that comparison on Linux, macOS and Windows.
 
 How much faster it is: [docs/benchmarks.md](../docs/benchmarks.md) (about 24x with 2,000 reels).
+
+Each release attaches ready-built binaries (`reels-similar-linux-x86_64`, `reels-similar-macos-arm64`,
+`reels-similar-windows-x86_64.exe`); rename yours to `reels-similar` and put it on `PATH`. To build it
+yourself:
 
 ```bash
 cd rust

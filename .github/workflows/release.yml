@@ -21,3 +21,33 @@ jobs:
       - run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
         env:
           GH_TOKEN: ${{ github.token }}
+
+  binaries:
+    # the optional Rust duplicate finder, ready to download, so nobody needs cargo to use it
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: reels-similar-linux-x86_64
+          - os: macos-latest
+            name: reels-similar-macos-arm64
+          - os: windows-latest
+            name: reels-similar-windows-x86_64.exe
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --locked
+      - run: cargo build --release --locked
+      - run: |
+          exe=reels-similar; [ "$RUNNER_OS" = Windows ] && exe=reels-similar.exe
+          cp "target/release/$exe" "${{ matrix.name }}"
+          gh release upload "$GITHUB_REF_NAME" "${{ matrix.name }}" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
