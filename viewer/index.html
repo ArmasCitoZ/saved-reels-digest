@@ -38,6 +38,17 @@
   code { font-size: .9em; }
   details summary { cursor: pointer; color: var(--muted); }
   .reels { columns: 2 14rem; }
+  .mark { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; }
+  .mark button, #changes button { font: inherit; font-size: .85rem; padding: .25rem .65rem; border-radius: 999px;
+          border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+  .mark button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .mark .note-input { flex: 1 1 12rem; font: inherit; font-size: .85rem; padding: .25rem .6rem;
+          border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+  #changes { position: sticky; bottom: 0; background: var(--card); border: 1px solid var(--accent);
+          border-radius: 12px; padding: .75rem 1rem; margin-top: 1rem; }
+  #changes p { margin: .25rem 0 .5rem; font-size: .9rem; }
+  #changes textarea { width: 100%; font: .85rem ui-monospace, monospace; background: var(--bg); color: var(--fg);
+          border: 1px solid var(--line); border-radius: 8px; padding: .5rem; }
   .empty { color: var(--muted); text-align: center; padding: 2rem 0; }
 </style>
 </head>
@@ -65,6 +76,13 @@
   </div>
   <section id="top"></section>
   <section id="ideas"></section>
+  <section id="changes" hidden>
+    <strong id="changes-count"></strong>
+    <p>El visor no cambia tus archivos. Para guardar las marcas, ejecuta estos comandos en la carpeta de
+      scripts del plugin (o pégaselos a Claude) y vuelve a abrir <code>reels.json</code>:</p>
+    <textarea id="commands" readonly rows="4" spellcheck="false"></textarea>
+    <button id="copy" type="button">Copiar</button> <button id="discard" type="button">Descartar cambios</button>
+  </section>
 </main>
 <script>/*VIEWER_JS*/</script>
 </body>
