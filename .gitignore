@@ -6,6 +6,7 @@ __pycache__/
 reels.json
 digest.md
 !examples/digest.md
+!examples/reels.json
 .session/
 .pytest_cache/
 rust/target/

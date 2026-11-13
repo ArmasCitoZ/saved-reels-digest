@@ -12,7 +12,8 @@ npm run build       # writes dist/index.html, a single self-contained file
 
 Open `dist/index.html` in your browser (double-click works) and pick `digest.md`, plus
 `reels.json` if you want each idea's reels and the marks from `db.py mark`. Both live in
-`~/saved-reels-digest/` (or `$SRD_HOME`). You can also drag the files onto the page.
+`~/saved-reels-digest/` (or `$SRD_HOME`). You can also drag the files onto the page. To try it
+without your own data, open `examples/digest.md` and `examples/reels.json` (invented accounts).
 
 - The search box matches every word you type in titles, text, categories and reel authors,
   ignoring case and accents (`/` jumps to it).

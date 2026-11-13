@@ -1,0 +1,161 @@
+{
+ "version": 1,
+ "reels": {
+  "DEMOclaude01": {
+   "shortcode": "DEMOclaude01",
+   "url": "https://www.instagram.com/reel/DEMOclaude01/",
+   "added_at": 1793534400,
+   "saved_at": 1789214400,
+   "author": "demo_devcorner",
+   "caption": "El archivo que hace que Claude Code recuerde tu proyecto 📄",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "claude-md-corto"
+  },
+  "DEMOclaude02": {
+   "shortcode": "DEMOclaude02",
+   "url": "https://www.instagram.com/reel/DEMOclaude02/",
+   "added_at": 1793534400,
+   "saved_at": 1790942400,
+   "author": "demo_ana.codes",
+   "caption": "Mi CLAUDE.md tiene 25 líneas y por qué no más",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "claude-md-corto"
+  },
+  "tt7400000000000000011": {
+   "shortcode": "tt7400000000000000011",
+   "url": "https://www.tiktok.com/@demo_shipfast/video/7400000000000000011",
+   "added_at": 1793534400,
+   "saved_at": 1793188800,
+   "author": "demo_shipfast",
+   "caption": "stop repeating yourself to your AI #claudecode",
+   "platform": "tiktok",
+   "source": "tiktok",
+   "is_video": true,
+   "relevant": true,
+   "entry": "claude-md-corto"
+  },
+  "DEMOclaude03": {
+   "shortcode": "DEMOclaude03",
+   "url": "https://www.instagram.com/reel/DEMOclaude03/",
+   "added_at": 1793534400,
+   "saved_at": 1791028800,
+   "author": "demo_devcorner",
+   "caption": "Primero el plan, luego el código",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "plan-antes-de-codigo"
+  },
+  "DEMOclaude04": {
+   "shortcode": "DEMOclaude04",
+   "url": "https://www.instagram.com/reel/DEMOclaude04/",
+   "added_at": 1793534400,
+   "saved_at": 1793361600,
+   "author": "demo_laura.ai",
+   "caption": "El modo plan me ahorró deshacer 20 archivos",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "plan-antes-de-codigo"
+  },
+  "DEMOclaude05": {
+   "shortcode": "DEMOclaude05",
+   "url": "https://www.instagram.com/reel/DEMOclaude05/",
+   "added_at": 1793534400,
+   "saved_at": 1787313600,
+   "author": "demo_ana.codes",
+   "caption": "Un subagente que revisa tu código sin prejuicios",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "subagentes-revision"
+  },
+  "DEMOprompt01": {
+   "shortcode": "DEMOprompt01",
+   "url": "https://www.instagram.com/reel/DEMOprompt01/",
+   "added_at": 1793534400,
+   "saved_at": 1790769600,
+   "author": "demo_promptlab",
+   "caption": "Deja de pedir 'profesional': da ejemplos",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "ejemplos-no-adjetivos"
+  },
+  "tt7400000000000000012": {
+   "shortcode": "tt7400000000000000012",
+   "url": "https://www.tiktok.com/@demo_laura.ai/video/7400000000000000012",
+   "added_at": 1793534400,
+   "saved_at": 1791720000,
+   "author": "demo_laura.ai",
+   "caption": "few-shot > adjectives",
+   "platform": "tiktok",
+   "source": "tiktok",
+   "is_video": true,
+   "relevant": true,
+   "entry": "ejemplos-no-adjetivos"
+  },
+  "DEMOprompt02": {
+   "shortcode": "DEMOprompt02",
+   "url": "https://www.instagram.com/reel/DEMOprompt02/",
+   "added_at": 1793534400,
+   "saved_at": 1784030400,
+   "author": "demo_growthguru",
+   "caption": "EL PROMPT SECRETO 🔥 comenta PROMPT y te lo paso",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "prompt-secreto"
+  },
+  "DEMOtools01": {
+   "shortcode": "DEMOtools01",
+   "url": "https://www.instagram.com/reel/DEMOtools01/",
+   "added_at": 1793534400,
+   "saved_at": 1793275200,
+   "author": "demo_shipfast",
+   "caption": "Whisper en tu portátil, sin GPU",
+   "collection": "IA",
+   "is_video": true,
+   "relevant": true,
+   "entry": "transcribir-en-local"
+  },
+  "DEMOother01": {
+   "shortcode": "DEMOother01",
+   "url": "https://www.instagram.com/reel/DEMOother01/",
+   "added_at": 1793534400,
+   "saved_at": 1791201600,
+   "author": "demo_cocina.facil",
+   "caption": "Pasta en 10 minutos 🍝",
+   "collection": null,
+   "is_video": true,
+   "relevant": false
+  },
+  "DEMOother02": {
+   "shortcode": "DEMOother02",
+   "url": "https://www.instagram.com/reel/DEMOother02/",
+   "added_at": 1793534400,
+   "saved_at": 1792497600,
+   "author": "demo_viajes",
+   "caption": "3 días en Lisboa",
+   "collection": null,
+   "is_video": true,
+   "relevant": false
+  }
+ },
+ "entries": {
+  "subagentes-revision": {
+   "status": "tried",
+   "updated": 1792065600,
+   "note": "útil en refactors grandes, excesivo para lo demás"
+  },
+  "prompt-secreto": {
+   "status": "discarded",
+   "updated": 1784548800,
+   "note": "no noté diferencia con un prompt normal"
+  }
+ }
+}

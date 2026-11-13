@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseDigest } from "../src/digest";
 import { categories, filterIdeas, joinIdeas, parseDatabase } from "../src/reels";
@@ -81,5 +82,28 @@ describe("joinIdeas and filterIdeas", () => {
     expect(categories(ideas)).toEqual(["Herramientas", "Prompting"]);
     expect(filterIdeas(ideas, { category: "Herramientas" }).map((i) => i.slug)).toEqual(["automatizacion", "revision"]);
     expect(filterIdeas(ideas, { category: "Herramientas", status: "todo" }).map((i) => i.slug)).toEqual(["revision"]);
+  });
+});
+
+describe("the sample in examples/", () => {
+  const dir = new URL("../../examples/", import.meta.url);
+  const ideas = joinIdeas(
+    parseDigest(readFileSync(new URL("digest.md", dir), "utf-8")),
+    parseDatabase(readFileSync(new URL("reels.json", dir), "utf-8")),
+  );
+
+  it("gives every idea its reels, oldest first", () => {
+    expect(ideas).toHaveLength(6);
+    for (const i of ideas) expect(i.reels.length, i.slug).toBeGreaterThan(0);
+    const claudeMd = ideas.find((i) => i.slug === "claude-md-corto")!;
+    expect(claudeMd.reels.map((r) => r.author)).toEqual(["demo_devcorner", "demo_ana.codes", "demo_shipfast"]);
+    expect(claudeMd.reels[2]?.source).toBe("tiktok");
+  });
+
+  it("shows the marks stored with db.py mark, with their notes", () => {
+    const byStatus = (s: string) => ideas.filter((i) => i.status === s).map((i) => i.slug);
+    expect(byStatus("tried")).toEqual(["subagentes-revision"]);
+    expect(byStatus("discarded")).toEqual(["prompt-secreto"]);
+    expect(ideas.find((i) => i.slug === "prompt-secreto")?.note).toMatch(/no noté diferencia/);
   });
 });
