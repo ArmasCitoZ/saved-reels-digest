@@ -74,3 +74,29 @@ jobs:
           # pwd -W gives a Windows path (D:/a/...) in Git Bash; elsewhere it fails and pwd is used
           dir=$(cd target/release && { pwd -W 2>/dev/null || pwd; })
           SRD_REELS_SIMILAR="$dir/$exe" python -m pytest -q ../tests/test_similar_rust.py
+
+  viewer:
+    # the TypeScript viewer (viewer/): typecheck, Vitest (which also compares its digest parser
+    # with export_digest.py, so Python is needed) and the single-file build people open
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: viewer
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: viewer
+          path: viewer/dist/index.html

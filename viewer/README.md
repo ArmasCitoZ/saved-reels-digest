@@ -39,6 +39,8 @@ Open `dist/index.html` in your browser (double-click works) and pick `digest.md`
 `test/digest.test.ts` runs both parsers on the same digests and fails if the TypeScript one reads
 anything differently from `export_digest.py`, which stays the reference (skipped without Python).
 `test/marks.test.ts` runs the generated commands in bash against a temporary `reels.json`.
+`test/build.test.ts` builds the page and checks it is still one self-contained file. CI runs the
+typecheck, the tests and the build on every push, and keeps the built page as a download.
 
 ```bash
 npm test            # Vitest
