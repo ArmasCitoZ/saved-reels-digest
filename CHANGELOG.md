@@ -7,6 +7,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 - A local digest viewer in TypeScript (`viewer/`): build it once with `npm run build`, open `viewer/dist/index.html`, load `digest.md` (and optionally `reels.json`) and search every idea, ignoring accents, or filter by category and tried/discarded status. Each idea shows the reels it came from and its `db.py mark` note. Nothing is uploaded.
+- An online demo of the viewer with the invented sample (`examples/digest.md` + `examples/reels.json`), published to GitHub Pages with every release by `.github/workflows/pages.yml`; `npm run build:demo` builds the same page locally.
 - Mark ideas as tried, discarded or pending from the viewer, with a note; it lists the `db.py mark` commands that save the marks, so `db.py` stays the only thing that writes `reels.json`.
 - Optional Rust duplicate finder (`rust/`, binary `reels-similar`). `db.py similar` uses it automatically when it is installed and gives the same groups as before, much faster on large collections; `--engine python|rust` picks one explicitly.
 - Releases attach ready-built `reels-similar` binaries for Linux, macOS and Windows, and CI builds and tests the Rust crate on all three, including the check that both engines give the same groups.

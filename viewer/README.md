@@ -27,6 +27,13 @@ without your own data, open `examples/digest.md` and `examples/reels.json` (inve
   Notes lose the characters shells treat specially (`"`, `$`, `` ` ``, `\`, `!`) so the commands
   work the same in bash, zsh and PowerShell.
 
+## Online demo
+
+`.github/workflows/pages.yml` publishes the demo build (the sample in `examples/`, invented
+accounts) at <https://armascitoz.github.io/saved-reels-digest/> with every release, and can be
+run by hand from the Actions tab. It needs **Settings → Pages → Source: GitHub Actions** once.
+Anyone can also open their own files there: the page still reads them only in the browser.
+
 ## Code
 
 | File | What it does |
