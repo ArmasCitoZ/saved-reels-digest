@@ -96,3 +96,18 @@ def test_check_only_fails_when_doctor_fails(shell, tmp_path):
     out = r.stdout + r.stderr
     assert r.returncode == 1, out
     assert "FAIL" in out and "Fix the FAIL lines" in out
+
+
+def test_upgrade_is_passed_to_setup_env():
+    assert re.search(r"\[switch\]\$Upgrade\b", TEXT)
+    assert "-Upgrade:$Upgrade" in TEXT
+    assert "$setupArgs = @('--upgrade')" in TEXT
+    assert "(Join-Path $scripts 'setup_env.py') $setupArgs" in TEXT
+
+
+@pytest.mark.parametrize("shell", _shells())
+def test_check_only_and_upgrade_together_are_refused(shell, tmp_path):
+    r = _run(shell, tmp_path / "srd", "-CheckOnly", "-Upgrade")
+    out = r.stdout + r.stderr
+    assert r.returncode == 2, out
+    assert "cannot be combined" in out and "Looking for Python" not in out

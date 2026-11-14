@@ -20,13 +20,20 @@
 .PARAMETER CheckOnly
   Only check the computer (Python, disk, folder, RAM); install nothing.
 
+.PARAMETER Upgrade
+  Update the packages of an existing environment (yt-dlp above all: Instagram and TikTok
+  change often and an old one fails to download). Passes --upgrade to setup_env.py.
+  Without cloning:
+    & ([scriptblock]::Create((irm https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1))) -Upgrade
+
 .NOTES
   Keep this file ASCII and compatible with Windows PowerShell 5.1, which is what a fresh
   Windows has: no ?? or ?. operators, no && or || between commands, no ternaries.
   tests/test_install_ps1.py checks this.
 #>
 param(
-    [switch]$CheckOnly
+    [switch]$CheckOnly,
+    [switch]$Upgrade
 )
 
 $RepoZip = 'https://github.com/ArmasCitoZ/saved-reels-digest/archive/refs/heads/main.zip'
@@ -113,9 +120,13 @@ function Invoke-Python([string[]]$Python, [string]$Script, [string[]]$Arguments)
     return $LASTEXITCODE
 }
 
-function Install-SavedReels([switch]$CheckOnly) {
+function Install-SavedReels([switch]$CheckOnly, [switch]$Upgrade) {
     $ErrorActionPreference = 'Stop'
     Write-Host 'saved-reels-digest: setup for Windows' -ForegroundColor Green
+    if ($CheckOnly -and $Upgrade) {
+        Write-Host '-CheckOnly installs nothing, so it cannot be combined with -Upgrade.' -ForegroundColor Yellow
+        return 2
+    }
 
     Write-Step "Looking for Python $MinPython or newer"
     $found = Find-Python
@@ -154,8 +165,14 @@ function Install-SavedReels([switch]$CheckOnly) {
             return 0
         }
 
-        Write-Step 'Creating the Python environment (setup_env.py, first time about a minute)'
-        if ((Invoke-Python $python (Join-Path $scripts 'setup_env.py') @()) -ne 0) {
+        $setupArgs = @()
+        if ($Upgrade) {
+            Write-Step 'Updating the packages of the Python environment (setup_env.py --upgrade)'
+            $setupArgs = @('--upgrade')
+        } else {
+            Write-Step 'Creating the Python environment (setup_env.py, first time about a minute)'
+        }
+        if ((Invoke-Python $python (Join-Path $scripts 'setup_env.py') $setupArgs) -ne 0) {
             Write-Host 'Setup failed: read the error above. Running this again resumes it.' -ForegroundColor Yellow
             return 1
         }
@@ -175,6 +192,6 @@ function Install-SavedReels([switch]$CheckOnly) {
     return 0
 }
 
-$code = Install-SavedReels -CheckOnly:$CheckOnly
+$code = Install-SavedReels -CheckOnly:$CheckOnly -Upgrade:$Upgrade
 # Run as a file, report the exit code. Piped through iex, "exit" would close the user's window.
 if ($PSCommandPath) { exit $code }
