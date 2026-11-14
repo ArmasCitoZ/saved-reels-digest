@@ -39,7 +39,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Usar `db.py check` en el paso 5 de la skill y documentarlo en el README
 - [x] `db.py status`: cuántos reels hay de cada plataforma (Instagram, TikTok, YouTube)
 - [x] `db.py status` y `unavailable`: aceptar `--collection`, como `next`, `dump`, `similar` y `recent`
-- [ ] `--collection` y `db.py collections`: explicar que también valen las listas de YouTube (hoy la ayuda solo habla de Instagram)
+- [x] `--collection` y `db.py collections`: explicar que también valen las listas de YouTube (hoy la ayuda solo habla de Instagram)
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

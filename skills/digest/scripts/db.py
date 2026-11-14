@@ -1,7 +1,8 @@
 """Inspect and update the local reel database (used by Claude during triage and merging).
 
   db.py status                              counts at every stage, and per platform
-  db.py collections                         Instagram collections and how many reels each has
+  db.py collections                         Instagram collections and YouTube playlists, with
+                                            how many reels each has
   db.py unavailable                         saved posts that were deleted or are private
   db.py next [--limit 40] [--field relevant] posts still waiting for triage, compact
   db.py set FIELD VALUE CODE [CODE ...]     e.g. set relevant true C1 C2 / set topic "Claude Code" C3
@@ -19,7 +20,7 @@
                                             repeated slugs and broken (#slug) links
 
 status, unavailable, next, dump, similar and recent accept --collection NAME to work only on
-one Instagram collection (as named in the official export, case-insensitive).
+one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive).
   db.py show CODE [CODE ...]                full record
 
 In set and show, a CODE can also be a pasted Instagram, TikTok or YouTube link.
@@ -109,12 +110,17 @@ def cmd_status(a):
 
 
 def cmd_collections(_):
-    c = Counter(r.get("collection") or "" for r in load_db()["reels"].values())
+    rs = list(load_db()["reels"].values())
+    c = Counter(r.get("collection") or "" for r in rs)
     if not any(c):
-        print("No collections recorded. They come from saved_collections.json in the official export.")
+        print("No collections recorded. They come from saved_collections.json in Instagram's official "
+              "export, and from YouTube playlists (collect.py youtube).")
         return
+    youtube_only = {name for name in c
+                    if name and all(platform(r) == "youtube" for r in rs if r.get("collection") == name)}
     for name, n in sorted(c.items(), key=lambda kv: (-kv[1], kv[0])):
-        print(f"  {name or '(no collection)':32} {n}")
+        shown = f"{name} (YouTube playlist)" if name in youtube_only else name or "(no collection)"
+        print(f"  {shown:32} {n}")
 
 
 def cmd_unavailable(a):
@@ -546,7 +552,8 @@ def main() -> None:
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
     for name in ("status", "unavailable", "next", "dump", "similar", "recent"):
-        sub.choices[name].add_argument("--collection", help="only reels from this Instagram collection")
+        sub.choices[name].add_argument("--collection",
+                                       help="only reels from this Instagram collection or YouTube playlist")
     a = ap.parse_args()
     a.fn(a)
 

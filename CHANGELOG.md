@@ -13,6 +13,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Optional Rust duplicate finder (`rust/`, binary `reels-similar`). `db.py similar` uses it automatically when it is installed and gives the same groups as before, much faster on large collections; `--engine python|rust` picks one explicitly.
 - Releases attach ready-built `reels-similar` binaries for Linux, macOS and Windows, and CI builds and tests the Rust crate on all three, including the check that both engines give the same groups.
 - `db.py status` shows how many saved reels come from Instagram, TikTok and YouTube.
+- `db.py collections` marks YouTube playlists as such, and the `--collection` help says it works for them too; before, both only talked about Instagram collections.
 - `db.py status` and `db.py unavailable` accept `--collection`, like `next`, `dump`, `similar` and `recent`; an unknown collection name is an error that points to `db.py collections`.
 - `db.py check` compares `digest.md` with the database: ideas no reel points to, reels pointing to ideas that were renamed or lost while merging, repeated slugs, `(#slug)` links that go nowhere, marks for ideas no longer in the digest and relevant reels still waiting.
 

@@ -130,7 +130,7 @@ $PY db.py next                               # pendientes de clasificar
 $PY db.py set relevant true CODE1 CODE2      # marcar relevantes
 $PY db.py similar                            # posibles duplicados, también entre idiomas
 $PY db.py dump                               # lo relevante, en páginas de ~60k caracteres (--offset N)
-$PY db.py collections                        # colecciones de Instagram (para --collection "IA")
+$PY db.py collections                        # colecciones de Instagram y listas de YouTube (para --collection "IA")
 $PY transcribe.py                            # modelo según la RAM; omite vídeos de más de 30 min
 $PY slides.py pending                        # carruseles y fotos por leer (fetch / save)
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó

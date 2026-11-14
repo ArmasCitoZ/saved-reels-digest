@@ -88,10 +88,10 @@ If it prints `STOPPED`, relay the reason; do not loop retries. Wait, or switch t
 
 ## Step 3: triage by topic (you do this)
 
-If the user only wants one of their Instagram collections ("just my IA folder"), run
-`PY SCRIPTS/db.py collections` to see the exact names (they come from the official
-export), then add `--collection "<name>"` to every `db.py next`, `db.py dump`,
-`db.py similar` and `transcribe.py` call below (`db.py status --collection "<name>"` shows
+If the user only wants one of their Instagram collections ("just my IA folder") or one
+YouTube playlist, run `PY SCRIPTS/db.py collections` to see the exact names (from the
+official export and the playlist titles), then add `--collection "<name>"` to every
+`db.py next`, `db.py dump`, `db.py similar` and `transcribe.py` call below (`db.py status --collection "<name>"` shows
 the progress of that collection alone). Mention that reels saved outside any collection
 are left out.
 

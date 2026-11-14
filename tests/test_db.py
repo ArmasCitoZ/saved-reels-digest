@@ -186,6 +186,20 @@ def test_collections_lists_counts(tmp_path):
     assert "(no collection)" in out
 
 
+def test_collections_marks_youtube_playlists(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", collection="IA"),
+            reel("ytdQw4w9WgXcQ", platform="youtube", collection="Watch later"))
+    out = run(tmp_path, "collections")
+    assert "Watch later (YouTube playlist)" in out
+    assert "IA (YouTube" not in out
+
+
+def test_collections_empty_mentions_every_source(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"))
+    out = run(tmp_path, "collections")
+    assert "official" in out and "YouTube playlists" in out
+
+
 def test_next_and_dump_filter_by_collection_case_insensitive(tmp_path):
     _collection_db(tmp_path)
     nxt = run(tmp_path, "next", "--collection", "ia")

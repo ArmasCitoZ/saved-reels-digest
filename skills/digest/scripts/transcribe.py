@@ -112,7 +112,7 @@ def main() -> None:
     ap.add_argument("--language", default=None, help="force a language code (es, en...); default auto")
     ap.add_argument("--all", action="store_true", help="ignore triage, transcribe every video")
     ap.add_argument("--shortcodes", help="comma-separated list to (re)transcribe")
-    ap.add_argument("--collection", help="only reels from this Instagram collection")
+    ap.add_argument("--collection", help="only reels from this Instagram collection or YouTube playlist")
     ap.add_argument("--file", help="transcribe a local media file and print it (testing)")
     ap.add_argument("--browser"); ap.add_argument("--username")
     ap.add_argument("--limit", type=int, default=0)
