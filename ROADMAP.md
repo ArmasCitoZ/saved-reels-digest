@@ -85,4 +85,4 @@ Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usab
 - [ ] Publicar el visor en GitHub Pages con los datos de `examples/` (el workflow `pages.yml` ya está; falta activar Pages → "GitHub Actions" en Settings y lanzarlo)
 
 ### PowerShell: instalación en Windows
-- [ ] `install.ps1`: instalación en un comando (comprueba Python, crea el entorno y explica cómo añadir el plugin)
+- [x] `install.ps1`: instalación en un comando (comprueba Python, crea el entorno y explica cómo añadir el plugin)

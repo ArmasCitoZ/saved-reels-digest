@@ -4,6 +4,25 @@ Para Windows 10 y 11. No necesitas saber programar: el trabajo lo hace Claude y 
 tienes que dejar instaladas dos cosas. _(Las capturas de pantalla están pendientes: mira el
 [ROADMAP](../ROADMAP.md).)_
 
+## Atajo: instalación en un comando
+
+Si ya tienes PowerShell abierto, este comando hace por ti la parte que se puede
+automatizar: busca Python 3.9 o superior, comprueba el equipo con `doctor.py`, crea el entorno
+de Python del plugin (aproximadamente un minuto la primera vez) y te dice qué escribir en
+Claude Code:
+
+```powershell
+irm https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1 | iex
+```
+
+Si has clonado el repositorio, puedes lanzarlo desde la carpeta:
+`powershell -ExecutionPolicy Bypass -File install.ps1`. Con `-CheckOnly` solo comprueba el
+equipo y no instala nada. Si no encuentra Python, te dice cómo instalarlo
+(`winget install -e --id Python.Python.3.14`); instálalo, abre otra ventana de PowerShell y
+vuelve a lanzarlo. Se puede repetir sin miedo: solo instala lo que falte.
+
+Si prefieres hacerlo a mano, o el atajo falla, sigue los pasos de abajo.
+
 ## 1. Instala Python
 
 1. Entra en [python.org/downloads](https://www.python.org/downloads/) y descarga la última
@@ -72,6 +91,9 @@ descarga el modelo Whisper: cuenta con aproximadamente 1 GB y unos minutos.
 |---|---|
 | `'py' no se reconoce como...` | Python no quedó en el PATH: vuelve a abrir el instalador, elige *Modify* → siguiente → marca *Add Python to environment variables*, y reabre PowerShell. |
 | Claude no encuentra `python3` | Es normal en Windows: dile que use `py`. |
+| `install.ps1` dice que no encuentra Python | Instálalo (paso 1) y abre una ventana **nueva** de PowerShell: las abiertas antes no ven el PATH nuevo. |
+| `irm` o `iex` dan error de seguridad o de conexión | Descarga `install.ps1` desde GitHub y lánzalo con `powershell -ExecutionPolicy Bypass -File install.ps1`. |
+| `pip` falla con `ResolutionImpossible` | Tu Python es más nuevo de lo que soportan algunas dependencias (`doctor.py` lo avisa). Instala también Python 3.14, borra la carpeta `.venv` y vuelve a lanzar `install.ps1`: elige solo la versión buena. |
 | `doctor.py` muestra una línea `FAIL` | Explica el problema concreto (versión, disco o carpeta). Arréglalo y vuelve a lanzar `/saved-reels:digest`. |
 | Error con las cookies del navegador | Cierra Chrome **del todo** (también en la bandeja junto al reloj) y reintenta, prueba con `--browser firefox` o usa la exportación oficial. |
 | El antivirus bloquea `python.exe` o `yt-dlp` | Permite la carpeta `C:\Users\TU_USUARIO\saved-reels-digest` y repite el comando. |
