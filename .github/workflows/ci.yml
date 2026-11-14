@@ -60,6 +60,27 @@ jobs:
           & "$env:SRD_HOME\.venv\Scripts\python.exe" skills\digest\scripts\doctor.py --json | Tee-Object -Variable report
           if (-not ($report -join "`n" | ConvertFrom-Json).checks.Where({ $_.name -eq 'venv' -and $_.status -eq 'ok' })) { exit 1 }
 
+  install-unix:
+    # install.sh from start to end on Linux and macOS, then doctor.py must find a complete environment
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: echo "SRD_HOME=$RUNNER_TEMP/srd" >> "$GITHUB_ENV"
+      - run: sh install.sh
+      - name: doctor.py sees a complete environment
+        run: |
+          "$SRD_HOME/.venv/bin/python" skills/digest/scripts/doctor.py --json > report.json
+          python -c "import json,sys; c={x['name']:x['status'] for x in json.load(open('report.json'))['checks']}; sys.exit(c['venv'] != 'ok')"
+      - name: a second run reuses the environment
+        run: sh install.sh | grep "already complete"
+
   rust:
     # the optional Rust duplicate finder (rust/): its own tests, then the Python test that
     # checks db.py similar gives the same groups with both engines, using the fresh binary
