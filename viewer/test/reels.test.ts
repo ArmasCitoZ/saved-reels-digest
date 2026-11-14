@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseDigest } from "../src/digest";
-import { categories, filterIdeas, joinIdeas, parseDatabase } from "../src/reels";
+import { categories, filterIdeas, joinIdeas, parseDatabase, platformName } from "../src/reels";
 
 const DIGEST = `# Digest
 
@@ -23,7 +23,7 @@ const DB = JSON.stringify({
   reels: {
     B2: { shortcode: "B2", author: "ana", entry: "revision", saved_at: 200, url: "https://x/B2" },
     A1: { shortcode: "A1", author: "luis", entry: "revision", saved_at: 100 },
-    C3: { shortcode: "C3", author: "eva", entry: "ejemplos", added_at: 50, source: "tiktok" },
+    C3: { shortcode: "C3", author: "eva", entry: "ejemplos", added_at: 50, source: "tiktok", platform: "tiktok" },
     D4: { shortcode: "D4", relevant: false },
   },
   entries: {
@@ -37,7 +37,8 @@ describe("parseDatabase", () => {
     const db = parseDatabase(DB);
     expect(db.total).toBe(4);
     expect(db.byEntry.get("revision")?.map((r) => r.shortcode)).toEqual(["A1", "B2"]);
-    expect(db.byEntry.get("ejemplos")?.[0]).toMatchObject({ source: "tiktok", savedAt: 50, url: null });
+    expect(db.byEntry.get("ejemplos")?.[0]).toMatchObject({ platform: "tiktok", savedAt: 50, url: null });
+    expect(db.byEntry.get("revision")?.[0]?.platform).toBe("instagram"); // no field: an Instagram reel
     expect([...db.marks.keys()]).toEqual(["automatizacion"]); // an unknown status is not a mark
   });
 
@@ -97,7 +98,7 @@ describe("the sample in examples/", () => {
     for (const i of ideas) expect(i.reels.length, i.slug).toBeGreaterThan(0);
     const claudeMd = ideas.find((i) => i.slug === "claude-md-corto")!;
     expect(claudeMd.reels.map((r) => r.author)).toEqual(["demo_devcorner", "demo_ana.codes", "demo_shipfast"]);
-    expect(claudeMd.reels[2]?.source).toBe("tiktok");
+    expect(claudeMd.reels[2]?.platform).toBe("tiktok");
   });
 
   it("shows the marks stored with db.py mark, with their notes", () => {
@@ -105,5 +106,18 @@ describe("the sample in examples/", () => {
     expect(byStatus("tried")).toEqual(["subagentes-revision"]);
     expect(byStatus("discarded")).toEqual(["prompt-secreto"]);
     expect(ideas.find((i) => i.slug === "prompt-secreto")?.note).toMatch(/no noté diferencia/);
+  });
+});
+
+describe("platformName", () => {
+  it("writes the platforms like db.py status, and keeps unknown ones", () => {
+    expect(platformName("tiktok")).toBe("TikTok");
+    expect(platformName("youtube")).toBe("YouTube");
+    expect(platformName("vimeo")).toBe("vimeo");
+  });
+
+  it("does not mistake how a reel was collected for its platform", () => {
+    const db = parseDatabase(JSON.stringify({ reels: { X: { entry: "e", source: "export" } } }));
+    expect(db.byEntry.get("e")?.[0]?.platform).toBe("instagram");
   });
 });

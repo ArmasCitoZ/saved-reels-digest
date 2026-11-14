@@ -7,7 +7,8 @@ export interface Reel {
   shortcode: string;
   url: string | null;
   author: string | null;
-  source: string;
+  /** "instagram", "tiktok" or "youtube". Not `source`, which says how it was collected (export, live...). */
+  platform: string;
   collection: string | null;
   /** Seconds since 1970, when it was saved (or added to the database, for old records). */
   savedAt: number | null;
@@ -61,7 +62,7 @@ export function parseDatabase(text: string): Database {
       shortcode: str(r.shortcode) ?? code,
       url: str(r.url),
       author: str(r.author),
-      source: str(r.source) ?? "instagram",
+      platform: str(r.platform) ?? "instagram", // Instagram reels predate the field, as in db.py
       collection: str(r.collection),
       savedAt: num(r.saved_at) ?? num(r.added_at),
     };
@@ -92,6 +93,13 @@ export function joinIdeas(digest: Digest, db: Database | null): ViewIdea[] {
       note: mark?.note ?? null,
     };
   });
+}
+
+/** How each platform is written, in db.py status order; unknown ones are shown as stored. */
+export const PLATFORM_NAMES: Record<string, string> = { instagram: "Instagram", tiktok: "TikTok", youtube: "YouTube" };
+
+export function platformName(platform: string): string {
+  return PLATFORM_NAMES[platform] ?? platform;
 }
 
 export interface Filter {

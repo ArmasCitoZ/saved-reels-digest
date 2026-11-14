@@ -4,7 +4,9 @@
 import { type Digest, parseDigest, type Status } from "./digest";
 import { type Change, applyChanges, markCommands, pending } from "./marks";
 import { inline, render, escapeHtml } from "./markdown";
-import { categories, type Database, filterIdeas, joinIdeas, parseDatabase, type Reel, type ViewIdea } from "./reels";
+import {
+  categories, type Database, filterIdeas, joinIdeas, parseDatabase, platformName, type Reel, type ViewIdea,
+} from "./reels";
 
 /** The sample files, embedded by `npm run build:demo` (the GitHub Pages copy); null in the normal build. */
 declare const __DEMO__: { digest: string; reels: string } | null;
@@ -30,7 +32,7 @@ function reelLink(r: Reel): string {
   const who = escapeHtml(r.author ? `@${r.author}` : r.shortcode);
   const when = r.savedAt ? ` <span class="muted">${day(r.savedAt)}</span>` : "";
   const label = r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener noreferrer">${who}</a>` : who;
-  return `<li>${label}${when}${r.source !== "instagram" ? ` <span class="muted">${escapeHtml(r.source)}</span>` : ""}</li>`;
+  return `<li>${label}${when}${r.platform !== "instagram" ? ` <span class="muted">${escapeHtml(platformName(r.platform))}</span>` : ""}</li>`;
 }
 
 function card(i: ViewIdea): string {
