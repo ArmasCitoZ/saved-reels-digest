@@ -17,6 +17,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `db.py status` and `db.py unavailable` accept `--collection`, like `next`, `dump`, `similar` and `recent`; an unknown collection name is an error that points to `db.py collections`.
 - `db.py check` compares `digest.md` with the database: ideas no reel points to, reels pointing to ideas that were renamed or lost while merging, repeated slugs, `(#slug)` links that go nowhere, marks for ideas no longer in the digest and relevant reels still waiting.
 
+### Changed
+- `setup_env.py` leaves a complete environment alone instead of running pip every time, so repeating the setup is instant and works offline; `--upgrade` updates the packages.
+
 ### Fixed
 - `doctor.py` warns when Python is newer than every dependency supports yet (3.15 has no onnxruntime build, so the install failed with a pip "ResolutionImpossible" error), and `setup_env.py` says which Python to install instead.
 - `fetch_meta.py` stops after 5 posts in a row look deleted or private, instead of marking a throttled session's whole list as gone.
