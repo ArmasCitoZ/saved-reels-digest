@@ -37,7 +37,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py set`/`show` y `transcribe.py --shortcodes`: aceptar enlaces de YouTube pegados (`watch?v=`, `youtu.be`, Shorts)
 - [x] `db.py check`: comparar `digest.md` con la base de datos (ideas sin reels, reels que apuntan a ideas que ya no están)
 - [x] Usar `db.py check` en el paso 5 de la skill y documentarlo en el README
-- [ ] `db.py status`: cuántos reels hay de cada plataforma (Instagram, TikTok, YouTube)
+- [x] `db.py status`: cuántos reels hay de cada plataforma (Instagram, TikTok, YouTube)
 - [ ] `db.py status` y `unavailable`: aceptar `--collection`, como `next`, `dump`, `similar` y `recent`
 - [ ] `--collection` y `db.py collections`: explicar que también valen las listas de YouTube (hoy la ayuda solo habla de Instagram)
 

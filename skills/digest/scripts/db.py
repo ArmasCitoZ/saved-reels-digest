@@ -1,6 +1,6 @@
 """Inspect and update the local reel database (used by Claude during triage and merging).
 
-  db.py status                              counts at every stage
+  db.py status                              counts at every stage, and per platform
   db.py collections                         Instagram collections and how many reels each has
   db.py unavailable                         saved posts that were deleted or are private
   db.py next [--limit 40] [--field relevant] posts still waiting for triage, compact
@@ -64,8 +64,17 @@ def _has_content(r: dict) -> bool:
     return r.get("meta") != "unavailable" or bool(_full_text(r))
 
 
+PLATFORMS = (("instagram", "Instagram"), ("tiktok", "TikTok"), ("youtube", "YouTube"))
+
+
+def platform(r: dict) -> str:
+    """Where the reel was saved. Instagram reels predate the field, so it is the default."""
+    return r.get("platform") or "instagram"
+
+
 def cmd_status(_):
     rs = list(load_db()["reels"].values())
+    per_platform = Counter(platform(r) for r in rs)
     c = Counter()
     for r in rs:
         c["total"] += 1
@@ -87,6 +96,10 @@ def cmd_status(_):
                  "triage: maybe": "maybe (decide after transcript)",
                  "triage: False": "not relevant"}.get(k, k)
         print(f"  {label:32} {c[k]}")
+        if k == "total":
+            for key, name in PLATFORMS:
+                if per_platform[key]:
+                    print(f"    {'from ' + name:30} {per_platform[key]}")
 
 
 def cmd_collections(_):

@@ -12,6 +12,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - Mark ideas as tried, discarded or pending from the viewer, with a note; it lists the `db.py mark` commands that save the marks, so `db.py` stays the only thing that writes `reels.json`.
 - Optional Rust duplicate finder (`rust/`, binary `reels-similar`). `db.py similar` uses it automatically when it is installed and gives the same groups as before, much faster on large collections; `--engine python|rust` picks one explicitly.
 - Releases attach ready-built `reels-similar` binaries for Linux, macOS and Windows, and CI builds and tests the Rust crate on all three, including the check that both engines give the same groups.
+- `db.py status` shows how many saved reels come from Instagram, TikTok and YouTube.
 - `db.py check` compares `digest.md` with the database: ideas no reel points to, reels pointing to ideas that were renamed or lost while merging, repeated slugs, `(#slug)` links that go nowhere, marks for ideas no longer in the digest and relevant reels still waiting.
 
 ### Fixed

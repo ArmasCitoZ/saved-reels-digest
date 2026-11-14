@@ -31,6 +31,24 @@ def load(home):
     return json.loads((home / "reels.json").read_text(encoding="utf-8"))["reels"]
 
 
+# ----------------------------------------------------------------- status
+def test_status_counts_each_platform(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"), reel("BBBBB2", relevant=True),
+            reel("tt7400000000000000001", platform="tiktok"),
+            reel("ytdQw4w9WgXcQ", platform="youtube"), reel("ytaBcDeFgHiJk", platform="youtube"))
+    lines = [line.split() for line in run(tmp_path, "status").splitlines()]
+    assert ["total", "5"] in lines
+    assert ["from", "Instagram", "2"] in lines
+    assert ["from", "TikTok", "1"] in lines
+    assert ["from", "YouTube", "2"] in lines
+
+
+def test_status_hides_platforms_with_nothing_saved(tmp_path):
+    make_db(tmp_path, reel("AAAAA1"))
+    out = run(tmp_path, "status")
+    assert "from Instagram" in out and "TikTok" not in out and "YouTube" not in out
+
+
 # ------------------------------------------------------------------- next
 def test_next_lists_only_untriaged(tmp_path):
     make_db(tmp_path, reel("AAAAA1", caption="new idea", author="ana"),
