@@ -55,13 +55,19 @@ Reinicia Claude Code y escribe:
 
 También puedes pedirlo con tus palabras: *"revisa mis reels guardados de Instagram y quédate con los de IA"*. Claude te guía en lo demás: crea su propio entorno de Python, te pregunta cómo quieres conectar Instagram y empieza.
 
-¿Estás en Windows? Un comando en PowerShell comprueba el equipo y deja preparado el entorno de Python antes de abrir Claude Code:
+¿Prefieres dejarlo todo preparado antes de abrir Claude Code? Un comando busca un Python que sirva, comprueba el equipo y crea el entorno de Python (se puede repetir sin miedo; con `--check-only` / `-CheckOnly` solo comprueba):
+
+```sh
+# macOS y Linux
+curl -fsSL https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.sh | sh
+```
 
 ```powershell
+# Windows (PowerShell)
 irm https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1 | iex
 ```
 
-Y tienes una [guía paso a paso](docs/windows.md), desde instalar Python hasta los errores más típicos.
+¿Estás en Windows? Tienes una [guía paso a paso](docs/windows.md), desde instalar Python hasta los errores más típicos.
 
 Para elegir otro tema basta con decirlo: `/saved-reels:digest marketing y negocios`. Si ya ordenas tus guardados en colecciones de Instagram, puedes pedirle que use solo una: *"solo mi colección IA"*.
 
@@ -170,7 +176,7 @@ It's free: there are no paid APIs or keys. Transcription runs on your machine an
 /saved-reels:digest
 ```
 
-On Windows, `irm https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1 | iex` in PowerShell checks the computer and sets up the Python environment first ([guide, in Spanish](docs/windows.md)).
+To check the computer and set up the Python environment before opening Claude Code: `curl -fsSL https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.sh | sh` on macOS and Linux, or `irm https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1 | iex` in PowerShell on Windows ([guide, in Spanish](docs/windows.md)).
 
 You can connect Instagram with the official data export (no risk), your logged-in browser session, or Claude in Chrome. Instagram's terms forbid automated access, so the live options go slowly and stop at the first rate-limit sign. Only use this with your own account. TikTok favorites can be added from TikTok's official data export (`collect.py tiktok`). YouTube Watch Later and playlists come from Google Takeout or straight from a playlist link (`collect.py youtube`).
 

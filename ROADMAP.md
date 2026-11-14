@@ -16,7 +16,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [ ] Añadir capturas reales a la guía de Windows
 - [x] Elegir modelo Whisper automáticamente según la RAM del equipo
 - [x] `setup_env.py`: no volver a llamar a pip si el entorno ya está completo (más rápido y funciona sin conexión al repetir la instalación)
-- [ ] `install.sh`: instalación en un comando para macOS y Linux, como `install.ps1` en Windows
+- [x] `install.sh`: instalación en un comando para macOS y Linux, como `install.ps1` en Windows
 
 ## Funciones
 - [x] `export_digest.py`: exportar `digest.md` a una bóveda de Obsidian (una nota por idea)

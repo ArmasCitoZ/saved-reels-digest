@@ -7,6 +7,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 - `install.ps1`: one-command setup on Windows (`irm .../install.ps1 | iex` or `-File install.ps1`). It finds a Python between 3.9 and 3.14 (the newest the dependencies support) while skipping the Microsoft Store alias, runs `doctor.py`, creates the environment and says what to type in Claude Code; `-CheckOnly` installs nothing. CI runs it in Windows PowerShell 5.1.
+- `install.sh`: the same one-command setup for macOS and Linux (`curl -fsSL .../install.sh | sh` or `sh install.sh`), in plain POSIX sh. `--check-only` installs nothing and `SRD_PYTHON` picks the Python. CI runs it on Ubuntu and macOS.
 - A local digest viewer in TypeScript (`viewer/`): build it once with `npm run build`, open `viewer/dist/index.html`, load `digest.md` (and optionally `reels.json`) and search every idea, ignoring accents, or filter by category and tried/discarded status. Each idea shows the reels it came from and its `db.py mark` note. Nothing is uploaded.
 - An online demo of the viewer with the invented sample (`examples/digest.md` + `examples/reels.json`), published to GitHub Pages with every release by `.github/workflows/pages.yml`; `npm run build:demo` builds the same page locally.
 - Mark ideas as tried, discarded or pending from the viewer, with a note; it lists the `db.py mark` commands that save the marks, so `db.py` stays the only thing that writes `reels.json`.

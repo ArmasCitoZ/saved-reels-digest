@@ -37,6 +37,16 @@ Los tests no necesitan red ni Instagram: usan la exportación anonimizada de
 `tests/fixtures/instagram_export/` y una base de datos temporal (`SRD_HOME` apunta a una
 carpeta de `tmp_path`). Si añades un comando, añade su test en `tests/`.
 
+## Si tocas los instaladores
+
+`install.sh` (macOS y Linux) e `install.ps1` (Windows) hacen lo mismo y deben seguir
+igualados. `install.sh` es sh POSIX (en Ubuntu lo ejecuta `dash`): nada de `[[`, `local`
+ni `function`. `install.ps1` tiene que funcionar en Windows PowerShell 5.1, el que trae
+Windows: solo ASCII y nada de `??`, `?.`, `&&`/`||` ni ternarios. Si cambia el rango de
+versiones de Python, cámbialo también en `MIN_PYTHON`/`MAX_PYTHON` de `doctor.py`.
+`tests/test_install_sh.py` y `tests/test_install_ps1.py` comprueban todo esto, y CI hace
+una instalación completa con cada uno.
+
 ## Si cambias el flujo
 
 `skills/digest/SKILL.md` es lo que lee Claude: si un script gana una opción o un comando
