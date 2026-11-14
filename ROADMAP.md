@@ -19,6 +19,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `install.sh --upgrade` / `install.ps1 -Upgrade`: actualizar los paquetes del entorno (pasa `--upgrade` a `setup_env.py`)
 - [x] `doctor.py`: avisar si yt-dlp tiene más de dos meses (Instagram y TikTok cambian a menudo y una versión vieja falla al descargar) y decir cómo actualizarlo
 - [x] `install.sh`: instalación en un comando para macOS y Linux, como `install.ps1` en Windows
+- [ ] `setup_env.py --upgrade`: decir qué versión de yt-dlp había y cuál queda (para saber si la actualización sirvió de algo)
 
 ## Funciones
 - [x] `export_digest.py`: exportar `digest.md` a una bóveda de Obsidian (una nota por idea)
@@ -65,6 +66,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `slides.py save`: aceptar enlaces pegados, como `db.py set`/`show` y `transcribe.py`
 - [x] `db.py mark`: no guardar marcas cuando ningún slug existe (casi siempre es una errata)
 - [x] `collect.py urls`: aceptar también enlaces de TikTok y YouTube (hoy ignora todo lo que no sea de Instagram sin avisar)
+- [ ] `transcribe.py` y `fetch_meta.py`: cuando paran por fallos seguidos con errores típicos de un yt-dlp viejo ("Unable to extract", "Unsupported URL"...), sugerir `setup_env.py --upgrade` en vez de dejar solo el error
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
@@ -91,6 +93,7 @@ Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usab
 - [x] Marcar ideas como probadas / descartadas desde el visor y exportar los cambios para `db.py`
 - [x] Tests con Vitest y build del visor en CI
 - [x] Visor: filtrar también por plataforma (Instagram, TikTok, YouTube), como ya hace `db.py status`
+- [ ] Visor: guardar la búsqueda y los filtros en la URL (`#q=...&plataforma=tiktok`) para que recargar no los pierda y se pueda guardar un enlace a una vista
 - [ ] Publicar el visor en GitHub Pages con los datos de `examples/` (el workflow `pages.yml` ya está; falta activar Pages → "GitHub Actions" en Settings y lanzarlo)
 
 ### PowerShell: instalación en Windows
