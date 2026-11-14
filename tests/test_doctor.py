@@ -86,3 +86,45 @@ def test_ram_check_recommends_a_model():
     assert doctor.check_ram(16 * 1024 * MB)["whisper_model"] == "small"
     low = doctor.check_ram(3 * 1024 * MB)
     assert low["status"] == "warn" and low["whisper_model"] == "tiny"
+
+
+def test_ytdlp_release_date_from_version():
+    import datetime as dt
+    assert doctor.release_date("2025.10.22") == dt.date(2025, 10, 22)
+    assert doctor.release_date("2025.10.22.234518") == dt.date(2025, 10, 22)  # nightly
+    assert doctor.release_date("1.2") is None
+    assert doctor.release_date("2025.13.40") is None
+
+
+def test_ytdlp_older_than_two_months_is_a_warning():
+    import datetime as dt
+    today = dt.date(2026, 11, 14)
+    assert doctor.check_ytdlp("2026.10.01", today)["status"] == "ok"
+    old = doctor.check_ytdlp("2026.03.01", today)
+    assert old["status"] == "warn"
+    assert "8 months old" in old["detail"] and "--upgrade" in old["detail"]
+    assert "-Upgrade" in old["detail"]
+
+
+def test_ytdlp_unknown_version():
+    assert doctor.check_ytdlp(None)["status"] == "warn"
+    assert doctor.check_ytdlp("dev")["status"] == "ok"  # not a date: nothing to compare
+
+
+def test_ytdlp_is_only_checked_with_a_complete_environment(tmp_path, monkeypatch):
+    monkeypatch.setattr(doctor, "check_venv", lambda home: {"name": "venv", "status": "warn", "detail": ""})
+    assert "yt-dlp" not in [c["name"] for c in doctor.run_checks(tmp_path)]
+    monkeypatch.setattr(doctor, "check_venv", lambda home: {"name": "venv", "status": "ok", "detail": ""})
+    monkeypatch.setattr(doctor, "ytdlp_version", lambda home: "2000.01.01")
+    names = [c["name"] for c in doctor.run_checks(tmp_path)]
+    assert names.index("yt-dlp") == names.index("venv") + 1
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the fake venv python is a shell script")
+def test_ytdlp_version_is_read_from_the_environment(tmp_path):
+    assert doctor.ytdlp_version(tmp_path) is None  # no environment
+    py = doctor.venv_python(tmp_path / ".venv")
+    py.parent.mkdir(parents=True)
+    py.write_text("#!/bin/sh\necho 2026.09.30\n")
+    py.chmod(0o755)
+    assert doctor.ytdlp_version(tmp_path) == "2026.09.30"

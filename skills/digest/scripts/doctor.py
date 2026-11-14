@@ -10,6 +10,7 @@ Exit code is 1 when any check fails.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import os
 import shutil
@@ -33,6 +34,11 @@ DISK_NEEDED_MB = 300  # later runs: temporary audio files and the database
 REQUIRED_MODULES = ("yt_dlp", "faster_whisper", "instaloader", "browser_cookie3")
 
 OK, WARN, FAIL = "ok", "warn", "fail"
+# yt-dlp versions are release dates. Instagram and TikTok change often, and a yt-dlp older
+# than this usually fails to download, so doctor.py says how to update it.
+YTDLP_MAX_AGE_DAYS = 60
+UPGRADE_HINT = ("update it with: setup_env.py --upgrade "
+                "(or install.sh --upgrade / install.ps1 -Upgrade)")
 
 
 def venv_python(root: Path) -> Path:
@@ -125,9 +131,47 @@ def check_ram(ram_bytes=None) -> dict:
             "detail": f"{gb:.1f} GB; Whisper model on CPU: {model}", "whisper_model": model}
 
 
+def ytdlp_version(home: Path = HOME):
+    """The yt-dlp version inside the environment ("2025.10.22"), or None."""
+    py = venv_python(home / ".venv")
+    try:
+        out = subprocess.run([str(py), "-c", "from yt_dlp.version import __version__; print(__version__)"],
+                             capture_output=True, text=True, timeout=60, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if out.returncode != 0:
+        return None
+    return out.stdout.strip() or None
+
+
+def release_date(version: str):
+    """yt-dlp versions are dates: 2025.10.22, or 2025.10.22.123456 for nightly builds."""
+    try:
+        year, month, day = (int(x) for x in version.split(".")[:3])
+        return dt.date(year, month, day)
+    except (ValueError, TypeError):
+        return None
+
+
+def check_ytdlp(version, today=None) -> dict:
+    if not version:
+        return {"name": "yt-dlp", "status": WARN, "detail": "could not read its version; " + UPGRADE_HINT}
+    released = release_date(version)
+    if released is None:
+        return {"name": "yt-dlp", "status": OK, "detail": version}
+    age = ((today or dt.date.today()) - released).days
+    if age > YTDLP_MAX_AGE_DAYS:
+        return {"name": "yt-dlp", "status": WARN,
+                "detail": f"{version} is {age // 30} months old and may fail to download from "
+                          f"Instagram or TikTok; {UPGRADE_HINT}"}
+    return {"name": "yt-dlp", "status": OK, "detail": version}
+
+
 def run_checks(home: Path = HOME) -> list:
-    return [check_python(), check_workspace(home), check_disk(home), check_ram(),
-            check_venv(home), check_ffmpeg()]
+    checks = [check_python(), check_workspace(home), check_disk(home), check_ram(), check_venv(home)]
+    if checks[-1]["status"] == OK:  # only a complete environment has a yt-dlp worth checking
+        checks.append(check_ytdlp(ytdlp_version(home)))
+    return checks + [check_ffmpeg()]
 
 
 def main(argv=None) -> int:
