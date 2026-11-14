@@ -9,6 +9,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `install.ps1`: one-command setup on Windows (`irm .../install.ps1 | iex` or `-File install.ps1`). It finds a Python between 3.9 and 3.14 (the newest the dependencies support) while skipping the Microsoft Store alias, runs `doctor.py`, creates the environment and says what to type in Claude Code; `-CheckOnly` installs nothing. CI runs it in Windows PowerShell 5.1.
 - `install.sh`: the same one-command setup for macOS and Linux (`curl -fsSL .../install.sh | sh` or `sh install.sh`), in plain POSIX sh. `--check-only` installs nothing and `SRD_PYTHON` picks the Python. CI runs it on Ubuntu and macOS.
 - `install.sh --upgrade` and `install.ps1 -Upgrade` update the packages of an existing environment (they pass `--upgrade` to `setup_env.py`), the fix when an old yt-dlp stops downloading.
+- The viewer filters ideas by platform (Instagram, TikTok, YouTube) when `reels.json` has reels from more than one.
 - `doctor.py` warns when the yt-dlp in the environment is more than two months old and says how to update it; the skill then runs `setup_env.py --upgrade`.
 - A local digest viewer in TypeScript (`viewer/`): build it once with `npm run build`, open `viewer/dist/index.html`, load `digest.md` (and optionally `reels.json`) and search every idea, ignoring accents, or filter by category and tried/discarded status. Each idea shows the reels it came from and its `db.py mark` note. Nothing is uploaded.
 - An online demo of the viewer with the invented sample (`examples/digest.md` + `examples/reels.json`), published to GitHub Pages with every release by `.github/workflows/pages.yml`; `npm run build:demo` builds the same page locally.
@@ -24,6 +25,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `setup_env.py` leaves a complete environment alone instead of running pip every time, so repeating the setup is instant and works offline; `--upgrade` updates the packages.
 
 ### Fixed
+- The viewer labelled Instagram reels with how they were collected ("export", "live"...) instead of their platform.
 - `doctor.py` warns when Python is newer than every dependency supports yet (3.15 has no onnxruntime build, so the install failed with a pip "ResolutionImpossible" error), and `setup_env.py` says which Python to install instead.
 - `fetch_meta.py` stops after 5 posts in a row look deleted or private, instead of marking a throttled session's whole list as gone.
 - `collect.py live` keeps what it read and explains why when Instagram or the connection cuts the read short, instead of a traceback.

@@ -27,7 +27,7 @@ describe("npm run build", () => {
   });
 
   it("keeps the page's Spanish text and the elements the script looks up", () => {
-    for (const id of ["files", "q", "category", "status", "ideas", "changes", "commands", "copy", "discard"]) {
+    for (const id of ["files", "q", "category", "status", "platform", "ideas", "changes", "commands", "copy", "discard"]) {
       expect(html).toContain(`id="${id}"`);
     }
     expect(html).toContain("Visor del digest");

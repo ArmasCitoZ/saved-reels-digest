@@ -5,7 +5,7 @@ import { type Digest, parseDigest, type Status } from "./digest";
 import { type Change, applyChanges, markCommands, pending } from "./marks";
 import { inline, render, escapeHtml } from "./markdown";
 import {
-  categories, type Database, filterIdeas, joinIdeas, parseDatabase, platformName, type Reel, type ViewIdea,
+  categories, type Database, filterIdeas, joinIdeas, parseDatabase, platformName, platforms, type Reel, type ViewIdea,
 } from "./reels";
 
 /** The sample files, embedded by `npm run build:demo` (the GitHub Pages copy); null in the normal build. */
@@ -60,8 +60,9 @@ function show(): void {
   const query = $<HTMLInputElement>("q").value;
   const category = $<HTMLSelectElement>("category").value || null;
   const status = ($<HTMLSelectElement>("status").value || null) as Status | null;
-  const found = filterIdeas(state.ideas, { query, category, status });
-  const filtering = Boolean(query.trim() || category || status);
+  const platform = $<HTMLSelectElement>("platform").value || null;
+  const found = filterIdeas(state.ideas, { query, category, status, platform });
+  const filtering = Boolean(query.trim() || category || status || platform);
 
   $("count").textContent = `${found.length} de ${state.ideas.length} ideas` +
     (state.db ? ` · ${state.db.total} reels en la base de datos` : "");
@@ -105,6 +106,14 @@ function refresh(): void {
   select.innerHTML = `<option value="">Todas las categorías</option>` +
     categories(state.ideas).map((c) => `<option>${escapeHtml(c)}</option>`).join("");
   select.value = categories(state.ideas).includes(current) ? current : "";
+  // Only worth a filter when the reels come from more than one platform (needs reels.json)
+  const found = platforms(state.ideas);
+  const platform = $<HTMLSelectElement>("platform");
+  const chosen = platform.value;
+  platform.innerHTML = `<option value="">Todas las plataformas</option>` +
+    found.map((p) => `<option value="${escapeHtml(p)}">${escapeHtml(platformName(p))}</option>`).join("");
+  platform.value = found.includes(chosen) ? chosen : "";
+  platform.hidden = found.length < 2;
   document.body.classList.add("loaded");
   show();
   showChanges();
@@ -143,7 +152,7 @@ function openOwn(files: FileList): void {
 function init(): void {
   const input = $<HTMLInputElement>("files");
   input.addEventListener("change", () => input.files && openOwn(input.files));
-  for (const id of ["q", "category", "status"]) $(id).addEventListener("input", show);
+  for (const id of ["q", "category", "status", "platform"]) $(id).addEventListener("input", show);
   $("ideas").addEventListener("click", (e) => {
     const button = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-mark]");
     const slug = button?.closest<HTMLElement>("article")?.dataset.slug;

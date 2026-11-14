@@ -20,6 +20,8 @@ without your own data, open `examples/digest.md` and `examples/reels.json` (inve
   ignoring case and accents (`/` jumps to it).
 - Filter by category and by status: pending, tried or discarded. A mark saved with `db.py mark`
   wins over what the digest text says, as in the next digest.
+- With `reels.json` open and reels from more than one platform, filter by platform too
+  (Instagram, TikTok, YouTube): it keeps the ideas with at least one reel saved there.
 - Mark ideas as tried, discarded or pending (with an optional note) right on the page. The
   viewer never writes your files: it lists the `db.py mark` commands that save those marks.
   Copy them and run them where you run the plugin's scripts (`$PY` is the plugin's Python, see

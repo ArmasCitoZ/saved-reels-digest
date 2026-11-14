@@ -27,6 +27,7 @@
   .controls input, .controls select { font: inherit; padding: .45rem .6rem; border-radius: 8px;
               border: 1px solid var(--line); background: var(--card); color: var(--fg); }
   .controls input { flex: 1 1 14rem; }
+  .controls [hidden] { display: none; }
   .idea { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
           padding: 1rem 1.25rem; margin: 1rem 0; }
   .idea h3 { margin: 0 0 .35rem; font-size: 1.15rem; }
@@ -77,6 +78,7 @@
       <option value="tried">Probado</option>
       <option value="discarded">Descartado</option>
     </select>
+    <select id="platform" aria-label="Plataforma" hidden></select>
     <div id="count"></div>
   </div>
   <section id="top"></section>
