@@ -106,6 +106,8 @@ export interface Filter {
   query?: string;
   category?: string | null;
   status?: Status | null;
+  /** Only ideas with at least one reel saved on this platform. */
+  platform?: string | null;
 }
 
 /** Case- and accent-insensitive: "automatizacion" finds "Automatización". */
@@ -119,6 +121,7 @@ export function filterIdeas(ideas: ViewIdea[], f: Filter): ViewIdea[] {
   return ideas.filter((i) => {
     if (f.category && i.category !== f.category) return false;
     if (f.status && i.status !== f.status) return false;
+    if (f.platform && !i.reels.some((r) => r.platform === f.platform)) return false;
     if (!words.length) return true;
     const hay = fold([i.title, i.body, i.category, i.slug, i.note ?? "",
       ...i.reels.map((r) => r.author ?? "")].join("\n"));
@@ -128,4 +131,11 @@ export function filterIdeas(ideas: ViewIdea[], f: Filter): ViewIdea[] {
 
 export function categories(ideas: ViewIdea[]): string[] {
   return [...new Set(ideas.map((i) => i.category))];
+}
+
+/** The platforms the ideas' reels come from: the known ones in db.py status order, then the rest. */
+export function platforms(ideas: ViewIdea[]): string[] {
+  const found = new Set(ideas.flatMap((i) => i.reels.map((r) => r.platform)));
+  const known = Object.keys(PLATFORM_NAMES).filter((p) => found.has(p));
+  return [...known, ...[...found].filter((p) => !(p in PLATFORM_NAMES)).sort()];
 }

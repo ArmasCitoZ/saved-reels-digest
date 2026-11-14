@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseDigest } from "../src/digest";
-import { categories, filterIdeas, joinIdeas, parseDatabase, platformName } from "../src/reels";
+import { categories, filterIdeas, joinIdeas, parseDatabase, platformName, platforms } from "../src/reels";
 
 const DIGEST = `# Digest
 
@@ -83,6 +83,24 @@ describe("joinIdeas and filterIdeas", () => {
     expect(categories(ideas)).toEqual(["Herramientas", "Prompting"]);
     expect(filterIdeas(ideas, { category: "Herramientas" }).map((i) => i.slug)).toEqual(["automatizacion", "revision"]);
     expect(filterIdeas(ideas, { category: "Herramientas", status: "todo" }).map((i) => i.slug)).toEqual(["revision"]);
+  });
+
+  it("filters by the platform of the reels behind each idea", () => {
+    expect(platforms(ideas)).toEqual(["instagram", "tiktok"]);
+    const on = (p: string) => filterIdeas(ideas, { platform: p }).map((i) => i.slug);
+    expect(on("tiktok")).toEqual(["ejemplos"]);
+    expect(on("instagram")).toEqual(["revision"]); // automatizacion has no reels at all
+    expect(on("youtube")).toEqual([]);
+    expect(filterIdeas(ideas, { platform: "tiktok", query: "eva" })).toHaveLength(1);
+  });
+
+  it("lists unknown platforms after the known ones", () => {
+    const mixed = joinIdeas(parseDigest(DIGEST), parseDatabase(JSON.stringify({ reels: {
+      A: { entry: "revision", platform: "vimeo" }, B: { entry: "revision", platform: "youtube" },
+      C: { entry: "ejemplos" },
+    } })));
+    expect(platforms(mixed)).toEqual(["instagram", "youtube", "vimeo"]);
+    expect(platforms(joinIdeas(parseDigest(DIGEST), null))).toEqual([]);
   });
 });
 
