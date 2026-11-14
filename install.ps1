@@ -31,6 +31,8 @@ param(
 
 $RepoZip = 'https://github.com/ArmasCitoZ/saved-reels-digest/archive/refs/heads/main.zip'
 $MinPython = [version]'3.9'
+# Newest Python every dependency has ready-built packages for: MAX_PYTHON in doctor.py
+$MaxPython = [version]'3.14'
 
 function Write-Step([string]$Text) {
     Write-Host ''
@@ -56,17 +58,34 @@ function Get-PythonVersion([string[]]$Command) {
 }
 
 function Find-Python {
-    # py is the launcher python.org installs on Windows; python3 and python cover the rest
+    # With several Pythons installed, py -3 picks the newest, which may be too new for the
+    # dependencies; so ask the py launcher for each supported version first, newest first.
+    # python3 and python cover installs without the launcher.
+    $candidates = @()
+    for ($minor = $MaxPython.Minor; $minor -ge $MinPython.Minor; $minor--) {
+        $candidates += ,@('py', "-3.$minor")
+    }
+    $candidates += ,@('py', '-3')
+    $candidates += ,@('python3')
+    $candidates += ,@('python')
     $tooOld = $null
-    foreach ($candidate in @(@('py', '-3'), @('python3'), @('python'))) {
+    $tooNew = $null
+    foreach ($candidate in $candidates) {
         $version = Get-PythonVersion $candidate
         if ($null -eq $version) { continue }
-        if ($version -ge $MinPython) {
-            return @{ Command = $candidate; Version = $version }
+        if ($version -lt $MinPython) {
+            if ($null -eq $tooOld) { $tooOld = $version }
+            continue
         }
-        if ($null -eq $tooOld) { $tooOld = $version }
+        if ([version]"$($version.Major).$($version.Minor)" -gt $MaxPython) {
+            if ($null -eq $tooNew) { $tooNew = @{ Command = $candidate; Version = $version; TooNew = $true } }
+            continue
+        }
+        return @{ Command = $candidate; Version = $version; TooNew = $false }
     }
-    if ($null -ne $tooOld) { return @{ Command = $null; Version = $tooOld } }
+    # only a too-new Python: worth trying, setup_env.py explains what to do if pip fails
+    if ($null -ne $tooNew) { return $tooNew }
+    if ($null -ne $tooOld) { return @{ Command = $null; Version = $tooOld; TooNew = $false } }
     return $null
 }
 
@@ -102,18 +121,22 @@ function Install-SavedReels([switch]$CheckOnly) {
     $found = Find-Python
     if ($null -eq $found) {
         Write-Host 'Python is not installed (or not in the PATH).' -ForegroundColor Yellow
-        Write-Host 'Install it with:   winget install -e --id Python.Python.3.12'
+        Write-Host "Install it with:   winget install -e --id Python.Python.$MaxPython"
         Write-Host 'or from https://www.python.org/downloads/ ticking "Add python.exe to PATH".'
         Write-Host 'Then open a NEW PowerShell window and run this again.'
         return 1
     }
     if ($null -eq $found.Command) {
         Write-Host "Found Python $($found.Version), but $MinPython or newer is needed." -ForegroundColor Yellow
-        Write-Host 'Install a newer one with:   winget install -e --id Python.Python.3.12'
+        Write-Host "Install a newer one with:   winget install -e --id Python.Python.$MaxPython"
         return 1
     }
     $python = $found.Command
     Write-Host "Using Python $($found.Version) ($($python -join ' '))"
+    if ($found.TooNew) {
+        Write-Host "Python $($found.Version) may be too new for some dependencies. If the setup fails," -ForegroundColor Yellow
+        Write-Host "install Python $MaxPython too (winget install -e --id Python.Python.$MaxPython) and run this again." -ForegroundColor Yellow
+    }
 
     $temp = Join-Path ([IO.Path]::GetTempPath()) ('saved-reels-digest-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $temp | Out-Null

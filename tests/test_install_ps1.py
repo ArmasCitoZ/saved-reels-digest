@@ -46,6 +46,17 @@ def test_exit_only_when_run_as_a_file():
     assert exits == ["if ($PSCommandPath) { exit $code }"]
 
 
+def test_python_range_matches_doctor():
+    # install.ps1 picks a Python in the range doctor.py accepts without warnings
+    sys.path.insert(0, str(SCRIPT.parent / "skills" / "digest" / "scripts"))
+    import doctor
+
+    newest = re.search(r"\$MaxPython = \[version\]'(\d+)\.(\d+)'", TEXT).groups()
+    oldest = re.search(r"\$MinPython = \[version\]'(\d+)\.(\d+)'", TEXT).groups()
+    assert tuple(map(int, newest)) == doctor.MAX_PYTHON
+    assert tuple(map(int, oldest)) == doctor.MIN_PYTHON
+
+
 def test_documents_both_ways_to_run_it():
     raw = "https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1"
     assert f"irm {raw} | iex" in TEXT
