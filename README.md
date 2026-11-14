@@ -125,7 +125,7 @@ Para borrarlo todo, elimina esa carpeta.
 Los scripts están en `skills/digest/scripts/` y se pueden usar sin Claude:
 
 ```bash
-python3 doctor.py                            # comprueba Python, disco y entorno
+python3 doctor.py                            # comprueba Python, disco, entorno y si yt-dlp está viejo
 python3 setup_env.py                         # crea ~/saved-reels-digest/.venv (--upgrade: actualiza)
 PY=~/saved-reels-digest/.venv/bin/python
 $PY collect.py export ~/Downloads/instagram-xxxx.zip
