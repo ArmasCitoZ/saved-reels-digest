@@ -55,3 +55,30 @@ def test_doctor_checks_every_requirement():
              for line in setup_env.REQ.read_text().splitlines()
              if line.strip() and not line.startswith("#")}
     assert names == set(doctor.REQUIRED_MODULES)
+
+
+def test_upgrade_reports_the_yt_dlp_versions(home, capsys):
+    calls, monkeypatch = home
+    _venv_status(monkeypatch, doctor.OK)
+    versions = iter(["2026.03.01", "2026.11.10"])
+    monkeypatch.setattr(setup_env, "ytdlp_version", lambda h: next(versions))
+    setup_env.main(["--upgrade"])
+    assert "yt-dlp updated: 2026.03.01 -> 2026.11.10" in capsys.readouterr().out
+
+
+def test_plain_install_does_not_read_yt_dlp(home):
+    calls, monkeypatch = home
+    _venv_status(monkeypatch, doctor.FAIL)
+    monkeypatch.setattr(setup_env, "ytdlp_version", lambda h: pytest.fail("not needed"))
+    setup_env.main([])
+
+
+@pytest.mark.parametrize("before, after, expected", [
+    ("2026.03.01", "2026.11.10", "updated: 2026.03.01 -> 2026.11.10"),
+    ("2026.11.10", "2026.11.10", "already the newest release (2026.11.10)"),
+    (None, "2026.11.10", "yt-dlp 2026.11.10"),
+    ("2026.03.01", None, ""),
+])
+def test_ytdlp_change(before, after, expected):
+    line = setup_env.ytdlp_change(before, after)
+    assert expected in line if expected else line == ""

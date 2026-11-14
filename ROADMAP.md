@@ -19,7 +19,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `install.sh --upgrade` / `install.ps1 -Upgrade`: actualizar los paquetes del entorno (pasa `--upgrade` a `setup_env.py`)
 - [x] `doctor.py`: avisar si yt-dlp tiene más de dos meses (Instagram y TikTok cambian a menudo y una versión vieja falla al descargar) y decir cómo actualizarlo
 - [x] `install.sh`: instalación en un comando para macOS y Linux, como `install.ps1` en Windows
-- [ ] `setup_env.py --upgrade`: decir qué versión de yt-dlp había y cuál queda (para saber si la actualización sirvió de algo)
+- [x] `setup_env.py --upgrade`: decir qué versión de yt-dlp había y cuál queda (para saber si la actualización sirvió de algo)
 
 ## Funciones
 - [x] `export_digest.py`: exportar `digest.md` a una bóveda de Obsidian (una nota por idea)

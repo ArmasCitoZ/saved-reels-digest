@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import ensure_home  # noqa: E402
-from doctor import MAX_PYTHON, NEWER_PYTHON_HINT, OK, check_venv  # noqa: E402
+from doctor import MAX_PYTHON, NEWER_PYTHON_HINT, OK, check_venv, ytdlp_version  # noqa: E402
 
 REQ = Path(__file__).resolve().parent / "requirements.txt"
 
@@ -40,6 +40,18 @@ def install(py: Path, env_dir: Path, upgrade: bool) -> None:
         raise
 
 
+def ytdlp_change(before, after) -> str:
+    """One line saying what --upgrade did to yt-dlp, the package that most often needs it."""
+    if not after:
+        return ""
+    if before and before != after:
+        return f"yt-dlp updated: {before} -> {after}"
+    if before == after:
+        return (f"yt-dlp was already the newest release ({after}); if downloads still fail, "
+                "the site may have changed after it: try again in a few days.")
+    return f"yt-dlp {after}"
+
+
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--upgrade", action="store_true",
@@ -58,7 +70,12 @@ def main(argv=None) -> None:
         print("The environment is already complete (setup_env.py --upgrade updates the packages).")
         print(f"\nREADY. Use this Python for the other scripts:\n{py}")
         return
+    before = ytdlp_version(home) if args.upgrade else None
     install(py, env_dir, args.upgrade)
+    if args.upgrade:
+        change = ytdlp_change(before, ytdlp_version(home))
+        if change:
+            print(change)
     print(f"\nREADY. Use this Python for the other scripts:\n{py}")
 
 

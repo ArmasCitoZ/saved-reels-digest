@@ -11,6 +11,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `install.sh --upgrade` and `install.ps1 -Upgrade` update the packages of an existing environment (they pass `--upgrade` to `setup_env.py`), the fix when an old yt-dlp stops downloading.
 - The viewer filters ideas by platform (Instagram, TikTok, YouTube) when `reels.json` has reels from more than one.
 - `doctor.py` warns when the yt-dlp in the environment is more than two months old and says how to update it; the skill then runs `setup_env.py --upgrade`.
+- `setup_env.py --upgrade` says which yt-dlp version was installed before and which one is now, or that it already was the newest.
 - `transcribe.py` and `fetch_meta.py` suggest `setup_env.py --upgrade` when they stop after several failures with the errors of an outdated yt-dlp ("Unable to extract", "Unsupported URL"...).
 - A local digest viewer in TypeScript (`viewer/`): build it once with `npm run build`, open `viewer/dist/index.html`, load `digest.md` (and optionally `reels.json`) and search every idea, ignoring accents, or filter by category and tried/discarded status. Each idea shows the reels it came from and its `db.py mark` note. Nothing is uploaded.
 - An online demo of the viewer with the invented sample (`examples/digest.md` + `examples/reels.json`), published to GitHub Pages with every release by `.github/workflows/pages.yml`; `npm run build:demo` builds the same page locally.
