@@ -9,6 +9,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `install.ps1`: one-command setup on Windows (`irm .../install.ps1 | iex` or `-File install.ps1`). It finds a Python between 3.9 and 3.14 (the newest the dependencies support) while skipping the Microsoft Store alias, runs `doctor.py`, creates the environment and says what to type in Claude Code; `-CheckOnly` installs nothing. CI runs it in Windows PowerShell 5.1.
 - `install.sh`: the same one-command setup for macOS and Linux (`curl -fsSL .../install.sh | sh` or `sh install.sh`), in plain POSIX sh. `--check-only` installs nothing and `SRD_PYTHON` picks the Python. CI runs it on Ubuntu and macOS.
 - `install.sh --upgrade` and `install.ps1 -Upgrade` update the packages of an existing environment (they pass `--upgrade` to `setup_env.py`), the fix when an old yt-dlp stops downloading.
+- The viewer keeps the search and filters in the URL (`#q=...&plataforma=tiktok`), so reloading does not lose them and a view can be bookmarked.
 - The viewer filters ideas by platform (Instagram, TikTok, YouTube) when `reels.json` has reels from more than one.
 - `doctor.py` warns when the yt-dlp in the environment is more than two months old and says how to update it; the skill then runs `setup_env.py --upgrade`.
 - `setup_env.py --upgrade` says which yt-dlp version was installed before and which one is now, or that it already was the newest.

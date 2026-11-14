@@ -22,6 +22,8 @@ without your own data, open `examples/digest.md` and `examples/reels.json` (inve
   wins over what the digest text says, as in the next digest.
 - With `reels.json` open and reels from more than one platform, filter by platform too
   (Instagram, TikTok, YouTube): it keeps the ideas with at least one reel saved there.
+- The search and filters live in the address bar (`#q=agentes&estado=todo&plataforma=tiktok`):
+  reloading keeps them, and a bookmark opens the same view once the files are loaded again.
 - Mark ideas as tried, discarded or pending (with an optional note) right on the page. The
   viewer never writes your files: it lists the `db.py mark` commands that save those marks.
   Copy them and run them where you run the plugin's scripts (`$PY` is the plugin's Python, see
@@ -44,6 +46,7 @@ Anyone can also open their own files there: the page still reads them only in th
 | `src/reels.ts` | Reads `reels.json`, attaches each idea's reels and the `db.py mark` marks, and filters ideas |
 | `src/marks.ts` | Marks made in the page, turned into grouped `db.py mark` commands |
 | `src/markdown.ts` | The small Markdown subset the digest uses, escaped so no HTML or script can get in |
+| `src/view.ts` | The search and filters as a URL fragment, and back |
 | `src/main.ts` | The page: opening files, the search box and filters |
 | `index.html` + `scripts/build.mjs` | Page template; the build inlines the bundled script so it works from `file://` |
 

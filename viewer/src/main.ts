@@ -7,6 +7,7 @@ import { inline, render, escapeHtml } from "./markdown";
 import {
   categories, type Database, filterIdeas, joinIdeas, parseDatabase, platformName, platforms, type Reel, type ViewIdea,
 } from "./reels";
+import { readView, type View, writeView } from "./view";
 
 /** The sample files, embedded by `npm run build:demo` (the GitHub Pages copy); null in the normal build. */
 declare const __DEMO__: { digest: string; reels: string } | null;
@@ -20,6 +21,8 @@ const state = {
   base: [] as ViewIdea[],
   ideas: [] as ViewIdea[],
   changes: new Map<string, Change>(),
+  /** Filters from the URL, applied once the files are loaded and the selects have their options. */
+  urlView: readView(location.hash) as View | null,
 };
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -54,6 +57,28 @@ function card(i: ViewIdea): string {
 </article>`;
 }
 
+/** Set the inputs to a view; a category or platform the files do not have is left unset. */
+function applyView(view: View): void {
+  $<HTMLInputElement>("q").value = view.q;
+  $<HTMLSelectElement>("status").value = view.status;
+  for (const id of ["category", "platform"] as const) {
+    const select = $<HTMLSelectElement>(id);
+    select.value = [...select.options].some((o) => o.value === view[id]) ? view[id] : "";
+  }
+}
+
+/** Keep the filters in the URL, without adding history entries; a bare #idea anchor is left alone. */
+function saveView(view: View): void {
+  const hash = writeView(view);
+  const current = location.hash.replace(/^#/, "");
+  if (hash === current || (!hash && !current.includes("="))) return;
+  try {
+    history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
+  } catch {
+    // some browsers refuse history changes on file:// pages; the filters still work
+  }
+}
+
 function show(): void {
   const { digest } = state;
   if (!digest) return;
@@ -61,6 +86,7 @@ function show(): void {
   const category = $<HTMLSelectElement>("category").value || null;
   const status = ($<HTMLSelectElement>("status").value || null) as Status | null;
   const platform = $<HTMLSelectElement>("platform").value || null;
+  saveView({ q: query, category: category ?? "", status: status ?? "", platform: platform ?? "" });
   const found = filterIdeas(state.ideas, { query, category, status, platform });
   const filtering = Boolean(query.trim() || category || status || platform);
 
@@ -114,6 +140,10 @@ function refresh(): void {
     found.map((p) => `<option value="${escapeHtml(p)}">${escapeHtml(platformName(p))}</option>`).join("");
   platform.value = found.includes(chosen) ? chosen : "";
   platform.hidden = found.length < 2;
+  if (state.urlView) {
+    applyView(state.urlView);
+    state.urlView = null;
+  }
   document.body.classList.add("loaded");
   show();
   showChanges();
@@ -183,6 +213,12 @@ function init(): void {
   });
   window.addEventListener("beforeunload", (e) => {
     if (pending(state.base, state.changes).size) e.preventDefault(); // the marks only live in this page
+  });
+  window.addEventListener("hashchange", () => {
+    // a pasted link with other filters; a plain #idea anchor only scrolls
+    if (!location.hash.includes("=") && location.hash.length > 1) return;
+    applyView(readView(location.hash));
+    show();
   });
   document.addEventListener("dragover", (e) => e.preventDefault());
   document.addEventListener("drop", (e) => {
