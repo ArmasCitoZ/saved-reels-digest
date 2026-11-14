@@ -39,6 +39,27 @@ jobs:
       - run: python -m pip install pytest
       - run: python -m pytest -q
 
+  install-windows:
+    # install.ps1 from start to end, in the Windows PowerShell 5.1 a fresh Windows has:
+    # it must create the environment, and doctor.py must then find it complete
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: keep the workspace in the runner's temp folder
+        shell: bash
+        run: echo "SRD_HOME=$RUNNER_TEMP\\srd" >> "$GITHUB_ENV"
+      - name: install.ps1
+        shell: powershell
+        run: .\install.ps1
+      - name: doctor.py sees a complete environment
+        shell: powershell
+        run: |
+          & "$env:SRD_HOME\.venv\Scripts\python.exe" skills\digest\scripts\doctor.py --json | Tee-Object -Variable report
+          if (-not ($report -join "`n" | ConvertFrom-Json).checks.Where({ $_.name -eq 'venv' -and $_.status -eq 'ok' })) { exit 1 }
+
   rust:
     # the optional Rust duplicate finder (rust/): its own tests, then the Python test that
     # checks db.py similar gives the same groups with both engines, using the fresh binary
