@@ -16,6 +16,8 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [ ] Añadir capturas reales a la guía de Windows
 - [x] Elegir modelo Whisper automáticamente según la RAM del equipo
 - [x] `setup_env.py`: no volver a llamar a pip si el entorno ya está completo (más rápido y funciona sin conexión al repetir la instalación)
+- [ ] `install.sh --upgrade` / `install.ps1 -Upgrade`: actualizar los paquetes del entorno (pasa `--upgrade` a `setup_env.py`)
+- [ ] `doctor.py`: avisar si yt-dlp tiene más de dos meses (Instagram y TikTok cambian a menudo y una versión vieja falla al descargar) y decir cómo actualizarlo
 - [x] `install.sh`: instalación en un comando para macOS y Linux, como `install.ps1` en Windows
 
 ## Funciones
@@ -67,7 +69,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
 - [x] CHANGELOG.md y releases versionadas por etiqueta (`release.yml`)
-- [ ] Publicar la primera versión con novedades (v0.2.0)
+- [ ] Publicar la primera versión con novedades (v0.2.0). Aún no hay ninguna etiqueta en el repositorio: o se etiqueta v0.2.0 en el commit de esa fecha, o se saca v0.3.0 con todo lo de "Unreleased" del CHANGELOG (subir `version` en `.claude-plugin/plugin.json` y `git tag v0.3.0 && git push --tags`; `release.yml` hace el resto)
 - [x] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
 - [x] GIF de demo en el README
 
@@ -88,6 +90,7 @@ Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usab
 - [x] `viewer/`: página estática en TypeScript (sin servidor) que abre `reels.json` + `digest.md` y permite buscar y filtrar por categoría
 - [x] Marcar ideas como probadas / descartadas desde el visor y exportar los cambios para `db.py`
 - [x] Tests con Vitest y build del visor en CI
+- [ ] Visor: filtrar también por plataforma (Instagram, TikTok, YouTube), como ya hace `db.py status`
 - [ ] Publicar el visor en GitHub Pages con los datos de `examples/` (el workflow `pages.yml` ya está; falta activar Pages → "GitHub Actions" en Settings y lanzarlo)
 
 ### PowerShell: instalación en Windows
