@@ -15,6 +15,8 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Guía paso a paso para Windows (`docs/windows.md`)
 - [ ] Añadir capturas reales a la guía de Windows
 - [x] Elegir modelo Whisper automáticamente según la RAM del equipo
+- [ ] `setup_env.py`: no volver a llamar a pip si el entorno ya está completo (más rápido y funciona sin conexión al repetir la instalación)
+- [ ] `install.sh`: instalación en un comando para macOS y Linux, como `install.ps1` en Windows
 
 ## Funciones
 - [x] `export_digest.py`: exportar `digest.md` a una bóveda de Obsidian (una nota por idea)
@@ -35,6 +37,9 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py set`/`show` y `transcribe.py --shortcodes`: aceptar enlaces de YouTube pegados (`watch?v=`, `youtu.be`, Shorts)
 - [x] `db.py check`: comparar `digest.md` con la base de datos (ideas sin reels, reels que apuntan a ideas que ya no están)
 - [x] Usar `db.py check` en el paso 5 de la skill y documentarlo en el README
+- [ ] `db.py status`: cuántos reels hay de cada plataforma (Instagram, TikTok, YouTube)
+- [ ] `db.py status` y `unavailable`: aceptar `--collection`, como `next`, `dump`, `similar` y `recent`
+- [ ] `--collection` y `db.py collections`: explicar que también valen las listas de YouTube (hoy la ayuda solo habla de Instagram)
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
@@ -57,6 +62,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py set` y `show`: aceptar enlaces pegados y terminar con error si ningún código existe
 - [x] `slides.py save`: aceptar enlaces pegados, como `db.py set`/`show` y `transcribe.py`
 - [x] `db.py mark`: no guardar marcas cuando ningún slug existe (casi siempre es una errata)
+- [ ] `collect.py urls`: aceptar también enlaces de TikTok y YouTube (hoy ignora todo lo que no sea de Instagram sin avisar)
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
