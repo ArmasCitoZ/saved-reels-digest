@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (HOME, in_collection, load_db, log, pick_whisper_model, save_db,  # noqa: E402
                     resolve_code, split_codes, total_ram_bytes)
-from ig import Blocked, Fetcher, NetworkError, classify_error  # noqa: E402
+from ig import Blocked, Fetcher, NetworkError, classify_error, outdated_ytdlp_hint  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
 # seconds to wait before each retry when our connection drops (then give up for this run)
@@ -178,8 +178,9 @@ def main() -> None:
                 streak += 1
                 if streak >= MAX_CONSECUTIVE_FAILS:
                     save_db(db)
+                    hint = outdated_ytdlp_hint(str(e))
                     sys.exit(f"STOPPED after {streak} failures in a row (last: {e}). "
-                             f"Saved {done} transcripts.")
+                             f"Saved {done} transcripts." + (f"\n{hint}" if hint else ""))
             save_db(db)
             eta = (time.time() - t0) / n * (len(todo) - n) / 60
             status = "ok" if r.get("transcribe") == "ok" else "failed"

@@ -75,6 +75,19 @@ def classify_error(msg: str) -> str:
     return "failed"
 
 
+# what yt-dlp says when the site changed and only a newer yt-dlp can read it again
+OUTDATED_HINTS = ("unable to extract", "unsupported url", "no video formats found",
+                  "please report this issue", "yt-dlp -u", "latest version")
+
+
+def outdated_ytdlp_hint(msg: str) -> str:
+    """A sentence to add when an error looks like an outdated yt-dlp, else ""."""
+    if not any(k in msg.lower() for k in OUTDATED_HINTS):
+        return ""
+    return ("This looks like an outdated yt-dlp (Instagram, TikTok and YouTube change often): "
+            "update it with setup_env.py --upgrade, then run this again.")
+
+
 def _raise_for(msg: str):
     kind = classify_error(msg)
     if kind == "blocked":
