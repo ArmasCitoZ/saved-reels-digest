@@ -5,10 +5,12 @@
 # environment the plugin uses (setup_env.py, about a minute and ~600 MB the first time) and
 # says how to add the plugin to Claude Code. Running it again is safe and quick.
 #
-#   From a clone:        sh install.sh [--check-only]
+#   From a clone:        sh install.sh [--check-only | --upgrade]
 #   Without cloning:     curl -fsSL https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.sh | sh
+#                        (add options with: ... | sh -s -- --upgrade)
 #
 #   --check-only         only check the computer; install nothing
+#   --upgrade            update the packages of an existing environment (yt-dlp above all)
 #   SRD_PYTHON=/path     use this Python instead of looking for one
 #   SRD_HOME=/folder     keep the files there instead of ~/saved-reels-digest
 #
@@ -23,13 +25,19 @@ step() { printf '\n==> %s\n' "$1"; }
 warn() { printf '%s\n' "$1" >&2; }
 
 check_only=0
+upgrade=""
 for arg in "$@"; do
     case $arg in
         --check-only) check_only=1 ;;
-        -h | --help) sed -n '2,15p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit 0 ;;
-        *) warn "Unknown option: $arg (use --check-only or --help)"; exit 2 ;;
+        --upgrade) upgrade=--upgrade ;;
+        -h | --help) sed -n '2,17p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) warn "Unknown option: $arg (use --check-only, --upgrade or --help)"; exit 2 ;;
     esac
 done
+if [ "$check_only" = 1 ] && [ -n "$upgrade" ]; then
+    warn '--check-only installs nothing, so it cannot be combined with --upgrade.'
+    exit 2
+fi
 
 # "3 13" for a working Python, nothing otherwise
 python_version() {
@@ -117,8 +125,13 @@ if [ "$check_only" = 1 ]; then
     exit 0
 fi
 
-step 'Creating the Python environment (setup_env.py, first time about a minute)'
-if ! "$python" "$scripts/setup_env.py"; then
+if [ -n "$upgrade" ]; then
+    step 'Updating the packages of the Python environment (setup_env.py --upgrade)'
+else
+    step 'Creating the Python environment (setup_env.py, first time about a minute)'
+fi
+# $upgrade is empty or a single word, so leaving it unquoted adds no argument when empty
+if ! "$python" "$scripts/setup_env.py" $upgrade; then
     warn 'Setup failed: read the error above. Running this again resumes it.'
     case $(uname -s) in
         Linux) warn 'On Debian/Ubuntu a missing venv module is fixed with: sudo apt install python3-venv' ;;

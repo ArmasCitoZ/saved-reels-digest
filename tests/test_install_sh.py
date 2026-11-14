@@ -89,3 +89,34 @@ def test_no_bashisms():
                 r"\bsource\b")
     for pattern in bashisms:
         assert not [ln for ln in code if re.search(pattern, ln)], pattern
+
+
+def recording_python(tmp_path):
+    """A 'python' 3.12 that answers the version question and logs every script it is asked to run."""
+    log = tmp_path / "calls.log"
+    exe = tmp_path / "python3.12"
+    exe.write_text(f'#!/bin/sh\nif [ "$1" = -c ]; then echo 3 12; exit 0; fi\n'
+                   f'echo "$(basename "$1") ${{2:-}}" >> "{log}"\n')
+    exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
+    return exe, log
+
+
+def test_upgrade_is_passed_to_setup_env(tmp_path):
+    exe, log = recording_python(tmp_path)
+    r = run(tmp_path / "srd", "--upgrade", SRD_PYTHON=str(exe))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "Updating the packages" in r.stdout
+    assert log.read_text().split("\n")[:2] == ["doctor.py ", "setup_env.py --upgrade"]
+
+
+def test_plain_install_does_not_upgrade(tmp_path):
+    exe, log = recording_python(tmp_path)
+    r = run(tmp_path / "srd", SRD_PYTHON=str(exe))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "Creating the Python environment" in r.stdout
+    assert log.read_text().split("\n")[:2] == ["doctor.py ", "setup_env.py "]
+
+
+def test_check_only_and_upgrade_together_are_refused(tmp_path):
+    r = run(tmp_path / "srd", "--check-only", "--upgrade", SRD_PYTHON=sys.executable)
+    assert r.returncode == 2 and "cannot be combined" in r.stderr
