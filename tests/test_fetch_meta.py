@@ -76,3 +76,18 @@ def test_ctrl_c_saves_what_was_already_read(run, monkeypatch):
     assert "Interrupted" in str(e.value) and "3 done" in str(e.value)
     assert saved and saved[-1] == {"C0": "ok", "C1": "ok", "C2": "ok", "C3": None, "C4": None}
     assert db["reels"]["C0"]["caption"] == "a tip"
+
+
+def test_failures_from_an_outdated_yt_dlp_suggest_upgrading(run):
+    broke = RuntimeError("yt-dlp: ERROR: [TikTok] 1: Unable to extract webpage video data")
+    run([broke] * 6)
+    with pytest.raises(SystemExit) as e:
+        fetch_meta.main()
+    assert "setup_env.py --upgrade" in str(e.value) and "--browser" not in str(e.value)
+
+
+def test_other_failures_still_suggest_a_browser(run):
+    run([RuntimeError("something odd")] * 6)
+    with pytest.raises(SystemExit) as e:
+        fetch_meta.main()
+    assert "Try --browser" in str(e.value) and "--upgrade" not in str(e.value)

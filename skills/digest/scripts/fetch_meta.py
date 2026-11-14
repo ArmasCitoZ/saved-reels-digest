@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import load_db, log, save_db  # noqa: E402
-from ig import Blocked, Fetcher, NetworkError, Unavailable  # noqa: E402
+from ig import Blocked, Fetcher, NetworkError, Unavailable, outdated_ytdlp_hint  # noqa: E402
 
 MAX_CONSECUTIVE_FAILS = 5
 
@@ -73,8 +73,9 @@ def main() -> None:
                 streak += 1
                 if streak >= MAX_CONSECUTIVE_FAILS:
                     save_db(db)
+                    hint = outdated_ytdlp_hint(str(e)) or "Try --browser, then run again."
                     sys.exit(f"STOPPED after {streak} failures in a row (last: {e}). "
-                             f"Progress saved ({ok} done). Try --browser, then run again.")
+                             f"Progress saved ({ok} done). {hint}")
             if n % 10 == 0:
                 save_db(db)
                 log(f"... {n}/{len(todo)}")

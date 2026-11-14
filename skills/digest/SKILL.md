@@ -29,7 +29,8 @@ dependencies and checks the Python version, free disk space, that `WORK` is writ
 whether the venv is complete. If any line says FAIL, explain the fix to the user in plain
 words and stop until it is solved. Then run `python3 SCRIPTS/setup_env.py`: it creates the
 venv and prints `PY`. If doctor.py warned that yt-dlp is old, or downloads fail later with
-yt-dlp errors, run `python3 SCRIPTS/setup_env.py --upgrade` (it needs internet) and retry. If `WORK/reels.json` already exists, run `PY SCRIPTS/db.py status`
+yt-dlp errors (`transcribe.py` and `fetch_meta.py` say so when they stop), run
+`python3 SCRIPTS/setup_env.py --upgrade` (it needs internet) and retry. If `WORK/reels.json` already exists, run `PY SCRIPTS/db.py status`
 and continue from the first unfinished step instead of starting over.
 
 Topic: use what the user asked for. If they gave none, use **tech: Claude and other AI

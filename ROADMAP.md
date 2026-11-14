@@ -66,7 +66,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `slides.py save`: aceptar enlaces pegados, como `db.py set`/`show` y `transcribe.py`
 - [x] `db.py mark`: no guardar marcas cuando ningún slug existe (casi siempre es una errata)
 - [x] `collect.py urls`: aceptar también enlaces de TikTok y YouTube (hoy ignora todo lo que no sea de Instagram sin avisar)
-- [ ] `transcribe.py` y `fetch_meta.py`: cuando paran por fallos seguidos con errores típicos de un yt-dlp viejo ("Unable to extract", "Unsupported URL"...), sugerir `setup_env.py --upgrade` en vez de dejar solo el error
+- [x] `transcribe.py` y `fetch_meta.py`: cuando paran por fallos seguidos con errores típicos de un yt-dlp viejo ("Unable to extract", "Unsupported URL"...), sugerir `setup_env.py --upgrade` en vez de dejar solo el error
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
