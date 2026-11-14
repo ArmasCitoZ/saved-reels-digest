@@ -18,8 +18,8 @@
                                             points to, reels pointing to ideas that are gone,
                                             repeated slugs and broken (#slug) links
 
-next, dump, similar and recent accept --collection NAME to work only on one Instagram
-collection (as named in the official export, case-insensitive).
+status, unavailable, next, dump, similar and recent accept --collection NAME to work only on
+one Instagram collection (as named in the official export, case-insensitive).
   db.py show CODE [CODE ...]                full record
 
 In set and show, a CODE can also be a pasted Instagram, TikTok or YouTube link.
@@ -72,8 +72,14 @@ def platform(r: dict) -> str:
     return r.get("platform") or "instagram"
 
 
-def cmd_status(_):
-    rs = list(load_db()["reels"].values())
+def _no_such_collection(name: str) -> None:
+    sys.exit(f"No reels in collection {name!r}. See the exact names with: db.py collections")
+
+
+def cmd_status(a):
+    rs = [r for r in load_db()["reels"].values() if in_collection(r, a.collection)]
+    if a.collection and not rs:
+        _no_such_collection(a.collection)
     per_platform = Counter(platform(r) for r in rs)
     c = Counter()
     for r in rs:
@@ -88,7 +94,7 @@ def cmd_status(_):
         c["merged into digest"] += bool(r.get("entry"))
     c["relevant & not yet in digest"] = sum(1 for r in rs if r.get("relevant") is True
                                             and not r.get("entry") and _has_content(r))
-    print(f"Database: {DB_PATH}")
+    print(f"Database: {DB_PATH}" + (f" (collection {a.collection!r} only)" if a.collection else ""))
     for k in ["total", "with caption", "meta failed", "deleted or private", "triage: None", "triage: True",
               "triage: maybe", "triage: False", "transcribed", "transcribe failed", "images read",
               "merged into digest", "relevant & not yet in digest"]:
@@ -111,8 +117,11 @@ def cmd_collections(_):
         print(f"  {name or '(no collection)':32} {n}")
 
 
-def cmd_unavailable(_):
-    rs = [r for r in load_db()["reels"].values() if r.get("meta") == "unavailable"]
+def cmd_unavailable(a):
+    reels = [r for r in load_db()["reels"].values() if in_collection(r, a.collection)]
+    if a.collection and not reels:
+        _no_such_collection(a.collection)
+    rs = [r for r in reels if r.get("meta") == "unavailable"]
     if not rs:
         print("No deleted or private posts found (so far).")
         return
@@ -536,7 +545,7 @@ def main() -> None:
     p = sub.add_parser("check"); p.add_argument("--digest", default=str(HOME / "digest.md"))
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
-    for name in ("next", "dump", "similar", "recent"):
+    for name in ("status", "unavailable", "next", "dump", "similar", "recent"):
         sub.choices[name].add_argument("--collection", help="only reels from this Instagram collection")
     a = ap.parse_args()
     a.fn(a)

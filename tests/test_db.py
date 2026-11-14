@@ -49,6 +49,27 @@ def test_status_hides_platforms_with_nothing_saved(tmp_path):
     assert "from Instagram" in out and "TikTok" not in out and "YouTube" not in out
 
 
+def test_status_and_unavailable_by_collection(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", collection="IA", relevant=True),
+            reel("BBBBB2", collection="IA", meta="unavailable", author="gone"),
+            reel("CCCCC3", collection="Recetas", meta="unavailable", author="cook"),
+            reel("DDDDD4", collection="Tech"))
+    lines = [line.split() for line in run(tmp_path, "status", "--collection", "ia").splitlines()]
+    assert ["total", "2"] in lines and ["relevant", "1"] in lines
+    out = run(tmp_path, "unavailable", "--collection", " IA ")
+    assert "1 saved posts" in out and "@gone" in out and "@cook" not in out
+    assert "No deleted" in run(tmp_path, "unavailable", "--collection", "Tech")
+
+
+def test_unknown_collection_is_an_error(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", collection="IA"))
+    env = {**os.environ, "SRD_HOME": str(tmp_path), "PYTHONIOENCODING": "utf-8"}
+    for cmd in ("status", "unavailable"):
+        r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), cmd, "--collection", "IAA"],
+                           env=env, capture_output=True, text=True, encoding="utf-8")
+        assert r.returncode == 1 and "db.py collections" in r.stderr
+
+
 # ------------------------------------------------------------------- next
 def test_next_lists_only_untriaged(tmp_path):
     make_db(tmp_path, reel("AAAAA1", caption="new idea", author="ana"),

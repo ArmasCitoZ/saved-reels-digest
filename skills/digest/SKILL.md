@@ -91,8 +91,9 @@ If it prints `STOPPED`, relay the reason; do not loop retries. Wait, or switch t
 If the user only wants one of their Instagram collections ("just my IA folder"), run
 `PY SCRIPTS/db.py collections` to see the exact names (they come from the official
 export), then add `--collection "<name>"` to every `db.py next`, `db.py dump`,
-`db.py similar` and `transcribe.py` call below. Mention that reels saved outside any
-collection are left out.
+`db.py similar` and `transcribe.py` call below (`db.py status --collection "<name>"` shows
+the progress of that collection alone). Mention that reels saved outside any collection
+are left out.
 
 Loop: `PY SCRIPTS/db.py next --limit 60` → decide each line → write decisions:
 
