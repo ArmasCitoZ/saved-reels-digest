@@ -13,6 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import ensure_home  # noqa: E402
+from doctor import MAX_PYTHON, NEWER_PYTHON_HINT  # noqa: E402
 
 REQ = Path(__file__).resolve().parent / "requirements.txt"
 
@@ -32,7 +33,16 @@ def main() -> None:
         venv.EnvBuilder(with_pip=True).create(env_dir)
     print("Installing dependencies (first time takes a minute) ...", flush=True)
     subprocess.check_call([str(py), "-m", "pip", "install", "-q", "--upgrade", "pip"])
-    subprocess.check_call([str(py), "-m", "pip", "install", "-q", "-r", str(REQ)])
+    try:
+        subprocess.check_call([str(py), "-m", "pip", "install", "-q", "-r", str(REQ)])
+    except subprocess.CalledProcessError:
+        if sys.version_info[:2] > MAX_PYTHON:
+            newest = ".".join(map(str, MAX_PYTHON))
+            sys.exit(f"Installing the dependencies failed. Python {sys.version_info[0]}."
+                     f"{sys.version_info[1]} is probably too new for some of them: "
+                     + NEWER_PYTHON_HINT.format(max=newest)
+                     + f", after deleting {env_dir}.")
+        raise
     print(f"\nREADY. Use this Python for the other scripts:\n{py}")
 
 

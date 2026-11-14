@@ -22,6 +22,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import HOME, pick_whisper_model, total_ram_bytes  # noqa: E402
 
 MIN_PYTHON = (3, 9)
+# Newest Python every dependency has ready-built packages for. Brand-new Pythons arrive before
+# some of them (onnxruntime, used by faster-whisper, had none for 3.15), and pip then fails.
+MAX_PYTHON = (3, 14)
+NEWER_PYTHON_HINT = ("if setup_env.py fails, install Python {max} alongside it "
+                     "(Windows: py -{max} setup_env.py; or python.org/downloads)")
 # first run: virtualenv with deps (~600 MB) + Whisper "small" model (~460 MB)
 DISK_NEEDED_FIRST_RUN_MB = 1200
 DISK_NEEDED_MB = 300  # later runs: temporary audio files and the database
@@ -40,6 +45,11 @@ def check_python(version=None) -> dict:
     if v[:2] < MIN_PYTHON:
         return {"name": "python", "status": FAIL,
                 "detail": f"Python {shown}; 3.9 or newer is required (python.org/downloads)"}
+    if v[:2] > MAX_PYTHON:
+        newest = ".".join(map(str, MAX_PYTHON))
+        return {"name": "python", "status": WARN,
+                "detail": f"Python {shown} is newer than some dependencies support yet; "
+                          + NEWER_PYTHON_HINT.format(max=newest)}
     return {"name": "python", "status": OK, "detail": f"Python {shown}"}
 
 

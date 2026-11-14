@@ -19,6 +19,14 @@ def test_python_version_gate():
     assert "3.13.1" in doctor.check_python((3, 13, 1))["detail"]
 
 
+def test_python_newer_than_the_dependencies_is_a_warning():
+    newest = doctor.MAX_PYTHON
+    assert doctor.check_python((*newest, 0))["status"] == "ok"
+    too_new = doctor.check_python((newest[0], newest[1] + 1, 2))
+    assert too_new["status"] == "warn"
+    assert f"install Python {newest[0]}.{newest[1]}" in too_new["detail"]
+
+
 def test_disk_needs_more_on_first_run(tmp_path):
     free = 800 * MB
     assert doctor.check_disk(tmp_path, free)["status"] == "fail"  # no .venv yet
