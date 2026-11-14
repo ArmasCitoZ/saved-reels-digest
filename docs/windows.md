@@ -21,6 +21,14 @@ equipo y no instala nada. Si no encuentra Python, te dice cómo instalarlo
 (`winget install -e --id Python.Python.3.14`); instálalo, abre otra ventana de PowerShell y
 vuelve a lanzarlo. Se puede repetir sin miedo: solo instala lo que falte.
 
+Para **actualizar** los paquetes (sobre todo `yt-dlp`, que hay que renovar cuando Instagram o
+TikTok cambian algo y las descargas empiezan a fallar), añade `-Upgrade`:
+`powershell -ExecutionPolicy Bypass -File install.ps1 -Upgrade`, o sin clonar:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1))) -Upgrade
+```
+
 Si prefieres hacerlo a mano, o el atajo falla, sigue los pasos de abajo.
 
 ## 1. Instala Python

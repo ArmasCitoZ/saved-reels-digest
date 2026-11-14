@@ -16,7 +16,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [ ] Añadir capturas reales a la guía de Windows
 - [x] Elegir modelo Whisper automáticamente según la RAM del equipo
 - [x] `setup_env.py`: no volver a llamar a pip si el entorno ya está completo (más rápido y funciona sin conexión al repetir la instalación)
-- [ ] `install.sh --upgrade` / `install.ps1 -Upgrade`: actualizar los paquetes del entorno (pasa `--upgrade` a `setup_env.py`)
+- [x] `install.sh --upgrade` / `install.ps1 -Upgrade`: actualizar los paquetes del entorno (pasa `--upgrade` a `setup_env.py`)
 - [ ] `doctor.py`: avisar si yt-dlp tiene más de dos meses (Instagram y TikTok cambian a menudo y una versión vieja falla al descargar) y decir cómo actualizarlo
 - [x] `install.sh`: instalación en un comando para macOS y Linux, como `install.ps1` en Windows
 

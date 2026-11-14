@@ -67,6 +67,8 @@ curl -fsSL https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/
 irm https://raw.githubusercontent.com/ArmasCitoZ/saved-reels-digest/main/install.ps1 | iex
 ```
 
+Si las descargas empiezan a fallar al cabo de unos meses, casi siempre es un `yt-dlp` viejo (Instagram y TikTok cambian a menudo). Actualiza los paquetes del entorno con `sh install.sh --upgrade` (o `curl ... | sh -s -- --upgrade`) en macOS y Linux, o `-Upgrade` en Windows.
+
 ¿Estás en Windows? Tienes una [guía paso a paso](docs/windows.md), desde instalar Python hasta los errores más típicos.
 
 Para elegir otro tema basta con decirlo: `/saved-reels:digest marketing y negocios`. Si ya ordenas tus guardados en colecciones de Instagram, puedes pedirle que use solo una: *"solo mi colección IA"*.
