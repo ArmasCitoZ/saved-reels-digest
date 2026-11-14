@@ -54,6 +54,10 @@ Choose with the user (AskUserQuestion if available) and recommend in this order:
    available and the user prefers it: follow `references/browser-collect.md`, then
    `PY SCRIPTS/collect.py urls FILE`.
 
+If the user just pastes a handful of links (Instagram, TikTok or YouTube, mixed is fine),
+save them to a file or pipe them in: `PY SCRIPTS/collect.py urls -`. It names any link it
+skipped because it is not a post (a profile, another site), so tell the user about those.
+
 **TikTok favorites** can be added too, alone or next to Instagram (same database, same
 digest). Only through TikTok's official export: TikTok app → Profile → ☰ → Settings and
 privacy → Account → Download your data → format **JSON** → Request data, then download the

@@ -62,7 +62,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py set` y `show`: aceptar enlaces pegados y terminar con error si ningún código existe
 - [x] `slides.py save`: aceptar enlaces pegados, como `db.py set`/`show` y `transcribe.py`
 - [x] `db.py mark`: no guardar marcas cuando ningún slug existe (casi siempre es una errata)
-- [ ] `collect.py urls`: aceptar también enlaces de TikTok y YouTube (hoy ignora todo lo que no sea de Instagram sin avisar)
+- [x] `collect.py urls`: aceptar también enlaces de TikTok y YouTube (hoy ignora todo lo que no sea de Instagram sin avisar)
 
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues

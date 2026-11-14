@@ -10,8 +10,9 @@ Three sources, pick one:
                                 Reads your saved feed live with instaloader,
                                 reusing the session of a browser where you are
                                 logged in (or a saved instaloader session).
-  collect.py urls FILE|-        Plain list of links, one per line (for example
-                                gathered by Claude from your browser).
+  collect.py urls FILE|-        Plain list of links (for example gathered by Claude
+                                from your browser). Instagram, TikTok and YouTube
+                                links can be mixed; other links are counted and skipped.
 
 TikTok too:
 
@@ -42,12 +43,13 @@ import sys
 import time
 import zipfile
 import zlib
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import (SESSION_DIR, SHORTCODE_RE, TIKTOK_RE, add_reel, ensure_home,  # noqa: E402
-                    load_db, log, save_db, shortcode_from_url, tiktok_key, tiktok_url,
+from common import (SESSION_DIR, SHORTCODE_RE, TIKTOK_RE, YOUTUBE_RE, add_reel,  # noqa: E402
+                    ensure_home, load_db, log, save_db, shortcode_from_url, tiktok_key, tiktok_url,
                     youtube_key, youtube_url)
 from ig import classify_error  # noqa: E402
 
@@ -409,13 +411,46 @@ def cmd_youtube(args) -> None:
 
 
 # ----------------------------------------------------------------------- urls
+LINK_RE = re.compile(r"https?://\S+|(?:www\.)?(?:instagram|tiktok|youtube)\.com/\S+|youtu\.be/\S+")
+
+
+def parse_links(text: str) -> list:
+    """[(database key, platform, fields)] for each Instagram, TikTok or YouTube post link, in order, once."""
+    found = []
+    for m in SHORTCODE_RE.finditer(text):
+        found.append((m.start(), m.group(1), "instagram", {}))
+    for m in TIKTOK_RE.finditer(text):
+        vid = m.group(1)
+        found.append((m.start(), tiktok_key(vid), "tiktok",
+                      {"url": tiktok_url(vid), "platform": "tiktok", "is_video": True}))
+    for m in YOUTUBE_RE.finditer(text):
+        vid = m.group(1)
+        found.append((m.start(), youtube_key(vid), "youtube",
+                      {"url": youtube_url(vid), "platform": "youtube", "is_video": True}))
+    seen, out = set(), []
+    for _, key, platform, fields in sorted(found, key=lambda f: f[0]):
+        if key not in seen:
+            seen.add(key)
+            out.append((key, platform, fields))
+    return out
+
+
 def cmd_urls(args) -> None:
     text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text("utf-8")
+    links = parse_links(text)
+    # links that are not a post: profiles, other sites... said out loud instead of dropped silently
+    other = [u for u in LINK_RE.findall(text) if not parse_links(u)]
     db = load_db()
-    codes = list(dict.fromkeys(SHORTCODE_RE.findall(text)))
-    new = sum(add_reel(db, sc, source="urls") for sc in codes)
+    new = sum(add_reel(db, key, source="urls", **fields) for key, _, fields in links)
     save_db(db)
-    print(f"Parsed {len(codes)} links, {new} new. Total: {len(db['reels'])}.")
+    per = Counter(platform for _, platform, _ in links)
+    detail = ", ".join(f"{per[p]} {name}" for p, name in
+                       (("instagram", "Instagram"), ("tiktok", "TikTok"), ("youtube", "YouTube")) if per[p])
+    print(f"Parsed {len(links)} links" + (f" ({detail})" if detail else "")
+          + f", {new} new. Total: {len(db['reels'])}.")
+    if other:
+        print(f"Skipped {len(other)} links that are not an Instagram, TikTok or YouTube post: "
+              + ", ".join(other[:5]) + (" ..." if len(other) > 5 else ""))
 
 
 def main() -> None:
