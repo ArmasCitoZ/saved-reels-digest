@@ -204,8 +204,8 @@ can be marked; if it says nothing was marked, pick the right slug from the list 
 
 If the user keeps notes in Obsidian (or asks for one note per idea), run
 `PY SCRIPTS/export_digest.py --vault <vault folder>` (`--folder` changes the subfolder,
-default `Saved reels`). It writes one note per `### idea` with frontmatter, tags by
-category, the source reels and links between ideas of the same category, plus an
+default `Saved reels`). It writes one note per `### idea` with frontmatter (including a
+`status` property that follows `db.py mark`), tags by category, the source reels and links between ideas of the same category, plus an
 `INDEX.md` map of content. Re-running updates the notes and keeps whatever the user wrote
 under `## My notes`; files it did not create are never overwritten. It relies on the
 digest structure above, so keep the `### Title {#slug}` headings.

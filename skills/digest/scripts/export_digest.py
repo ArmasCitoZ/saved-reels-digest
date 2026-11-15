@@ -8,7 +8,8 @@ VAULT/FOLDER:
 
   INDEX.md          map of content: "Do these first" and every idea by category
   <Idea title>.md   one note per idea, with frontmatter (title, date, tags,
-                    aliases, sources) and links to the other ideas of its category
+                    aliases, status, sources) and links to the other ideas of its
+                    category
 
 Links are relative markdown links, so the notes also render on GitHub and in
 VS Code. Safe to re-run: notes are rewritten from the digest, but anything you
@@ -174,7 +175,7 @@ def link(text: str, target: str) -> str:
 
 
 def _yaml_str(s: str) -> str:
-    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
 
 
 def rewrite_anchors(text: str, by_slug: dict) -> str:
@@ -185,12 +186,18 @@ def rewrite_anchors(text: str, by_slug: dict) -> str:
     return ANCHOR_LINK_RE.sub(repl, text)
 
 
-def render_note(idea: dict, ideas: list, by_slug: dict, day: str, index_name: str) -> str:
+def render_note(idea: dict, ideas: list, by_slug: dict, day: str, index_name: str,
+                marks: dict | None = None) -> str:
     sources = list(dict.fromkeys(URL_RE.findall(idea["body"])))
     tags = ["saved-reels", slugify(idea["category"])]
+    status, note = resolve_status(idea, marks)
+    # status is a property, so Bases and Dataview can filter tried / discarded / todo ideas
     fm = ["---", f"title: {_yaml_str(idea['title'])}", f"date: {day}",
           f"tags: [{', '.join(tags)}]", f"aliases: [{idea['slug']}]",
-          f"category: {_yaml_str(idea['category'])}", f"generator: {MARKER}"]
+          f"category: {_yaml_str(idea['category'])}", f"status: {status}"]
+    if note:
+        fm.append(f"note: {_yaml_str(note)}")
+    fm.append(f"generator: {MARKER}")
     if sources:
         fm.append("sources:")
         fm += [f"  - {u}" for u in sources]
@@ -232,7 +239,7 @@ def _my_notes(path: Path) -> str:
     return text[idx + 1:].rstrip() + "\n" if idx >= 0 else ""
 
 
-def export(digest_text: str, out_dir: Path, today: str | None = None) -> dict:
+def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dict | None = None) -> dict:
     digest = parse_digest(digest_text)
     if not digest["ideas"]:
         raise ValueError("no ideas found: expected '### Idea title {#slug}' entries under '## Category'")
@@ -243,7 +250,7 @@ def export(digest_text: str, out_dir: Path, today: str | None = None) -> dict:
     report = {"written": [], "skipped": [], "stale": []}
     files = {"INDEX.md": render_index(digest, by_slug, day)}
     for i in digest["ideas"]:
-        files[i["file"]] = render_note(i, digest["ideas"], by_slug, day, "INDEX.md")
+        files[i["file"]] = render_note(i, digest["ideas"], by_slug, day, "INDEX.md", marks)
     for name, content in files.items():
         path = out_dir / name
         if path.exists():
@@ -327,7 +334,7 @@ def main(argv=None) -> int:
         return 0
     out_dir = Path(args.vault).expanduser() / args.folder
     try:
-        report = export(src.read_text("utf-8"), out_dir)
+        report = export(src.read_text("utf-8"), out_dir, marks=load_marks())
     except ValueError as e:
         sys.exit(f"Could not export {src}: {e}")
     print(f"Wrote {len(report['written'])} notes to {out_dir} (open INDEX.md).")

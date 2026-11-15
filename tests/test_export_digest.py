@@ -308,3 +308,32 @@ def test_cli_json_uses_the_marks_in_reels_json(tmp_path):
     assert r.returncode == 0, r.stderr
     by_slug = {i["slug"]: i for i in json.loads(r.stdout)["ideas"]}
     assert (by_slug["claude-md"]["status"], by_slug["claude-md"]["note"]) == ("tried", "works")
+
+
+def _frontmatter(note: str) -> str:
+    return note.split("\n---", 1)[0]
+
+
+def test_notes_have_the_status_property(tmp_path):
+    digest = DIGEST.replace("**Notes:**", "**Status:** 🚫 Discarded: hype\n**Notes:**")
+    ed.export(digest, tmp_path, marks={"plan-mode": {"status": "tried", "note": 'fast "and" safe\nreally'}})
+    plan = _frontmatter((tmp_path / "Plan mode before big changes.md").read_text(encoding="utf-8"))
+    assert "\nstatus: tried\n" in plan
+    assert '\nnote: "fast \\"and\\" safe\\nreally"\n' in plan  # one YAML line, quotes escaped
+    claude = _frontmatter((tmp_path / "Keep a CLAUDE.md project memory.md").read_text(encoding="utf-8"))
+    assert "\nstatus: todo\n" in claude and "\nnote:" not in claude
+    examples = _frontmatter((tmp_path / "Give examples, not adjectives.md").read_text(encoding="utf-8"))
+    assert "\nstatus: discarded\n" in examples  # from the digest text when there is no mark
+
+
+def test_cli_vault_uses_the_marks_in_reels_json(tmp_path):
+    _db_with_marks(tmp_path, {"claude-md": {"status": "tried", "note": "works"}})
+    src = tmp_path / "digest.md"
+    src.write_text(DIGEST, encoding="utf-8")
+    vault = tmp_path / "vault"
+    r = subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py"), "--vault", str(vault),
+                        "--digest", str(src)], env={**os.environ, "SRD_HOME": str(tmp_path)},
+                       capture_output=True, text=True, encoding="utf-8", check=False)
+    assert r.returncode == 0, r.stderr
+    note = (vault / "Saved reels" / "Keep a CLAUDE.md project memory.md").read_text(encoding="utf-8")
+    assert "\nstatus: tried\n" in note and '\nnote: "works"\n' in note
