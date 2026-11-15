@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- The viewer sorts ideas by their most recently saved reel or by how many reels back them (with `reels.json` open), besides the digest's own order, and keeps the choice in the URL (`#orden=recent`).
 - `db.py check --strict` exits with status 1 when `digest.md` and the database disagree, so a script or CI job can stop on it; without the flag it still only reports.
 - `export_digest.py --prune` deletes the vault notes it made for ideas no longer in the digest (merged or removed); notes with something written under `## My notes` are kept and listed. Without it they are still only listed.
 - Obsidian notes have a `status` property (todo, tried or discarded, with the marks in `reels.json` winning over the digest text) and the `note` saved with `db.py mark`, so Bases or Dataview can list the ideas still to try. The vault's `INDEX.md` puts ✅ or 🚫 next to tried and discarded ideas and counts them.

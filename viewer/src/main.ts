@@ -5,7 +5,8 @@ import { type Digest, parseDigest, type Status } from "./digest";
 import { type Change, applyChanges, markCommands, pending } from "./marks";
 import { inline, render, escapeHtml } from "./markdown";
 import {
-  categories, type Database, filterIdeas, joinIdeas, parseDatabase, platformName, platforms, type Reel, type ViewIdea,
+  categories, type Database, filterIdeas, joinIdeas, parseDatabase, platformName, platforms, type Reel, type Sort,
+  sortIdeas, type ViewIdea,
 } from "./reels";
 import { readView, type View, writeView } from "./view";
 
@@ -61,6 +62,7 @@ function card(i: ViewIdea): string {
 function applyView(view: View): void {
   $<HTMLInputElement>("q").value = view.q;
   $<HTMLSelectElement>("status").value = view.status;
+  $<HTMLSelectElement>("sort").value = view.sort;
   for (const id of ["category", "platform"] as const) {
     const select = $<HTMLSelectElement>(id);
     select.value = [...select.options].some((o) => o.value === view[id]) ? view[id] : "";
@@ -86,8 +88,9 @@ function show(): void {
   const category = $<HTMLSelectElement>("category").value || null;
   const status = ($<HTMLSelectElement>("status").value || null) as Status | null;
   const platform = $<HTMLSelectElement>("platform").value || null;
-  saveView({ q: query, category: category ?? "", status: status ?? "", platform: platform ?? "" });
-  const found = filterIdeas(state.ideas, { query, category, status, platform });
+  const sort = $<HTMLSelectElement>("sort").value as View["sort"];
+  saveView({ q: query, category: category ?? "", status: status ?? "", platform: platform ?? "", sort });
+  const found = sortIdeas(filterIdeas(state.ideas, { query, category, status, platform }), (sort || "digest") as Sort);
   const filtering = Boolean(query.trim() || category || status || platform);
 
   $("count").textContent = `${found.length} de ${state.ideas.length} ideas` +
@@ -140,6 +143,8 @@ function refresh(): void {
     found.map((p) => `<option value="${escapeHtml(p)}">${escapeHtml(platformName(p))}</option>`).join("");
   platform.value = found.includes(chosen) ? chosen : "";
   platform.hidden = found.length < 2;
+  // Sorting by date or number of reels needs reels.json; without it every idea ties
+  $("sort").hidden = !state.db;
   if (state.urlView) {
     applyView(state.urlView);
     state.urlView = null;
@@ -182,7 +187,7 @@ function openOwn(files: FileList): void {
 function init(): void {
   const input = $<HTMLInputElement>("files");
   input.addEventListener("change", () => input.files && openOwn(input.files));
-  for (const id of ["q", "category", "status", "platform"]) $(id).addEventListener("input", show);
+  for (const id of ["q", "category", "status", "platform", "sort"]) $(id).addEventListener("input", show);
   $("ideas").addEventListener("click", (e) => {
     const button = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-mark]");
     const slug = button?.closest<HTMLElement>("article")?.dataset.slug;

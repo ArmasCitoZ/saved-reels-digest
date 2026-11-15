@@ -139,3 +139,23 @@ export function platforms(ideas: ViewIdea[]): string[] {
   const known = Object.keys(PLATFORM_NAMES).filter((p) => found.has(p));
   return [...known, ...[...found].filter((p) => !(p in PLATFORM_NAMES)).sort()];
 }
+
+/** How the list is ordered: as in the digest (its ranking), newest saved reel first, or most reels first. */
+export type Sort = "digest" | "recent" | "reels";
+export const SORTS: readonly Sort[] = ["digest", "recent", "reels"];
+
+/** When the idea's newest reel was saved; null without reels.json or dates. */
+export function lastSaved(i: ViewIdea): number | null {
+  const times = i.reels.map((r) => r.savedAt).filter((t): t is number => t !== null);
+  return times.length ? Math.max(...times) : null;
+}
+
+/** A sorted copy. Ties, and ideas with no date for "recent", keep the digest's order. */
+export function sortIdeas(ideas: ViewIdea[], sort: Sort): ViewIdea[] {
+  if (sort === "digest") return [...ideas];
+  const key = sort === "recent" ? (i: ViewIdea) => lastSaved(i) ?? -Infinity : (i: ViewIdea) => i.reels.length;
+  return ideas
+    .map((idea, n) => ({ idea, n, k: key(idea) }))
+    .sort((a, b) => (b.k === a.k ? a.n - b.n : b.k > a.k ? 1 : -1))
+    .map((x) => x.idea);
+}

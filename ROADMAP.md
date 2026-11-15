@@ -98,7 +98,7 @@ Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usab
 - [x] Tests con Vitest y build del visor en CI
 - [x] Visor: filtrar también por plataforma (Instagram, TikTok, YouTube), como ya hace `db.py status`
 - [x] Visor: guardar la búsqueda y los filtros en la URL (`#q=...&plataforma=tiktok`) para que recargar no los pierda y se pueda guardar un enlace a una vista
-- [ ] Visor: ordenar las ideas (orden del digest, guardadas hace menos, con más reels) y guardar el orden en la URL como los filtros
+- [x] Visor: ordenar las ideas (orden del digest, guardadas hace menos, con más reels) y guardar el orden en la URL como los filtros
 - [ ] Publicar el visor en GitHub Pages con los datos de `examples/` (el workflow `pages.yml` ya está; falta activar Pages → "GitHub Actions" en Settings y lanzarlo)
 
 ### PowerShell: instalación en Windows

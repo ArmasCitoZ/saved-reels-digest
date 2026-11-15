@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parseDigest } from "../src/digest";
-import { categories, filterIdeas, joinIdeas, parseDatabase, platformName, platforms } from "../src/reels";
+import {
+  categories, filterIdeas, joinIdeas, lastSaved, parseDatabase, platformName, platforms, sortIdeas,
+} from "../src/reels";
 
 const DIGEST = `# Digest
 
@@ -137,5 +139,30 @@ describe("platformName", () => {
   it("does not mistake how a reel was collected for its platform", () => {
     const db = parseDatabase(JSON.stringify({ reels: { X: { entry: "e", source: "export" } } }));
     expect(db.byEntry.get("e")?.[0]?.platform).toBe("instagram");
+  });
+});
+
+describe("sortIdeas", () => {
+  const ideas = joinIdeas(parseDigest(DIGEST), parseDatabase(DB));
+  const slugs = (list: typeof ideas) => list.map((i) => i.slug);
+
+  it("keeps the digest's order by default, without changing the list it gets", () => {
+    const sorted = sortIdeas(ideas, "digest");
+    expect(slugs(sorted)).toEqual(["automatizacion", "revision", "ejemplos"]);
+    expect(sorted).not.toBe(ideas);
+  });
+
+  it("puts the idea with the newest saved reel first, and ideas with no dates last", () => {
+    expect(lastSaved(ideas[1]!)).toBe(200);
+    expect(lastSaved(ideas[0]!)).toBeNull();
+    expect(slugs(sortIdeas(ideas, "recent"))).toEqual(["revision", "ejemplos", "automatizacion"]);
+    expect(slugs(ideas)).toEqual(["automatizacion", "revision", "ejemplos"]); // not sorted in place
+  });
+
+  it("puts the ideas backed by more reels first, ties in digest order", () => {
+    expect(slugs(sortIdeas(ideas, "reels"))).toEqual(["revision", "ejemplos", "automatizacion"]);
+    const alone = joinIdeas(parseDigest(DIGEST), null);
+    expect(slugs(sortIdeas(alone, "reels"))).toEqual(slugs(alone));
+    expect(slugs(sortIdeas(alone, "recent"))).toEqual(slugs(alone));
   });
 });
