@@ -15,7 +15,8 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind)
-  db.py ideas                               every idea (slug) reels point to: how many reels,
+  db.py ideas [--status todo|tried|discarded]
+                                            every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark, to reuse slugs
   db.py rename OLD NEW [--digest [PATH]]    move every reel of an idea (and its mark) to another
                                             slug, after renaming it or merging it into NEW;
@@ -482,12 +483,19 @@ def cmd_ideas(a):
     if not ideas:
         print("No ideas yet: reels get one with db.py set entry SLUG CODE ... while merging.")
         return
-    rows = sorted(ideas.items(), key=lambda kv: (-len(kv[1]), kv[0]))
-    print(f"{len(rows)} ideas (reels, newest saved, mark):")
+    def status(slug):
+        return marks.get(slug, {}).get("status", "todo")
+
+    rows = sorted(((slug, rs) for slug, rs in ideas.items() if not a.status or status(slug) == a.status),
+                  key=lambda kv: (-len(kv[1]), kv[0]))
+    if not rows:
+        print(f"None of the {len(ideas)} ideas is {a.status}.")
+        return
+    print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
     for slug, rs in rows:
         newest = max((saved_ts(r) or 0 for r in rs), default=0) or None
-        print(f"  {slug:{width}}  {len(rs):3}  {_day(newest)}  {marks.get(slug, {}).get('status', 'todo')}")
+        print(f"  {slug:{width}}  {len(rs):3}  {_day(newest)}  {status(slug)}")
 
 
 def cmd_rename(a):
@@ -648,7 +656,9 @@ def main() -> None:
     p = sub.add_parser("marks")
     p.add_argument("--status", choices=("tried", "discarded"), help="list only this kind of mark")
     p.set_defaults(fn=cmd_marks)
-    sub.add_parser("ideas").set_defaults(fn=cmd_ideas)
+    p = sub.add_parser("ideas")
+    p.add_argument("--status", choices=MARKS, help="only ideas with this mark (todo = not marked)")
+    p.set_defaults(fn=cmd_ideas)
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")
     p.add_argument("--digest", nargs="?", const=str(HOME / "digest.md"),
                    help="also rename {#OLD} and (#OLD) in this digest (default WORK/digest.md)")

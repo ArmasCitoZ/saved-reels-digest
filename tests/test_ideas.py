@@ -28,3 +28,19 @@ def test_ideas_ties_are_sorted_by_slug_and_unknown_dates_shown(tmp_path):
 def test_ideas_when_nothing_is_merged_yet(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True))
     assert "No ideas yet" in run(tmp_path, "ideas")
+
+
+def test_ideas_can_list_one_status(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"), reel("BBBBB2", entry="subagents"),
+            reel("CCCCC3", entry="mcp"))
+    run(tmp_path, "mark", "tried", "subagents")
+    run(tmp_path, "mark", "discarded", "mcp", "--note", "too much setup")
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--status", "todo"))] == ["hooks"]
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--status", "tried"))] == ["subagents"]
+    out = run(tmp_path, "ideas", "--status", "discarded")
+    assert out.startswith("1 discarded ideas") and [r[0] for r in rows(out)] == ["mcp"]
+
+
+def test_ideas_status_with_no_match(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"))
+    assert "None of the 1 ideas is tried." in run(tmp_path, "ideas", "--status", "tried")
