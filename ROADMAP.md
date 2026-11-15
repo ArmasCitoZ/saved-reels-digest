@@ -43,6 +43,10 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py status`: cuántos reels hay de cada plataforma (Instagram, TikTok, YouTube)
 - [x] `db.py status` y `unavailable`: aceptar `--collection`, como `next`, `dump`, `similar` y `recent`
 - [x] `--collection` y `db.py collections`: explicar que también valen las listas de YouTube (hoy la ayuda solo habla de Instagram)
+- [ ] Exportadores: usar las marcas de `reels.json` (`db.py mark`) para el estado de cada idea, como ya hace el visor (hoy `export_digest.py` solo lee el texto del digest, así que una idea marcada como probada sale pendiente en Obsidian y Notion)
+- [ ] Obsidian: `status` (y la nota de `db.py mark`) en las propiedades de cada nota, e indicar en `INDEX.md` qué ideas están probadas o descartadas, para poder filtrarlas con Bases o Dataview
+- [ ] `export_digest.py --prune`: borrar las notas que creó el exportador y ya no están en el digest (sin tocar las que tienen algo escrito bajo `## My notes`); hoy solo se listan
+- [ ] `db.py check --strict`: terminar con código 1 cuando hay algo que arreglar, para poder usarlo en scripts y en CI
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
@@ -94,6 +98,7 @@ Leer un `digest.md` largo en un editor es incómodo; un visor local lo hace usab
 - [x] Tests con Vitest y build del visor en CI
 - [x] Visor: filtrar también por plataforma (Instagram, TikTok, YouTube), como ya hace `db.py status`
 - [x] Visor: guardar la búsqueda y los filtros en la URL (`#q=...&plataforma=tiktok`) para que recargar no los pierda y se pueda guardar un enlace a una vista
+- [ ] Visor: ordenar las ideas (orden del digest, guardadas hace menos, con más reels) y guardar el orden en la URL como los filtros
 - [ ] Publicar el visor en GitHub Pages con los datos de `examples/` (el workflow `pages.yml` ya está; falta activar Pages → "GitHub Actions" en Settings y lanzarlo)
 
 ### PowerShell: instalación en Windows
