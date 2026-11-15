@@ -182,6 +182,10 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    (it shows each recent reel and the entry it went into).
 6. On later runs, merge new reels into existing entries before creating new ones,
    and refresh the header counts, "Do these first" and "Saved this week".
+   To rename an entry's slug, or to fold one entry into another, never retype its codes:
+   `PY SCRIPTS/db.py rename <old-slug> <new-slug> --digest` moves its reels and its mark
+   and rewrites `{#old-slug}` and every `(#old-slug)` link in `digest.md`. When it says two
+   entries now share the slug, merge their text into one `###` entry.
 7. Respect what the user already did: run `PY SCRIPTS/db.py marks`. For each marked
    entry, make the first line under its `###` heading `**Status:** ✅ Tried: <note>` or
    `**Status:** 🚫 Discarded: <note>` (keep the heading itself unchanged), and leave both
@@ -190,7 +194,8 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
 8. Before telling the user it is done, run `PY SCRIPTS/db.py check`. It compares
    `digest.md` with the database and lists what does not match: ideas no reel points to
    (run `db.py set entry` for their sources), reels pointing to an idea that was renamed or
-   dropped (point them to the idea they now belong to), repeated `{#slug}`s, `(#slug)` links
+   dropped (run the `db.py rename` it suggests, adding `--digest` only if the digest still
+   has the old slug; check that its guess is right), repeated `{#slug}`s, `(#slug)` links
    that go nowhere and relevant reels not merged yet. Fix each one and run it again until it
    says they agree; otherwise the next run merges new reels into the wrong ideas.
 
