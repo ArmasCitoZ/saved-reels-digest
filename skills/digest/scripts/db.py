@@ -15,9 +15,10 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks                               every idea marked tried or discarded
-  db.py check [--digest PATH]               compare digest.md with the database: ideas no reel
+  db.py check [--digest PATH] [--strict]    compare digest.md with the database: ideas no reel
                                             points to, reels pointing to ideas that are gone,
-                                            repeated slugs and broken (#slug) links
+                                            repeated slugs and broken (#slug) links; --strict
+                                            exits with status 1 when something needs fixing
 
 status, unavailable, next, dump, similar and recent accept --collection NAME to work only on
 one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive).
@@ -504,6 +505,8 @@ def cmd_check(a):
     print(f"{len(problems)} things to fix in {path.name} ({ideas} ideas):")
     for p in problems:
         print(f"- {p}")
+    if a.strict:
+        sys.exit(1)
 
 
 def cmd_show(a):
@@ -549,6 +552,8 @@ def main() -> None:
     p.set_defaults(fn=cmd_mark)
     sub.add_parser("marks").set_defaults(fn=cmd_marks)
     p = sub.add_parser("check"); p.add_argument("--digest", default=str(HOME / "digest.md"))
+    p.add_argument("--strict", action="store_true",
+                   help="exit with status 1 when there is something to fix (for scripts and CI)")
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
     for name in ("status", "unavailable", "next", "dump", "similar", "recent"):

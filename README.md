@@ -143,7 +143,7 @@ $PY transcribe.py                            # modelo según la RAM; omite víde
 $PY slides.py pending                        # carruseles y fotos por leer (fetch / save)
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó
 $PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recuerda
-$PY db.py check                              # digest.md y la base coinciden (ideas sin reels, slugs rotos)
+$PY db.py check [--strict]                   # digest.md y la base coinciden (ideas sin reels, slugs rotos); --strict sale con error si no
 $PY db.py unavailable                        # guardados borrados o privados
 $PY db.py status
 $PY export_digest.py --vault ~/Obsidian/MiBoveda   # una nota por idea + INDEX.md

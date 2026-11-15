@@ -46,7 +46,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Exportadores: usar las marcas de `reels.json` (`db.py mark`) para el estado de cada idea, como ya hace el visor (hoy `export_digest.py` solo lee el texto del digest, así que una idea marcada como probada sale pendiente en Obsidian y Notion)
 - [x] Obsidian: `status` (y la nota de `db.py mark`) en las propiedades de cada nota, e indicar en `INDEX.md` qué ideas están probadas o descartadas, para poder filtrarlas con Bases o Dataview
 - [x] `export_digest.py --prune`: borrar las notas que creó el exportador y ya no están en el digest (sin tocar las que tienen algo escrito bajo `## My notes`); hoy solo se listan
-- [ ] `db.py check --strict`: terminar con código 1 cuando hay algo que arreglar, para poder usarlo en scripts y en CI
+- [x] `db.py check --strict`: terminar con código 1 cuando hay algo que arreglar, para poder usarlo en scripts y en CI
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

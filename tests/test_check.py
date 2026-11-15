@@ -68,3 +68,21 @@ def test_missing_digest(tmp_path):
                        env={**os.environ, "SRD_HOME": str(tmp_path), "PYTHONIOENCODING": "utf-8"},
                        capture_output=True, text=True, encoding="utf-8")
     assert r.returncode != 0 and "Write the digest first" in r.stderr
+
+
+def _check(home, *args):
+    return subprocess.run([sys.executable, str(SCRIPTS / "db.py"), "check", *args],
+                          env={**os.environ, "SRD_HOME": str(home), "PYTHONIOENCODING": "utf-8"},
+                          capture_output=True, text=True, encoding="utf-8")
+
+
+def test_strict_fails_only_when_there_is_something_to_fix(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"))
+    write(tmp_path)
+    r = _check(tmp_path, "--strict")
+    assert r.returncode == 0 and "agree (2 ideas)" in r.stdout
+    write(tmp_path, DIGEST.replace("{#mcp-servers}", "{#mcp}"))
+    r = _check(tmp_path, "--strict")
+    assert r.returncode == 1 and "things to fix" in r.stdout and "'mcp-servers'" in r.stdout
+    assert _check(tmp_path).returncode == 0  # without --strict it only reports
