@@ -117,17 +117,21 @@ describe.skipIf(!python)("same result as export_digest.py --json", () => {
   const cases = { example, PORTUGUESE, FENCED, ACCENTS };
   for (const [name, text] of Object.entries(cases)) {
     it(name, () => {
-      const file = join(mkdtempSync(join(tmpdir(), "srd-viewer-")), "digest.md");
+      const home = mkdtempSync(join(tmpdir(), "srd-viewer-"));
+      const file = join(home, "digest.md");
       writeFileSync(file, text, "utf-8");
+      // SRD_HOME without a reels.json, so marks in the developer's own database never leak in
       const r = spawnSync(python!, [`${root}skills/digest/scripts/export_digest.py`, "--json", "--digest", file], {
-        encoding: "utf-8", env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+        encoding: "utf-8", env: { ...process.env, PYTHONIOENCODING: "utf-8", SRD_HOME: home },
       });
       if (r.status !== 0) throw new Error(r.stderr);
       const py = JSON.parse(r.stdout);
       const ts = parseDigest(text);
       expect({ title: ts.title, date: ts.date, top: ts.top }).toEqual({ title: py.title, date: py.date, top: py.top });
       expect(ts.ideas.map(({ title, slug, category, status, sources, body }) =>
-        ({ title, slug, category, status, sources, body }))).toEqual(py.ideas);
+        ({ title, slug, category, status, sources, body }))).toEqual(
+        // `note` comes from db.py mark in reels.json, which the digest parser does not read
+        py.ideas.map(({ note, ...idea }: { note: string | null }) => (expect(note).toBeNull(), idea)));
     });
   }
 });
