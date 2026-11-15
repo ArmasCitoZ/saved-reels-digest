@@ -27,7 +27,8 @@
                                             exits with status 1 when something needs fixing
 
 status, unavailable, next, dump, similar and recent accept --collection NAME to work only on
-one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive).
+one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive);
+a name no reel is in is an error that suggests the closest one.
   db.py show CODE [CODE ...]                full record
 
 In set and show, a CODE can also be a pasted Instagram, TikTok or YouTube link.
@@ -73,6 +74,23 @@ def _has_content(r: dict) -> bool:
     return r.get("meta") != "unavailable" or bool(_full_text(r))
 
 
+def _closest(name: str, known) -> str | None:
+    """The known name a typo most likely meant (case and '-'/'_' are ignored), or None."""
+    def norm(x):
+        return x.casefold().replace("_", "-")
+
+    by_norm = {norm(k): k for k in known}
+    hit = difflib.get_close_matches(norm(name), list(by_norm), n=1, cutoff=0.75)
+    return by_norm[hit[0]] if hit else None
+
+
+def _guesses(names, known) -> str:
+    """A "Did you mean" sentence for the names that have a close match, else an empty string."""
+    pairs = [(n, _closest(n, known)) for n in names]
+    pairs = [f"{g} (for {n})" if len(names) > 1 else g for n, g in pairs if g]
+    return f" Did you mean: {', '.join(pairs)}?" if pairs else ""
+
+
 PLATFORMS = (("instagram", "Instagram"), ("tiktok", "TikTok"), ("youtube", "YouTube"))
 
 
@@ -81,14 +99,24 @@ def platform(r: dict) -> str:
     return r.get("platform") or "instagram"
 
 
-def _no_such_collection(name: str) -> None:
-    sys.exit(f"No reels in collection {name!r}. See the exact names with: db.py collections")
+def _no_such_collection(name: str, known=()) -> None:
+    guess = _closest(name.strip(), known)
+    sys.exit(f"No reels in collection {name!r}."
+             + (f" Did you mean --collection \"{guess}\"?" if guess else "")
+             + " See the exact names with: db.py collections")
+
+
+def _check_collection(name: str | None) -> None:
+    """Stop on a collection no reel is in, instead of quietly finding nothing in it."""
+    if not name:
+        return
+    reels = load_db()["reels"].values()
+    if not any(in_collection(r, name) for r in reels):
+        _no_such_collection(name, {r["collection"] for r in reels if r.get("collection")})
 
 
 def cmd_status(a):
     rs = [r for r in load_db()["reels"].values() if in_collection(r, a.collection)]
-    if a.collection and not rs:
-        _no_such_collection(a.collection)
     per_platform = Counter(platform(r) for r in rs)
     c = Counter()
     for r in rs:
@@ -133,8 +161,6 @@ def cmd_collections(_):
 
 def cmd_unavailable(a):
     reels = [r for r in load_db()["reels"].values() if in_collection(r, a.collection)]
-    if a.collection and not reels:
-        _no_such_collection(a.collection)
     rs = [r for r in reels if r.get("meta") == "unavailable"]
     if not rs:
         print("No deleted or private posts found (so far).")
@@ -432,23 +458,6 @@ def cmd_recent(a):
 MARKS = ("tried", "discarded", "todo")  # todo = clear the mark
 
 
-def _closest(name: str, known) -> str | None:
-    """The known name a typo most likely meant (case and '-'/'_' are ignored), or None."""
-    def norm(x):
-        return x.casefold().replace("_", "-")
-
-    by_norm = {norm(k): k for k in known}
-    hit = difflib.get_close_matches(norm(name), list(by_norm), n=1, cutoff=0.75)
-    return by_norm[hit[0]] if hit else None
-
-
-def _guesses(names, known) -> str:
-    """" Did you mean: a (for b), c?" for the names that have a close match, else ""."""
-    pairs = [(n, _closest(n, known)) for n in names]
-    pairs = [f"{g} (for {n})" if len(names) > 1 else g for n, g in pairs if g]
-    return f" Did you mean: {', '.join(pairs)}?" if pairs else ""
-
-
 def cmd_mark(a):
     db = load_db()
     entries = db.setdefault("entries", {})
@@ -698,6 +707,7 @@ def main() -> None:
         sub.choices[name].add_argument("--collection",
                                        help="only reels from this Instagram collection or YouTube playlist")
     a = ap.parse_args()
+    _check_collection(getattr(a, "collection", None))
     a.fn(a)
 
 

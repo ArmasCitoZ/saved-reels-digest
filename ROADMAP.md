@@ -58,7 +58,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py ideas --status todo|tried|discarded`: listar solo las ideas pendientes, probadas o descartadas
 - [x] Skill y README: usar `db.py ideas` en el paso de fusión para reutilizar slugs en vez de inventar uno parecido
 - [x] `db.py mark` y `rename`: cuando un slug no existe, sugerir el más parecido ("¿quisiste decir `subagents`?") en vez de solo listar los primeros 15
-- [ ] `--collection`: si el nombre no existe, sugerir la colección o lista más parecida (erratas como `--collection "Ideas IA"` por "Ideas de IA")
+- [x] `--collection`: si el nombre no existe, sugerir la colección o lista más parecida (erratas como `--collection "Ideas IA"` por "Ideas de IA")
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

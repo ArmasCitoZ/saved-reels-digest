@@ -64,10 +64,19 @@ def test_status_and_unavailable_by_collection(tmp_path):
 def test_unknown_collection_is_an_error(tmp_path):
     make_db(tmp_path, reel("AAAAA1", collection="IA"))
     env = {**os.environ, "SRD_HOME": str(tmp_path), "PYTHONIOENCODING": "utf-8"}
-    for cmd in ("status", "unavailable"):
-        r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), cmd, "--collection", "IAA"],
+    for cmd in ("status", "unavailable", "next", "dump", "similar", "recent"):
+        r = subprocess.run([sys.executable, str(SCRIPTS / "db.py"), cmd, "--collection", "Recetas"],
                            env=env, capture_output=True, text=True, encoding="utf-8")
-        assert r.returncode == 1 and "db.py collections" in r.stderr
+        assert r.returncode == 1 and "db.py collections" in r.stderr, cmd
+        assert "Did you mean" not in r.stderr
+
+
+def test_unknown_collection_suggests_the_closest_name(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", collection="Ideas de IA"), reel("BBBBB2", collection="Recetas"),
+            reel("ytdQw4w9WgXcQ", platform="youtube", collection="Watch later"))
+    for typo, meant in (("Ideas IA", "Ideas de IA"), ("watch_later", "Watch later"), ("receta", "Recetas")):
+        err = run_failing(tmp_path, "next", "--collection", typo)
+        assert f'Did you mean --collection "{meant}"?' in err, typo
 
 
 # ------------------------------------------------------------------- next
@@ -210,7 +219,10 @@ def test_next_and_dump_filter_by_collection_case_insensitive(tmp_path):
 
 def test_unknown_collection_says_so(tmp_path):
     _collection_db(tmp_path)
-    assert "in collection 'Viajes'" in run(tmp_path, "next", "--collection", "Viajes")
+    assert "No reels in collection 'Viajes'" in run_failing(tmp_path, "next", "--collection", "Viajes")
+    # a real collection with nothing left still just says so
+    run(tmp_path, "set", "relevant", "false", "AAAAA1")
+    assert "Nothing left to triage in collection 'IA'" in run(tmp_path, "next", "--collection", "IA")
 
 
 # ------------------------------------------------------------- dump budget
