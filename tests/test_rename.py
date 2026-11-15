@@ -61,3 +61,51 @@ def test_accented_slugs_are_valid(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True, entry="automatizacion"))
     run(tmp_path, "rename", "automatizacion", "automatización")
     assert entry_of(tmp_path) == {"AAAAA1": "automatización"}
+
+
+DIGEST = """# IA: my saved reels digest
+
+## Do these first
+1. **Subagents** → [entry](#sub-agents)
+
+## Claude Code
+### Subagents {#sub-agents}
+Split big tasks. Pairs well with [hooks](#hooks).
+
+### Hooks {#hooks}
+Run commands on events. See [subagents](#sub-agents).
+"""
+
+
+def test_digest_flag_renames_heading_and_links(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="sub-agents"),
+            reel("BBBBB2", relevant=True, entry="hooks"))
+    (tmp_path / "digest.md").write_text(DIGEST, encoding="utf-8")
+    out = run(tmp_path, "rename", "sub-agents", "subagents", "--digest")
+    assert "renamed 1 headings and 2 links to {#subagents}" in out
+    text = (tmp_path / "digest.md").read_text(encoding="utf-8")
+    assert "sub-agents" not in text and "{#subagents}" in text and "(#hooks)" in text
+    assert "agree (2 ideas)" in run(tmp_path, "check")
+
+
+def test_digest_flag_warns_when_two_headings_now_share_the_slug(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="sub-agents"),
+            reel("BBBBB2", relevant=True, entry="hooks"))
+    path = tmp_path / "my-digest.md"
+    path.write_text(DIGEST, encoding="utf-8")
+    out = run(tmp_path, "rename", "hooks", "sub-agents", "--digest", str(path))
+    assert "two {#sub-agents} ideas: merge their text" in out
+    assert "{#hooks}" not in path.read_text(encoding="utf-8")
+
+
+def test_digest_without_the_slug_is_left_alone(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="old"))
+    (tmp_path / "digest.md").write_text(DIGEST, encoding="utf-8")
+    assert "has no {#old} or (#old): left as it was" in run(tmp_path, "rename", "old", "new", "--digest")
+    assert (tmp_path / "digest.md").read_text(encoding="utf-8") == DIGEST
+
+
+def test_missing_digest_renames_nothing(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="old"))
+    assert "Nothing was renamed" in run_failing(tmp_path, "rename", "old", "new", "--digest")
+    assert entry_of(tmp_path) == {"AAAAA1": "old"}

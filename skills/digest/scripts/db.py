@@ -15,8 +15,9 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks                               every idea marked tried or discarded
-  db.py rename OLD NEW                      move every reel of an idea (and its mark) to another
-                                            slug, after renaming it or merging it into NEW
+  db.py rename OLD NEW [--digest [PATH]]    move every reel of an idea (and its mark) to another
+                                            slug, after renaming it or merging it into NEW;
+                                            --digest also renames {#OLD} and (#OLD) in digest.md
   db.py check [--digest PATH] [--strict]    compare digest.md with the database: ideas no reel
                                             points to, reels pointing to ideas that are gone,
                                             repeated slugs and broken (#slug) links; --strict
@@ -465,6 +466,9 @@ def cmd_rename(a):
         sys.exit(f"{new!r} is not a valid slug: use letters, digits, '-' or '_' (as in {{#{new}}}).")
     if old == new:
         sys.exit("The old and new slugs are the same: nothing to rename.")
+    digest = Path(a.digest).expanduser() if a.digest else None
+    if digest and not digest.exists():
+        sys.exit(f"Not found: {digest}. Nothing was renamed.")
     db = load_db()
     entries = db.setdefault("entries", {})
     moved = [r for r in db["reels"].values() if r.get("entry") == old]
@@ -488,6 +492,24 @@ def cmd_rename(a):
     save_db(db)
     print(f"Moved {len(moved)} reels from {old!r} to {new!r}"
           + (f" (merged with the {already} already there)." if already else ".") + note)
+    if digest:
+        print(rename_in_digest(digest, old, new))
+
+
+def rename_in_digest(path: Path, old: str, new: str) -> str:
+    """Rename the {#old} heading anchor and every (#old) link in digest.md; says what changed."""
+    text = path.read_text("utf-8")
+    both = f"{{#{old}}}" in text and f"{{#{new}}}" in text
+    text, headings = re.subn(r"\{#" + re.escape(old) + r"\}", f"{{#{new}}}", text)
+    text, links = re.subn(r"\]\(#" + re.escape(old) + r"\)", f"](#{new})", text)
+    if not headings and not links:
+        return f"{path.name} has no {{#{old}}} or (#{old}): left as it was."
+    path.write_text(text, "utf-8")
+    msg = f"In {path.name}: renamed {headings} headings and {links} links to {{#{new}}}."
+    if both:
+        msg += (f" It now has two {{#{new}}} ideas: merge their text into one entry "
+                "(db.py check lists repeated slugs).")
+    return msg
 
 
 def check_digest(db: dict, digest_text: str) -> list[str]:
@@ -588,6 +610,8 @@ def main() -> None:
     p.set_defaults(fn=cmd_mark)
     sub.add_parser("marks").set_defaults(fn=cmd_marks)
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")
+    p.add_argument("--digest", nargs="?", const=str(HOME / "digest.md"),
+                   help="also rename {#OLD} and (#OLD) in this digest (default WORK/digest.md)")
     p.set_defaults(fn=cmd_rename)
     p = sub.add_parser("check"); p.add_argument("--digest", default=str(HOME / "digest.md"))
     p.add_argument("--strict", action="store_true",

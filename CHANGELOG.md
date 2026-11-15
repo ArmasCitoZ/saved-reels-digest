@@ -6,7 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- `db.py rename OLD NEW` moves every reel of an idea, and its `db.py mark`, to another slug when the idea is renamed or merged into another one; before, each code had to go through `db.py set entry` again and the mark was lost. When both ideas are marked, the mark of NEW is kept.
+- `db.py rename OLD NEW` moves every reel of an idea, and its `db.py mark`, to another slug when the idea is renamed or merged into another one; before, each code had to go through `db.py set entry` again and the mark was lost. When both ideas are marked, the mark of NEW is kept. With `--digest` it also renames the `{#OLD}` heading and every `(#OLD)` link in `digest.md`, so both stay in agreement in one step.
 - The viewer sorts ideas by their most recently saved reel or by how many reels back them (with `reels.json` open), besides the digest's own order, and keeps the choice in the URL (`#orden=recent`).
 - `db.py check --strict` exits with status 1 when `digest.md` and the database disagree, so a script or CI job can stop on it; without the flag it still only reports.
 - `export_digest.py --prune` deletes the vault notes it made for ideas no longer in the digest (merged or removed); notes with something written under `## My notes` are kept and listed. Without it they are still only listed.
