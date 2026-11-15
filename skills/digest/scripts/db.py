@@ -15,6 +15,8 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks                               every idea marked tried or discarded
+  db.py rename OLD NEW                      move every reel of an idea (and its mark) to another
+                                            slug, after renaming it or merging it into NEW
   db.py check [--digest PATH] [--strict]    compare digest.md with the database: ideas no reel
                                             points to, reels pointing to ideas that are gone,
                                             repeated slugs and broken (#slug) links; --strict
@@ -454,6 +456,40 @@ def cmd_marks(_):
               + (f"  {e['note']}" if e.get("note") else ""))
 
 
+SLUG_RE = re.compile(r"^[\w-]+$")
+
+
+def cmd_rename(a):
+    old, new = a.old, a.new
+    if not SLUG_RE.match(new):
+        sys.exit(f"{new!r} is not a valid slug: use letters, digits, '-' or '_' (as in {{#{new}}}).")
+    if old == new:
+        sys.exit("The old and new slugs are the same: nothing to rename.")
+    db = load_db()
+    entries = db.setdefault("entries", {})
+    moved = [r for r in db["reels"].values() if r.get("entry") == old]
+    if not moved and old not in entries:
+        known = sorted({r["entry"] for r in db["reels"].values() if r.get("entry")})
+        sys.exit(f"No reel points to {old!r} and it has no mark, so nothing was renamed (typo?)."
+                 + (f" Known ideas: {', '.join(known[:15])}" + (" ..." if len(known) > 15 else "")
+                    if known else ""))
+    already = sum(1 for r in db["reels"].values() if r.get("entry") == new)
+    for r in moved:
+        r["entry"] = new
+    note = ""
+    if old in entries:
+        mark = entries.pop(old)
+        if new in entries:
+            note = (f" Kept the {entries[new].get('status', '?')} mark of {new!r} and dropped the "
+                    f"{mark.get('status', '?')} mark of {old!r}.")
+        else:
+            entries[new] = mark
+            note = f" Its {mark.get('status', '?')} mark moved too."
+    save_db(db)
+    print(f"Moved {len(moved)} reels from {old!r} to {new!r}"
+          + (f" (merged with the {already} already there)." if already else ".") + note)
+
+
 def check_digest(db: dict, digest_text: str) -> list[str]:
     """Problems between digest.md and reels.json, as lines to print. Empty when they agree."""
     from export_digest import ANCHOR_LINK_RE, parse_digest
@@ -551,6 +587,8 @@ def main() -> None:
     p.add_argument("slugs", nargs="+"); p.add_argument("--note", help="why, in a few words")
     p.set_defaults(fn=cmd_mark)
     sub.add_parser("marks").set_defaults(fn=cmd_marks)
+    p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")
+    p.set_defaults(fn=cmd_rename)
     p = sub.add_parser("check"); p.add_argument("--digest", default=str(HOME / "digest.md"))
     p.add_argument("--strict", action="store_true",
                    help="exit with status 1 when there is something to fix (for scripts and CI)")
