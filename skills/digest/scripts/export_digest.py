@@ -1,6 +1,6 @@
 """Export digest.md to an Obsidian vault: one note per idea plus an index note.
 
-  export_digest.py --vault ~/Obsidian/MyVault [--folder "Saved reels"] [--digest PATH]
+  export_digest.py --vault ~/Obsidian/MyVault [--folder "Saved reels"] [--digest PATH] [--prune]
   export_digest.py --json [--digest PATH]
 
 Reads the digest written in step 5 (default: WORK/digest.md) and writes into
@@ -16,6 +16,10 @@ Links are relative markdown links, so the notes also render on GitHub and in
 VS Code. Safe to re-run: notes are rewritten from the digest, but anything you
 write under a "## My notes" heading in a note is kept. Files in the folder that
 this script did not create are never overwritten.
+
+Notes for ideas that are no longer in the digest (merged or removed) are listed
+and left alone; --prune deletes them, except the ones with something written
+under "## My notes", which are kept and listed.
 
 With --json it writes nothing and prints the digest as structured JSON instead
 (title, date, top list and every idea with its category, body, source links and
@@ -249,7 +253,13 @@ def _my_notes(path: Path) -> str:
     return text[idx + 1:].rstrip() + "\n" if idx >= 0 else ""
 
 
-def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dict | None = None) -> dict:
+def _has_my_notes(path: Path) -> bool:
+    """Whether the user wrote anything under "## My notes" (an empty heading does not count)."""
+    return bool(_my_notes(path)[len(MY_NOTES):].strip())
+
+
+def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dict | None = None,
+           prune: bool = False) -> dict:
     digest = parse_digest(digest_text)
     if not digest["ideas"]:
         raise ValueError("no ideas found: expected '### Idea title {#slug}' entries under '## Category'")
@@ -257,7 +267,7 @@ def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dic
     assign_filenames(digest["ideas"])
     by_slug = {i["slug"]: i for i in digest["ideas"]}
     out_dir.mkdir(parents=True, exist_ok=True)
-    report = {"written": [], "skipped": [], "stale": []}
+    report = {"written": [], "skipped": [], "stale": [], "pruned": []}
     files = {"INDEX.md": render_index(digest, by_slug, day, marks)}
     for i in digest["ideas"]:
         files[i["file"]] = render_note(i, digest["ideas"], by_slug, day, "INDEX.md", marks)
@@ -274,7 +284,11 @@ def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dic
         report["written"].append(name)
     for path in sorted(out_dir.glob("*.md")):
         if path.name not in files and _is_ours(path):
-            report["stale"].append(path.name)
+            if prune and not _has_my_notes(path):
+                path.unlink()
+                report["pruned"].append(path.name)
+            else:
+                report["stale"].append(path.name)
     return report
 
 
@@ -331,6 +345,9 @@ def main(argv=None) -> int:
     mode.add_argument("--json", action="store_true", help="print the digest as JSON, write nothing")
     ap.add_argument("--folder", default="Saved reels", help="subfolder inside the vault")
     ap.add_argument("--digest", default=str(HOME / "digest.md"), help="digest to export")
+    ap.add_argument("--prune", action="store_true",
+                    help="delete notes this script made for ideas no longer in the digest "
+                         "(notes with text under '## My notes' are kept)")
     args = ap.parse_args(argv)
     src = Path(args.digest).expanduser()
     if not src.exists():
@@ -344,14 +361,19 @@ def main(argv=None) -> int:
         return 0
     out_dir = Path(args.vault).expanduser() / args.folder
     try:
-        report = export(src.read_text("utf-8"), out_dir, marks=load_marks())
+        report = export(src.read_text("utf-8"), out_dir, marks=load_marks(), prune=args.prune)
     except ValueError as e:
         sys.exit(f"Could not export {src}: {e}")
     print(f"Wrote {len(report['written'])} notes to {out_dir} (open INDEX.md).")
     if report["skipped"]:
         print("Skipped (exists and was not created by this tool): " + ", ".join(report["skipped"]))
-    if report["stale"]:
-        print("No longer in the digest (left untouched, delete if you want): "
+    if report["pruned"]:
+        print("Deleted, no longer in the digest: " + ", ".join(report["pruned"]))
+    if report["stale"] and args.prune:
+        print("No longer in the digest but kept, they have text under '## My notes': "
+              + ", ".join(report["stale"]))
+    elif report["stale"]:
+        print("No longer in the digest (left untouched; --prune deletes them): "
               + ", ".join(report["stale"]))
     return 0
 

@@ -354,3 +354,42 @@ def test_index_without_marks_has_no_counts(tmp_path):
     index = (tmp_path / "INDEX.md").read_text(encoding="utf-8")
     assert "_Exported from digest.md on 2026-11-01 · 3 ideas_" in index
     assert "✅" not in index and "🚫" not in index
+
+
+# ------------------------------------------------------------------ --prune
+def test_prune_deletes_old_notes_but_keeps_my_notes_and_foreign_files(tmp_path):
+    ed.export(DIGEST, tmp_path)
+    examples = tmp_path / "Give examples, not adjectives.md"
+    claude = tmp_path / "Keep a CLAUDE.md project memory.md"
+    claude.write_text(claude.read_text(encoding="utf-8") + "\n## My notes\nKeep this.\n", encoding="utf-8")
+    plan = tmp_path / "Plan mode before big changes.md"
+    plan.write_text(plan.read_text(encoding="utf-8") + "\n## My notes\n\n", encoding="utf-8")  # empty
+    foreign = tmp_path / "Mine.md"
+    foreign.write_text("my own note\n", encoding="utf-8")
+    only_index = "# T\n\n## Other\n### Something new {#new}\nText.\n"
+    report = ed.export(only_index, tmp_path, prune=True)
+    assert sorted(report["pruned"]) == ["Give examples, not adjectives.md", "Plan mode before big changes.md"]
+    assert report["stale"] == ["Keep a CLAUDE.md project memory.md"]
+    assert not examples.exists() and not plan.exists()
+    assert claude.exists() and foreign.exists() and (tmp_path / "Something new.md").exists()
+
+
+def test_cli_prune_says_what_it_deleted_and_kept(tmp_path):
+    src = tmp_path / "digest.md"
+    src.write_text(DIGEST, encoding="utf-8")
+    vault = tmp_path / "vault"
+
+    def run(*extra):
+        return subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py"), "--vault", str(vault),
+                               "--digest", str(src), *extra], env={**os.environ, "SRD_HOME": str(tmp_path)},
+                              capture_output=True, text=True, encoding="utf-8", check=False)
+
+    assert run().returncode == 0
+    src.write_text(DIGEST.split("## Prompting")[0], encoding="utf-8")
+    r = run()
+    assert "--prune deletes them): Give examples, not adjectives.md" in r.stdout
+    assert (vault / "Saved reels" / "Give examples, not adjectives.md").exists()
+    r = run("--prune")
+    assert r.returncode == 0, r.stderr
+    assert "Deleted, no longer in the digest: Give examples, not adjectives.md" in r.stdout
+    assert not (vault / "Saved reels" / "Give examples, not adjectives.md").exists()

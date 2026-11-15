@@ -207,7 +207,9 @@ If the user keeps notes in Obsidian (or asks for one note per idea), run
 default `Saved reels`). It writes one note per `### idea` with frontmatter (including a
 `status` property that follows `db.py mark`), tags by category, the source reels and links between ideas of the same category, plus an
 `INDEX.md` map of content. Re-running updates the notes and keeps whatever the user wrote
-under `## My notes`; files it did not create are never overwritten. It relies on the
+under `## My notes`; files it did not create are never overwritten.
+Notes of ideas that left the digest are only listed; if the user wants them gone, re-run
+with `--prune` (it keeps any note with text under `## My notes`). It relies on the
 digest structure above, so keep the `### Title {#slug}` headings.
 
 ## Optional: export to Notion

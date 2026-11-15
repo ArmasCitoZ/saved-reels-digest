@@ -147,6 +147,7 @@ $PY db.py check                              # digest.md y la base coinciden (id
 $PY db.py unavailable                        # guardados borrados o privados
 $PY db.py status
 $PY export_digest.py --vault ~/Obsidian/MiBoveda   # una nota por idea + INDEX.md
+$PY export_digest.py --vault ~/Obsidian/MiBoveda --prune  # y borra las notas de ideas que ya no están
 $PY export_digest.py --json                  # el resumen como JSON (lo usa Claude para Notion)
 ```
 
