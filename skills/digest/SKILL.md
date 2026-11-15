@@ -178,9 +178,14 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    signal, not proof; rank by usefulness, not by count.
 4. Record which entry each reel went into (enables incremental runs):
    `PY SCRIPTS/db.py set entry <slug> CODE1 CODE2 ...`
+   Slugs are lowercase words joined by `-` (letters with accents are fine); first run
+   `PY SCRIPTS/db.py ideas` to see the slugs already in use, and reuse the existing one
+   when a reel belongs to that idea instead of inventing a near-copy (`sub-agents` next
+   to `subagents` splits one idea in two).
 5. Run `PY SCRIPTS/db.py recent --days 7` and rebuild "Saved this week" from it
    (it shows each recent reel and the entry it went into).
-6. On later runs, merge new reels into existing entries before creating new ones,
+6. On later runs, merge new reels into existing entries before creating new ones
+   (`PY SCRIPTS/db.py ideas` lists them with how many reels each has and when the newest was saved),
    and refresh the header counts, "Do these first" and "Saved this week".
    To rename an entry's slug, or to fold one entry into another, never retype its codes:
    `PY SCRIPTS/db.py rename <old-slug> <new-slug> --digest` moves its reels and its mark
