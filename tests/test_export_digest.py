@@ -337,3 +337,20 @@ def test_cli_vault_uses_the_marks_in_reels_json(tmp_path):
     assert r.returncode == 0, r.stderr
     note = (vault / "Saved reels" / "Keep a CLAUDE.md project memory.md").read_text(encoding="utf-8")
     assert "\nstatus: tried\n" in note and '\nnote: "works"\n' in note
+
+
+def test_index_shows_which_ideas_are_tried_or_discarded(tmp_path):
+    ed.export(DIGEST, tmp_path, marks={"plan-mode": {"status": "tried", "note": None},
+                                       "give-examples-not-adjectives": {"status": "discarded", "note": None}})
+    index = (tmp_path / "INDEX.md").read_text(encoding="utf-8")
+    assert "_Exported from digest.md on 2026-11-01 · 3 ideas · ✅ 1 tried · 🚫 1 discarded_" in index
+    assert "- [Plan mode before big changes](Plan%20mode%20before%20big%20changes.md) ✅\n" in index
+    assert "- [Give examples, not adjectives](Give%20examples%2C%20not%20adjectives.md) 🚫\n" in index
+    assert "(Keep%20a%20CLAUDE.md%20project%20memory.md)\n" in index  # pending: no mark
+
+
+def test_index_without_marks_has_no_counts(tmp_path):
+    ed.export(DIGEST, tmp_path)
+    index = (tmp_path / "INDEX.md").read_text(encoding="utf-8")
+    assert "_Exported from digest.md on 2026-11-01 · 3 ideas_" in index
+    assert "✅" not in index and "🚫" not in index

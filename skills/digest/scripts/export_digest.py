@@ -6,7 +6,8 @@
 Reads the digest written in step 5 (default: WORK/digest.md) and writes into
 VAULT/FOLDER:
 
-  INDEX.md          map of content: "Do these first" and every idea by category
+  INDEX.md          map of content: "Do these first" and every idea by category,
+                    with ✅ / 🚫 next to the ideas marked tried / discarded
   <Idea title>.md   one note per idea, with frontmatter (title, date, tags,
                     aliases, status, sources) and links to the other ideas of its
                     category
@@ -30,6 +31,7 @@ import argparse
 import json
 import re
 import sys
+from collections import Counter
 from datetime import date
 from pathlib import Path
 from urllib.parse import quote
@@ -211,11 +213,18 @@ def render_note(idea: dict, ideas: list, by_slug: dict, day: str, index_name: st
     return "\n\n".join(p for p in parts if p) + "\n"
 
 
-def render_index(digest: dict, by_slug: dict, day: str) -> str:
+INDEX_MARKS = {"tried": " ✅", "discarded": " 🚫", "todo": ""}
+
+
+def render_index(digest: dict, by_slug: dict, day: str, marks: dict | None = None) -> str:
+    status = {i["slug"]: resolve_status(i, marks)[0] for i in digest["ideas"]}
+    done = Counter(status.values())
+    summary = f"_Exported from digest.md on {day} · {len(digest['ideas'])} ideas"
+    if done["tried"] or done["discarded"]:
+        summary += f" · ✅ {done['tried']} tried · 🚫 {done['discarded']} discarded"
     lines = ["---", f"title: {_yaml_str(digest['title'])}", f"date: {day}",
              "tags: [saved-reels]", f"generator: {MARKER}", "---", "",
-             f"# {digest['title']}", "",
-             f"_Exported from digest.md on {day} · {len(digest['ideas'])} ideas_", ""]
+             f"# {digest['title']}", "", summary + "_", ""]
     if digest["top"]:
         lines += [f"## {digest['top_heading']}", ""]
         lines += [f"{n}. {rewrite_anchors(t, by_slug)}" for n, t in enumerate(digest["top"], 1)]
@@ -223,7 +232,8 @@ def render_index(digest: dict, by_slug: dict, day: str) -> str:
     categories = list(dict.fromkeys(i["category"] for i in digest["ideas"]))
     for cat in categories:
         lines += [f"## {cat}", ""]
-        lines += [f"- {link(i['title'], i['file'])}" for i in digest["ideas"] if i["category"] == cat]
+        lines += [f"- {link(i['title'], i['file'])}{INDEX_MARKS[status[i['slug']]]}"
+                  for i in digest["ideas"] if i["category"] == cat]
         lines.append("")
     return "\n".join(lines)
 
@@ -248,7 +258,7 @@ def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dic
     by_slug = {i["slug"]: i for i in digest["ideas"]}
     out_dir.mkdir(parents=True, exist_ok=True)
     report = {"written": [], "skipped": [], "stale": []}
-    files = {"INDEX.md": render_index(digest, by_slug, day)}
+    files = {"INDEX.md": render_index(digest, by_slug, day, marks)}
     for i in digest["ideas"]:
         files[i["file"]] = render_note(i, digest["ideas"], by_slug, day, "INDEX.md", marks)
     for name, content in files.items():

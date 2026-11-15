@@ -6,7 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Obsidian notes have a `status` property (todo, tried or discarded, with the marks in `reels.json` winning over the digest text) and the `note` saved with `db.py mark`, so Bases or Dataview can list the ideas still to try.
+- Obsidian notes have a `status` property (todo, tried or discarded, with the marks in `reels.json` winning over the digest text) and the `note` saved with `db.py mark`, so Bases or Dataview can list the ideas still to try. The vault's `INDEX.md` puts ✅ or 🚫 next to tried and discarded ideas and counts them.
 - `install.ps1`: one-command setup on Windows (`irm .../install.ps1 | iex` or `-File install.ps1`). It finds a Python between 3.9 and 3.14 (the newest the dependencies support) while skipping the Microsoft Store alias, runs `doctor.py`, creates the environment and says what to type in Claude Code; `-CheckOnly` installs nothing. CI runs it in Windows PowerShell 5.1.
 - `install.sh`: the same one-command setup for macOS and Linux (`curl -fsSL .../install.sh | sh` or `sh install.sh`), in plain POSIX sh. `--check-only` installs nothing and `SRD_PYTHON` picks the Python. CI runs it on Ubuntu and macOS.
 - `install.sh --upgrade` and `install.ps1 -Upgrade` update the packages of an existing environment (they pass `--upgrade` to `setup_env.py`), the fix when an old yt-dlp stops downloading.
