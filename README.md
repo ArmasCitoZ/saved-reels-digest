@@ -143,6 +143,7 @@ $PY transcribe.py                            # modelo según la RAM; omite víde
 $PY slides.py pending                        # carruseles y fotos por leer (fetch / save)
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó
 $PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recuerda
+$PY db.py marks --status tried                # solo las ideas probadas (o discarded)
 $PY db.py check [--strict]                   # digest.md y la base coinciden (ideas sin reels, slugs rotos); --strict sale con error si no
 $PY db.py rename sub-agentes subagentes --digest  # renombrar o fusionar una idea: mueve sus reels y su marca y cambia {#slug} y (#slug) en digest.md
 $PY db.py unavailable                        # guardados borrados o privados

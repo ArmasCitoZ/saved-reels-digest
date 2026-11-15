@@ -69,3 +69,17 @@ def test_todo_clears_a_mark_whose_reels_moved_to_another_idea(tmp_path):
 def test_marks_when_empty(tmp_path):
     make_db(tmp_path, reel("AAAAA1"))
     assert "No ideas marked" in run(tmp_path, "marks")
+
+
+def test_marks_can_list_one_status(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"))
+    run(tmp_path, "mark", "tried", "subagents")
+    run(tmp_path, "mark", "discarded", "mcp-servers", "--note", "too much setup")
+    tried = run(tmp_path, "marks", "--status", "tried")
+    assert "subagents" in tried and "mcp-servers" not in tried
+    discarded = run(tmp_path, "marks", "--status", "discarded")
+    assert "mcp-servers" in discarded and "too much setup" in discarded and "subagents" not in discarded
+    run(tmp_path, "mark", "todo", "mcp-servers")
+    assert "No ideas marked as discarded yet." in run(tmp_path, "marks", "--status", "discarded")
+    assert "invalid choice" in run_failing(tmp_path, "marks", "--status", "todo")

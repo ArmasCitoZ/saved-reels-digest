@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py marks --status tried` (or `discarded`) lists only one kind of mark.
 - When reels point to an idea that is no longer in the digest, `db.py check` prints the `db.py rename` that fixes it, naming the new slug when exactly one idea has no reels (almost always the same idea, renamed).
 - `db.py rename OLD NEW` moves every reel of an idea, and its `db.py mark`, to another slug when the idea is renamed or merged into another one; before, each code had to go through `db.py set entry` again and the mark was lost. When both ideas are marked, the mark of NEW is kept. With `--digest` it also renames the `{#OLD}` heading and every `(#OLD)` link in `digest.md`, so both stay in agreement in one step.
 - The viewer sorts ideas by their most recently saved reel or by how many reels back them (with `reels.json` open), besides the digest's own order, and keeps the choice in the URL (`#orden=recent`).
