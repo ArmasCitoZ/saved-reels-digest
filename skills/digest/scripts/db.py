@@ -161,6 +161,14 @@ def cmd_next(a):
 # Fields the digest steps are meant to write by hand; the rest belong to the collectors.
 SETTABLE = ("relevant", "entry", "topic", "caption", "author", "collection")
 TRIAGE_VALUES = (True, False, "maybe", None)
+# What an idea's {#slug} can hold, so its heading and (#slug) links can point to it.
+SLUG_RE = re.compile(r"^[\w-]+$")
+
+
+def _bad_slug(slug: str) -> str:
+    hint = re.sub(r"[^\w-]+", "-", slug.strip().lower()).strip("-")
+    return (f"{slug!r} is not a valid slug: use letters, digits, '-' or '_' (as in {{#{hint or 'my-idea'}}})."
+            + (f" Try: {hint}" if hint else ""))
 
 
 def cmd_set(a):
@@ -169,6 +177,8 @@ def cmd_set(a):
         sys.exit(f"Unknown field {a.field!r}. Can be set: {', '.join(SETTABLE)}.")
     if a.field == "relevant" and val not in TRIAGE_VALUES:
         sys.exit(f"Invalid value {a.value!r} for relevant. Use: true, false, maybe or none.")
+    if a.field == "entry" and val is not None and not (isinstance(val, str) and SLUG_RE.match(val)):
+        sys.exit(_bad_slug(a.value) + " Nothing was changed.")
     db = load_db()
     missing, done = [], 0
     for name in split_codes(a.codes):
@@ -460,13 +470,10 @@ def cmd_marks(a):
               + (f"  {e['note']}" if e.get("note") else ""))
 
 
-SLUG_RE = re.compile(r"^[\w-]+$")
-
-
 def cmd_rename(a):
     old, new = a.old, a.new
     if not SLUG_RE.match(new):
-        sys.exit(f"{new!r} is not a valid slug: use letters, digits, '-' or '_' (as in {{#{new}}}).")
+        sys.exit(_bad_slug(new))
     if old == new:
         sys.exit("The old and new slugs are the same: nothing to rename.")
     digest = Path(a.digest).expanduser() if a.digest else None

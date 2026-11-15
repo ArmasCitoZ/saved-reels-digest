@@ -35,6 +35,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `setup_env.py` leaves a complete environment alone instead of running pip every time, so repeating the setup is instant and works offline; `--upgrade` updates the packages.
 
 ### Fixed
+- `db.py set entry` refuses slugs with spaces, `#`, parentheses and other characters a `{#slug}` heading or `(#slug)` link cannot hold, and suggests a valid one (`"Claude Code"` → `claude-code`); before, the reels were saved under a slug no digest idea could ever match.
 - `export_digest.py --json` takes each idea's status from the marks `db.py mark` saved in `reels.json`, like the viewer, and adds their `note`; before, an idea marked as tried still went to Notion as pending unless the digest text had been edited too. A missing or damaged `reels.json` falls back to the digest's Status lines.
 - The viewer labelled Instagram reels with how they were collected ("export", "live"...) instead of their platform.
 - `doctor.py` warns when Python is newer than every dependency supports yet (3.15 has no onnxruntime build, so the install failed with a pip "ResolutionImpossible" error), and `setup_env.py` says which Python to install instead.

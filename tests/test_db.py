@@ -303,6 +303,23 @@ def test_set_accepts_every_triage_value(tmp_path):
         assert load(tmp_path)["AAAAA1"]["relevant"] == stored
 
 
+def test_set_entry_refuses_a_slug_the_digest_cannot_link_to(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="hooks"))
+    for bad in ("Claude Code", "#hooks", "hooks)", "true"):
+        err = run_failing(tmp_path, "set", "entry", bad, "AAAAA1")
+        assert "not a valid slug" in err and "Nothing was changed" in err
+    assert "Try: claude-code" in run_failing(tmp_path, "set", "entry", "Claude Code", "AAAAA1")
+    assert load(tmp_path)["AAAAA1"]["entry"] == "hooks"
+
+
+def test_set_entry_accepts_accents_and_clearing(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True))
+    run(tmp_path, "set", "entry", "automatización_2", "AAAAA1")
+    assert load(tmp_path)["AAAAA1"]["entry"] == "automatización_2"
+    run(tmp_path, "set", "entry", "none", "AAAAA1")
+    assert load(tmp_path)["AAAAA1"]["entry"] is None
+
+
 # ------------------------------------------------------------------- output encoding
 def test_emoji_captions_print_on_a_windows_style_pipe(tmp_path):
     make_db(tmp_path, reel("AAAAA1", caption="prueba 🤖 automatización"))
