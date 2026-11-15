@@ -49,7 +49,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py check --strict`: terminar con código 1 cuando hay algo que arreglar, para poder usarlo en scripts y en CI
 - [x] `db.py rename VIEJO NUEVO`: pasar todos los reels de una idea (y su marca de `db.py mark`) a otro slug al renombrarla o fusionarla con otra; hoy hay que repetir `db.py set entry` con cada código y la marca se pierde
 - [x] `db.py rename --digest`: cambiar también el `{#viejo}` del título y los enlaces `(#viejo)` en `digest.md`, para que digest y base sigan de acuerdo en un solo paso
-- [ ] `db.py check`: cuando unos reels apuntan a una idea que ya no está, sugerir el `db.py rename` exacto (con el slug nuevo si solo hay una idea sin reels)
+- [x] `db.py check`: cuando unos reels apuntan a una idea que ya no está, sugerir el `db.py rename` exacto (con el slug nuevo si solo hay una idea sin reels)
 - [ ] Skill: usar `db.py rename` al fusionar o renombrar ideas y al arreglar lo que diga `db.py check`
 - [ ] README: documentar `db.py rename`
 - [ ] `db.py marks --status tried|discarded`: listar solo las ideas probadas o solo las descartadas

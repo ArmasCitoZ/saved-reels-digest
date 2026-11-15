@@ -86,3 +86,23 @@ def test_strict_fails_only_when_there_is_something_to_fix(tmp_path):
     r = _check(tmp_path, "--strict")
     assert r.returncode == 1 and "things to fix" in r.stdout and "'mcp-servers'" in r.stdout
     assert _check(tmp_path).returncode == 0  # without --strict it only reports
+
+
+def test_suggests_the_rename_when_one_idea_lost_its_reels(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp"))
+    write(tmp_path)
+    out = run(tmp_path, "check")
+    assert "Probably renamed to {#mcp-servers}: db.py rename mcp mcp-servers" in out
+    run(tmp_path, "rename", "mcp", "mcp-servers")
+    assert "agree (2 ideas)" in run(tmp_path, "check")
+
+
+def test_without_a_single_candidate_the_rename_has_a_placeholder(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"),
+            reel("CCCCC3", relevant=True, entry="old-one"), reel("DDDDD4", relevant=True, entry="old-two"))
+    write(tmp_path)
+    out = run(tmp_path, "check")
+    assert "Point them to the idea they belong to: db.py rename old-one NEW-SLUG" in out
+    assert "db.py rename old-two NEW-SLUG" in out and "Probably renamed" not in out

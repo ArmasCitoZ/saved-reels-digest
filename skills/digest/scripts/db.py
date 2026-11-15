@@ -527,12 +527,19 @@ def check_digest(db: dict, digest_text: str) -> list[str]:
         if n > 1:
             problems.append(f"{n} ideas share the slug {{#{slug}}}: give each its own, "
                             "or their links and reels get mixed up.")
-    for slug in sorted(set(linked) - set(slugs)):
+    lost = sorted(set(linked) - set(slugs))
+    unbacked = sorted(set(slugs) - set(linked))
+    for slug in lost:
         codes = linked[slug]
+        # one lost slug and one idea without reels: almost always the same idea, renamed
+        target = unbacked[0] if len(lost) == 1 and len(unbacked) == 1 else "NEW-SLUG"
         problems.append(f"{len(codes)} reels point to {slug!r}, which is not in the digest "
                         f"(renamed or lost while merging?): {', '.join(codes[:8])}"
-                        + (" ..." if len(codes) > 8 else ""))
-    for slug in sorted(set(slugs) - set(linked)):
+                        + (" ..." if len(codes) > 8 else "")
+                        + (f". Probably renamed to {{#{target}}}: " if target != "NEW-SLUG"
+                           else ". Point them to the idea they belong to: ")
+                        + f"db.py rename {slug} {target}")
+    for slug in unbacked:
         problems.append(f"No reel points to {{#{slug}}}: record its sources with "
                         f"db.py set entry {slug} CODE ...")
     for slug in sorted(set(ANCHOR_LINK_RE.findall(digest_text)) - set(slugs)):
