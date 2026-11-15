@@ -51,7 +51,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py rename --digest`: cambiar también el `{#viejo}` del título y los enlaces `(#viejo)` en `digest.md`, para que digest y base sigan de acuerdo en un solo paso
 - [x] `db.py check`: cuando unos reels apuntan a una idea que ya no está, sugerir el `db.py rename` exacto (con el slug nuevo si solo hay una idea sin reels)
 - [x] Skill: usar `db.py rename` al fusionar o renombrar ideas y al arreglar lo que diga `db.py check`
-- [ ] README: documentar `db.py rename`
+- [x] README: documentar `db.py rename`
 - [ ] `db.py marks --status tried|discarded`: listar solo las ideas probadas o solo las descartadas
 
 ## Robustez
