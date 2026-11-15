@@ -15,6 +15,8 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind)
+  db.py ideas                               every idea (slug) reels point to: how many reels,
+                                            the newest saved and its mark, to reuse slugs
   db.py rename OLD NEW [--digest [PATH]]    move every reel of an idea (and its mark) to another
                                             slug, after renaming it or merging it into NEW;
                                             --digest also renames {#OLD} and (#OLD) in digest.md
@@ -470,6 +472,24 @@ def cmd_marks(a):
               + (f"  {e['note']}" if e.get("note") else ""))
 
 
+def cmd_ideas(a):
+    db = load_db()
+    marks = db.get("entries") or {}
+    ideas = {}
+    for r in db["reels"].values():
+        if r.get("entry"):
+            ideas.setdefault(r["entry"], []).append(r)
+    if not ideas:
+        print("No ideas yet: reels get one with db.py set entry SLUG CODE ... while merging.")
+        return
+    rows = sorted(ideas.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+    print(f"{len(rows)} ideas (reels, newest saved, mark):")
+    width = max(len(slug) for slug, _ in rows)
+    for slug, rs in rows:
+        newest = max((saved_ts(r) or 0 for r in rs), default=0) or None
+        print(f"  {slug:{width}}  {len(rs):3}  {_day(newest)}  {marks.get(slug, {}).get('status', 'todo')}")
+
+
 def cmd_rename(a):
     old, new = a.old, a.new
     if not SLUG_RE.match(new):
@@ -628,6 +648,7 @@ def main() -> None:
     p = sub.add_parser("marks")
     p.add_argument("--status", choices=("tried", "discarded"), help="list only this kind of mark")
     p.set_defaults(fn=cmd_marks)
+    sub.add_parser("ideas").set_defaults(fn=cmd_ideas)
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")
     p.add_argument("--digest", nargs="?", const=str(HOME / "digest.md"),
                    help="also rename {#OLD} and (#OLD) in this digest (default WORK/digest.md)")
