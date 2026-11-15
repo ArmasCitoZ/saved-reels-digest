@@ -35,6 +35,7 @@ In set and show, a CODE can also be a pasted Instagram, TikTok or YouTube link.
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import math
 import os
@@ -431,6 +432,23 @@ def cmd_recent(a):
 MARKS = ("tried", "discarded", "todo")  # todo = clear the mark
 
 
+def _closest(name: str, known) -> str | None:
+    """The known name a typo most likely meant (case and '-'/'_' are ignored), or None."""
+    def norm(x):
+        return x.casefold().replace("_", "-")
+
+    by_norm = {norm(k): k for k in known}
+    hit = difflib.get_close_matches(norm(name), list(by_norm), n=1, cutoff=0.75)
+    return by_norm[hit[0]] if hit else None
+
+
+def _guesses(names, known) -> str:
+    """" Did you mean: a (for b), c?" for the names that have a close match, else ""."""
+    pairs = [(n, _closest(n, known)) for n in names]
+    pairs = [f"{g} (for {n})" if len(names) > 1 else g for n, g in pairs if g]
+    return f" Did you mean: {', '.join(pairs)}?" if pairs else ""
+
+
 def cmd_mark(a):
     db = load_db()
     entries = db.setdefault("entries", {})
@@ -443,10 +461,15 @@ def cmd_mark(a):
     slugs = [s for s in slugs if s in known]
     if not slugs:
         hint = sorted(known)
+        guess = _guesses(unknown, known)
+        if guess:
+            more = guess
+        elif hint:
+            more = f" Known ideas: {', '.join(hint[:15])}" + (" ..." if len(hint) > 15 else "")
+        else:
+            more = " No reel has an entry yet: run db.py set entry SLUG CODE ... first."
         sys.exit("None of these ideas are linked to any reel, so nothing was marked (typo?): "
-                 f"{', '.join(unknown)}. "
-                 + (f"Known ideas: {', '.join(hint[:15])}" + (" ..." if len(hint) > 15 else "")
-                    if hint else "No reel has an entry yet: run db.py set entry SLUG CODE ... first."))
+                 f"{', '.join(unknown)}.{more}")
     for slug in slugs:
         if a.status == "todo":
             entries.pop(slug, None)
@@ -457,7 +480,8 @@ def cmd_mark(a):
         entries[slug] = e
     save_db(db)
     print(f"Marked {len(slugs)} entries as {a.status}."
-          + (f" Skipped, not linked to any reel (typo?): {', '.join(unknown)}" if unknown else ""))
+          + (f" Skipped, not linked to any reel (typo?): {', '.join(unknown)}.{_guesses(unknown, known)}"
+             if unknown else ""))
 
 
 def cmd_marks(a):
@@ -511,8 +535,10 @@ def cmd_rename(a):
     entries = db.setdefault("entries", {})
     moved = [r for r in db["reels"].values() if r.get("entry") == old]
     if not moved and old not in entries:
-        known = sorted({r["entry"] for r in db["reels"].values() if r.get("entry")})
+        known = sorted({r["entry"] for r in db["reels"].values() if r.get("entry")} | set(entries))
+        guess = _closest(old, known)
         sys.exit(f"No reel points to {old!r} and it has no mark, so nothing was renamed (typo?)."
+                 + (f" Did you mean {guess!r}?" if guess else "")
                  + (f" Known ideas: {', '.join(known[:15])}" + (" ..." if len(known) > 15 else "")
                     if known else ""))
     already = sum(1 for r in db["reels"].values() if r.get("entry") == new)

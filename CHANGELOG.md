@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py mark` and `db.py rename` suggest the closest existing slug when one does not exist ("Did you mean: subagents?"), ignoring case and `-`/`_`; the guess is only shown, never applied.
 - `db.py ideas` lists every idea reels point to, with how many reels back it, when the newest was saved and its mark (todo, tried or discarded), so the slugs already in use are at hand while merging. `--status todo` (or `tried`, `discarded`) lists only the ideas with that mark. The skill runs it before recording entries, so new reels reuse the existing slug instead of a near-copy that splits one idea in two.
 - `db.py marks --status tried` (or `discarded`) lists only one kind of mark.
 - When reels point to an idea that is no longer in the digest, `db.py check` prints the `db.py rename` that fixes it, naming the new slug when exactly one idea has no reels (almost always the same idea, renamed).

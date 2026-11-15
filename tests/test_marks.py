@@ -49,8 +49,25 @@ def test_mark_todo_clears_and_unknown_slug_is_skipped(tmp_path):
 def test_mark_with_only_unknown_slugs_changes_nothing(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
     r = run_failing(tmp_path, "mark", "tried", "sub-agents")
-    assert "nothing was marked" in r and "sub-agents" in r and "Known ideas: subagents" in r
+    assert "nothing was marked" in r and "sub-agents" in r and "Did you mean: subagents?" in r
     assert entries(tmp_path) == {}
+
+
+def test_mark_lists_known_ideas_when_nothing_is_close(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"))
+    r = run_failing(tmp_path, "mark", "tried", "prompting")
+    assert "Did you mean" not in r and "Known ideas: mcp-servers, subagents" in r
+
+
+def test_mark_suggests_the_closest_slug_for_each_typo(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"),
+            reel("CCCCC3", relevant=True, entry="hooks"))
+    out = run(tmp_path, "mark", "tried", "hooks", "Sub_Agents", "mcp-server", "prompting")
+    assert "Marked 1 entries" in out
+    assert "Did you mean: subagents (for Sub_Agents), mcp-servers (for mcp-server)?" in out
+    assert list(entries(tmp_path)) == ["hooks"]  # a guess is never applied by itself
 
 
 def test_mark_with_no_entries_yet_explains_the_order(tmp_path):

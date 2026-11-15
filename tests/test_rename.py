@@ -51,7 +51,9 @@ def test_unknown_or_invalid_slugs_change_nothing(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
     before = (tmp_path / "reels.json").read_text(encoding="utf-8")
     err = run_failing(tmp_path, "rename", "sub-agents", "agents")
-    assert "nothing was renamed" in err and "Known ideas: subagents" in err
+    assert "nothing was renamed" in err and "Did you mean 'subagents'?" in err
+    assert "Known ideas: subagents" in err
+    assert "Did you mean" not in run_failing(tmp_path, "rename", "prompting", "agents")
     assert "not a valid slug" in run_failing(tmp_path, "rename", "subagents", "two words")
     assert "the same" in run_failing(tmp_path, "rename", "subagents", "subagents")
     assert (tmp_path / "reels.json").read_text(encoding="utf-8") == before
