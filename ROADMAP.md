@@ -53,6 +53,12 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Skill: usar `db.py rename` al fusionar o renombrar ideas y al arreglar lo que diga `db.py check`
 - [x] README: documentar `db.py rename`
 - [x] `db.py marks --status tried|discarded`: listar solo las ideas probadas o solo las descartadas
+- [ ] `db.py set entry`: rechazar slugs inválidos (espacios, `#`, paréntesis...) con la misma regla que `db.py rename`; hoy `set entry "Claude Code"` se guarda y luego ni el `{#slug}` ni los enlaces del digest pueden apuntar a esa idea
+- [ ] `db.py ideas`: listar cada idea de la base con cuántos reels tiene, cuándo se guardó el último y su marca, para que Claude vea los slugs que ya existen antes de crear uno nuevo al fusionar
+- [ ] `db.py ideas --status todo|tried|discarded`: listar solo las ideas pendientes, probadas o descartadas
+- [ ] Skill y README: usar `db.py ideas` en el paso de fusión para reutilizar slugs en vez de inventar uno parecido
+- [ ] `db.py mark` y `rename`: cuando un slug no existe, sugerir el más parecido ("¿quisiste decir `subagents`?") en vez de solo listar los primeros 15
+- [ ] `--collection`: si el nombre no existe, sugerir la colección o lista más parecida (erratas como `--collection "Ideas IA"` por "Ideas de IA")
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
