@@ -261,3 +261,50 @@ def test_tilde_fences_count_too():
 def test_a_fence_never_closed_does_not_swallow_the_rest():
     d = ed.parse_digest("# D\n\n## Tools\n### One {#one}\n```\ncode\n\n### Two {#two}\nText.\n")
     assert [i["slug"] for i in d["ideas"]] == ["one", "two"]
+
+
+# ------------------------------------------------------------------ marks from reels.json
+def _db_with_marks(home: Path, entries: dict) -> None:
+    import json
+
+    home.mkdir(parents=True, exist_ok=True)
+    (home / "reels.json").write_text(json.dumps({"reels": {}, "entries": entries}), encoding="utf-8")
+
+
+def test_marks_from_the_database_win_over_the_digest_text(tmp_path):
+    _db_with_marks(tmp_path, {"plan-mode": {"status": "tried", "note": "saves time", "updated": 1},
+                              "claude-md": {"status": "discarded"},
+                              "ghost": {"status": "tried"}})
+    marks = ed.load_marks(tmp_path / "reels.json")
+    assert marks == {"plan-mode": {"status": "tried", "note": "saves time"},
+                     "claude-md": {"status": "discarded", "note": None},
+                     "ghost": {"status": "tried", "note": None}}
+    digest = DIGEST.replace("Write conventions once.", "**Status:** ✅ Tried: old\nWrite conventions once.")
+    by_slug = {i["slug"]: i for i in ed.to_json(digest, marks)["ideas"]}
+    assert (by_slug["plan-mode"]["status"], by_slug["plan-mode"]["note"]) == ("tried", "saves time")
+    assert by_slug["claude-md"]["status"] == "discarded"  # the mark beats the digest's "Tried"
+    assert (by_slug["give-examples-not-adjectives"]["status"],
+            by_slug["give-examples-not-adjectives"]["note"]) == ("todo", None)
+
+
+def test_missing_or_damaged_database_means_no_marks(tmp_path, capsys):
+    assert ed.load_marks(tmp_path / "reels.json") == {}
+    (tmp_path / "reels.json").write_text("{not json", encoding="utf-8")
+    assert ed.load_marks(tmp_path / "reels.json") == {}
+    assert "Status lines" in capsys.readouterr().err
+    _db_with_marks(tmp_path, {"x": {"status": "weird"}, "y": "tried"})
+    assert ed.load_marks(tmp_path / "reels.json") == {}
+
+
+def test_cli_json_uses_the_marks_in_reels_json(tmp_path):
+    import json
+
+    _db_with_marks(tmp_path, {"claude-md": {"status": "tried", "note": "works"}})
+    src = tmp_path / "digest.md"
+    src.write_text(DIGEST, encoding="utf-8")
+    r = subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py"), "--json",
+                        "--digest", str(src)], env={**os.environ, "SRD_HOME": str(tmp_path)},
+                       capture_output=True, text=True, encoding="utf-8", check=False)
+    assert r.returncode == 0, r.stderr
+    by_slug = {i["slug"]: i for i in json.loads(r.stdout)["ideas"]}
+    assert (by_slug["claude-md"]["status"], by_slug["claude-md"]["note"]) == ("tried", "works")

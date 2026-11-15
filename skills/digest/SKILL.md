@@ -219,8 +219,9 @@ export or the plain `digest.md` instead.
 
 1. `PY SCRIPTS/export_digest.py --json` prints the digest as JSON: `title`, `date`,
    `top`, `categories` and `ideas` (each with `title`, `slug`, `category`, `status`
-   = todo / tried / discarded, `sources` and the markdown `body`). Use it instead of
-   re-reading `digest.md`.
+   = todo / tried / discarded, the `note` saved with `db.py mark` or null, `sources` and
+   the markdown `body`). The status already takes the marks in `reels.json` into account,
+   so use it instead of re-reading `digest.md`.
 2. Ask where it should go (a parent page; search for it by name). Create one page titled
    like the digest with "Do these first" as a numbered list and every idea grouped under
    its category, then one child page per idea with the `body` as content, and a first line

@@ -19,6 +19,9 @@ With --json it writes nothing and prints the digest as structured JSON instead
 (title, date, top list and every idea with its category, body, source links and
 tried/discarded status). Claude uses that to fill other tools, such as Notion
 through its connector, without re-parsing the markdown by hand.
+
+An idea's status comes from the marks `db.py mark` saved in reels.json when
+there is one (like the viewer does), else from the digest's own Status line.
 """
 from __future__ import annotations
 
@@ -31,7 +34,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import HOME  # noqa: E402
+from common import DB_PATH, HOME  # noqa: E402
 
 MARKER = "saved-reels-digest"  # frontmatter `generator:` value identifying our notes
 MY_NOTES = "## My notes"
@@ -258,15 +261,46 @@ def export(digest_text: str, out_dir: Path, today: str | None = None) -> dict:
     return report
 
 
-def to_json(digest_text: str) -> dict:
+def load_marks(path: Path = DB_PATH) -> dict:
+    """{slug: {"status", "note"}} for the ideas `db.py mark` marked as tried or discarded.
+
+    The export never fails because of reels.json: a missing or damaged file just means
+    no marks, and the digest's own Status lines are used instead (with a warning if damaged).
+    """
+    if not path.exists():
+        return {}
+    try:
+        entries = json.loads(path.read_text("utf-8-sig")).get("entries") or {}
+    except (OSError, ValueError, AttributeError) as e:
+        print(f"Could not read the marks in {path} ({e}); using the digest's Status lines.",
+              file=sys.stderr)
+        return {}
+    marks = {}
+    for slug, e in entries.items() if isinstance(entries, dict) else ():
+        if isinstance(e, dict) and e.get("status") in ("tried", "discarded"):
+            note = e.get("note")
+            marks[slug] = {"status": e["status"], "note": note if isinstance(note, str) and note else None}
+    return marks
+
+
+def resolve_status(idea: dict, marks: dict | None) -> tuple[str, str | None]:
+    """(status, note): the reels.json mark wins over what the digest text says."""
+    mark = (marks or {}).get(idea["slug"])
+    if mark:
+        return mark["status"], mark["note"]
+    return idea_status(idea["body"]), None
+
+
+def to_json(digest_text: str, marks: dict | None = None) -> dict:
     """The digest as plain data, for exporters that are not files (e.g. Notion via a connector)."""
     digest = parse_digest(digest_text)
     if not digest["ideas"]:
         raise ValueError("no ideas found: expected '### Idea title {#slug}' entries under '## Category'")
     ideas = []
     for i in digest["ideas"]:
+        status, note = resolve_status(i, marks)
         ideas.append({"title": i["title"], "slug": i["slug"], "category": i["category"],
-                      "status": idea_status(i["body"]),
+                      "status": status, "note": note,
                       "sources": list(dict.fromkeys(URL_RE.findall(i["body"]))),
                       "body": i["body"]})
     return {"title": digest["title"], "date": digest["date"], "top": digest["top"],
@@ -286,7 +320,7 @@ def main(argv=None) -> int:
         sys.exit(f"Not found: {src}. Write the digest first (step 5).")
     if args.json:
         try:
-            data = to_json(src.read_text("utf-8"))
+            data = to_json(src.read_text("utf-8"), load_marks())
         except ValueError as e:
             sys.exit(f"Could not export {src}: {e}")
         print(json.dumps(data, ensure_ascii=False, indent=1))
