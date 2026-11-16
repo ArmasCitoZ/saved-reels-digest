@@ -179,9 +179,11 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
 4. Record which entry each reel went into (enables incremental runs):
    `PY SCRIPTS/db.py set entry <slug> CODE1 CODE2 ...`
    Slugs are lowercase words joined by `-` (letters with accents are fine); first run
-   `PY SCRIPTS/db.py ideas` to see the slugs already in use, and reuse the existing one
-   when a reel belongs to that idea instead of inventing a near-copy (`sub-agents` next
-   to `subagents` splits one idea in two).
+   `PY SCRIPTS/db.py ideas` to see the slugs already in use (add `--collection NAME` when the
+   user asked for one collection or playlist), and reuse the existing one when a reel belongs
+   to that idea instead of inventing a near-copy (`sub-agents` next to `subagents` splits one
+   idea in two). Unsure whether a reel fits an idea? `PY SCRIPTS/db.py ideas <slug>` lists the
+   reels already in it (date, code, author, link); `db.py show CODE` has their full text.
 5. Run `PY SCRIPTS/db.py recent --days 7` and rebuild "Saved this week" from it
    (it shows each recent reel and the entry it went into).
 6. On later runs, merge new reels into existing entries before creating new ones
@@ -200,7 +202,8 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    `digest.md` with the database and lists what does not match: ideas no reel points to
    (run `db.py set entry` for their sources), reels pointing to an idea that was renamed or
    dropped (run the `db.py rename` it suggests, adding `--digest` only if the digest still
-   has the old slug; check that its guess is right), repeated `{#slug}`s, `(#slug)` links
+   has the old slug; check that its guess is right — when it is, `db.py check --fix` runs
+   that rename for you; it never guesses when more than one idea could be the target), repeated `{#slug}`s, `(#slug)` links
    that go nowhere and relevant reels not merged yet. Fix each one and run it again until it
    says they agree; otherwise the next run merges new reels into the wrong ideas.
 

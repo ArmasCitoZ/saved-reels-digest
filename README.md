@@ -144,8 +144,9 @@ $PY slides.py pending                        # carruseles y fotos por leer (fetc
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó
 $PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recuerda
 $PY db.py marks --status tried                # solo las ideas probadas (o discarded)
-$PY db.py ideas [--status todo]               # cada idea con sus reels, el último guardado y su marca
-$PY db.py check [--strict]                   # digest.md y la base coinciden (ideas sin reels, slugs rotos); --strict sale con error si no
+$PY db.py ideas [--status todo] [--collection "IA"]  # cada idea con sus reels, el último guardado y su marca
+$PY db.py ideas subagentes                   # los reels de una idea: fecha, código, autor y enlace
+$PY db.py check [--strict] [--fix]           # digest.md y la base coinciden (ideas sin reels, slugs rotos); --strict sale con error si no; --fix aplica el rename que no tiene dudas
 $PY db.py rename sub-agentes subagentes --digest  # renombrar o fusionar una idea: mueve sus reels y su marca y cambia {#slug} y (#slug) en digest.md
 $PY db.py unavailable                        # guardados borrados o privados
 $PY db.py status
@@ -154,7 +155,7 @@ $PY export_digest.py --vault ~/Obsidian/MiBoveda --prune  # y borra las notas de
 $PY export_digest.py --json                  # el resumen como JSON (lo usa Claude para Notion)
 ```
 
-¿Cambiaste el nombre de una idea o juntaste dos en una? `db.py rename VIEJO NUEVO` pasa todos sus reels (y lo que marcaste con `db.py mark`) al slug nuevo, así los reels que guardes después siguen yendo a la misma idea; con `--digest` cambia también el título y los enlaces en `digest.md`. Si ambas ideas estaban marcadas, se queda la marca de la nueva. Y si se te olvida, `db.py check` te dice el `rename` exacto que lo arregla. Para ver qué ideas tienes ya (y no crear `sub-agentes` al lado de `subagentes`), `db.py ideas` las lista con cuántos reels tiene cada una, cuándo guardaste el último y si la marcaste; con `--status todo` solo las que te quedan por probar.
+¿Cambiaste el nombre de una idea o juntaste dos en una? `db.py rename VIEJO NUEVO` pasa todos sus reels (y lo que marcaste con `db.py mark`) al slug nuevo, así los reels que guardes después siguen yendo a la misma idea; con `--digest` cambia también el título y los enlaces en `digest.md`. Si ambas ideas estaban marcadas, se queda la marca de la nueva. Y si se te olvida, `db.py check` te dice el `rename` exacto que lo arregla; si solo hay un slug perdido y una sola idea sin reels, `db.py check --fix` lo aplica por ti (en cualquier otro caso solo avisa, porque elegir la idea correcta requiere criterio). Para ver qué ideas tienes ya (y no crear `sub-agentes` al lado de `subagentes`), `db.py ideas` las lista con cuántos reels tiene cada una, cuándo guardaste el último y si la marcaste; con `--status todo` solo las que te quedan por probar y con `--collection "IA"` solo las de esa colección o lista. ¿De dónde salió una idea? `db.py ideas subagentes` enseña sus reels, del más reciente al más antiguo, con el enlace a cada uno.
 
 Para correr los tests y el linter igual que en CI:
 
