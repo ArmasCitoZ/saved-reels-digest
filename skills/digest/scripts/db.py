@@ -18,6 +18,7 @@
   db.py ideas [--status todo|tried|discarded]
                                             every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark, to reuse slugs
+  db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link
   db.py rename OLD NEW [--digest [PATH]]    move every reel of an idea (and its mark) to another
                                             slug, after renaming it or merging it into NEW;
                                             --digest also renames {#OLD} and (#OLD) in digest.md
@@ -521,6 +522,10 @@ def cmd_ideas(a):
     def status(slug):
         return marks.get(slug, {}).get("status", "todo")
 
+    if a.slugs:
+        _show_ideas(a.slugs, ideas, marks, a.collection)
+        return
+
     rows = sorted(((slug, rs) for slug, rs in ideas.items() if not a.status or status(slug) == a.status),
                   key=lambda kv: (-len(kv[1]), kv[0]))
     if not rows:
@@ -532,6 +537,27 @@ def cmd_ideas(a):
     for slug, rs in rows:
         newest = max((saved_ts(r) or 0 for r in rs), default=0) or None
         print(f"  {slug:{width}}  {len(rs):3}  {_day(newest)}  {status(slug)}")
+
+
+def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None) -> None:
+    """The reels behind each slug, newest saved first, to see where an idea comes from."""
+    slugs = list(dict.fromkeys(slugs))
+    unknown = [s for s in slugs if s not in ideas]
+    if len(unknown) == len(slugs):
+        where = f" from collection {collection!r}" if collection else ""
+        sys.exit(f"No reel{where} points to {', '.join(unknown)} (typo?).{_guesses(unknown, ideas)}"
+                 " See every idea with: db.py ideas")
+    for slug in slugs:
+        if slug not in ideas:
+            continue
+        rs = sorted(ideas[slug], key=lambda r: saved_ts(r) or 0, reverse=True)
+        m = marks.get(slug, {})
+        print(f"{slug}: {len(rs)} reels, {m.get('status', 'todo')}"
+              + (f" ({m['note']})" if m.get("note") else ""))
+        for r in rs:
+            print(f"  {_day(saved_ts(r))}  {r['shortcode']}  @{r.get('author') or '?'}  {r['url']}")
+    if unknown:
+        print(f"Skipped, no reel points to: {', '.join(unknown)} (typo?).{_guesses(unknown, ideas)}")
 
 
 def cmd_rename(a):
@@ -731,6 +757,7 @@ def main() -> None:
     p.add_argument("--status", choices=("tried", "discarded"), help="list only this kind of mark")
     p.set_defaults(fn=cmd_marks)
     p = sub.add_parser("ideas")
+    p.add_argument("slugs", nargs="*", help="list the reels of these ideas instead")
     p.add_argument("--status", choices=MARKS, help="only ideas with this mark (todo = not marked)")
     p.set_defaults(fn=cmd_ideas)
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")

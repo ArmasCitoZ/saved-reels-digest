@@ -71,3 +71,30 @@ def test_ideas_unknown_collection_suggests_the_closest(tmp_path):
     make_db(tmp_path, reel("AAAAA1", entry="hooks", collection="Ideas de IA"))
     err = run_failing(tmp_path, "ideas", "--collection", "Ideas IA")
     assert 'Did you mean --collection "Ideas de IA"' in err
+
+
+def test_ideas_slug_lists_its_reels_newest_first(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", author="ana", saved_at=1761000000),
+            reel("BBBBB2", entry="hooks", author="leo", saved_at=1762000000),
+            reel("CCCCC3", entry="subagents"))
+    run(tmp_path, "mark", "discarded", "hooks", "--note", "too slow")
+    out = run(tmp_path, "ideas", "hooks").splitlines()
+    assert out[0] == "hooks: 2 reels, discarded (too slow)"
+    assert out[1].split() == ["2025-11-01", "BBBBB2", "@leo", "https://www.instagram.com/reel/BBBBB2/"]
+    assert out[2].split()[:3] == ["2025-10-20", "AAAAA1", "@ana"]
+    assert len(out) == 3
+
+
+def test_ideas_slug_with_a_typo_suggests_the_closest(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="subagents"))
+    assert "Did you mean: subagents?" in run_failing(tmp_path, "ideas", "subagent")
+    out = run(tmp_path, "ideas", "subagents", "subagent")
+    assert out.startswith("subagents: 1 reels, todo")
+    assert "Skipped, no reel points to: subagent (typo?). Did you mean: subagents?" in out
+
+
+def test_ideas_slug_respects_the_collection(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", collection="IA"),
+            reel("BBBBB2", entry="hooks", collection="Cocina"))
+    out = run(tmp_path, "ideas", "hooks", "--collection", "IA")
+    assert out.startswith("hooks: 1 reels") and "AAAAA1" in out and "BBBBB2" not in out
