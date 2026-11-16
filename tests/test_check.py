@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-from test_db import SCRIPTS, make_db, reel, run
+from test_db import SCRIPTS, load, make_db, reel, run
 
 DIGEST = """# IA: my saved reels digest
 _Updated 2026-11-10 · 4 saved · 3 on topic · 2 unique ideas after merging_
@@ -106,3 +106,35 @@ def test_without_a_single_candidate_the_rename_has_a_placeholder(tmp_path):
     out = run(tmp_path, "check")
     assert "Point them to the idea they belong to: db.py rename old-one NEW-SLUG" in out
     assert "db.py rename old-two NEW-SLUG" in out and "Probably renamed" not in out
+
+
+def test_fix_applies_the_rename_check_is_sure_of(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp"), reel("CCCCC3", relevant=True, entry="mcp"))
+    run(tmp_path, "mark", "tried", "mcp")
+    write(tmp_path)
+    out = run(tmp_path, "check", "--fix")
+    assert "Fixed: Moved 2 reels from 'mcp' to 'mcp-servers'. Its tried mark moved too." in out
+    assert "agree (2 ideas)" in out
+    reels = load(tmp_path)
+    assert reels["BBBBB2"]["entry"] == reels["CCCCC3"]["entry"] == "mcp-servers"
+    assert "mcp-servers" in run(tmp_path, "marks", "--status", "tried")
+
+
+def test_fix_does_nothing_when_the_rename_is_a_guess(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"),
+            reel("CCCCC3", relevant=True, entry="old-one"), reel("DDDDD4", relevant=True, entry="old-two"))
+    write(tmp_path)
+    out = run(tmp_path, "check", "--fix")
+    assert "Nothing to fix automatically" in out and "Fixed" not in out
+    assert "db.py rename old-one NEW-SLUG" in out
+    assert load(tmp_path)["CCCCC3"]["entry"] == "old-one"
+
+
+def test_fix_on_an_agreeing_digest_leaves_it_alone(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"))
+    write(tmp_path)
+    out = run(tmp_path, "check", "--fix", "--strict")
+    assert "Nothing to fix automatically" in out and "agree (2 ideas)" in out

@@ -59,7 +59,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Skill y README: usar `db.py ideas` en el paso de fusión para reutilizar slugs en vez de inventar uno parecido
 - [x] `db.py mark` y `rename`: cuando un slug no existe, sugerir el más parecido ("¿quisiste decir `subagents`?") en vez de solo listar los primeros 15
 - [x] `--collection`: si el nombre no existe, sugerir la colección o lista más parecida (erratas como `--collection "Ideas IA"` por "Ideas de IA")
-- [ ] `db.py check --fix`: aplicar solo el arreglo que no tiene dudas (un slug perdido y una sola idea sin reels → `db.py rename`), en vez de que Claude copie el comando a mano
+- [x] `db.py check --fix`: aplicar solo el arreglo que no tiene dudas (un slug perdido y una sola idea sin reels → `db.py rename`), en vez de que Claude copie el comando a mano
 - [ ] `db.py ideas --collection`: listar solo las ideas con reels de una colección o lista, como ya aceptan `status`, `next`, `dump`...
 - [ ] `db.py ideas SLUG ...`: ver los reels de una idea (código, autor, enlace, fecha) para revisar de dónde sale antes de fusionarla o renombrarla
 - [ ] Skill y README: documentar `check --fix`, `ideas --collection` e `ideas SLUG`

@@ -22,9 +22,10 @@
                                             slug, after renaming it or merging it into NEW;
                                             --digest also renames {#OLD} and (#OLD) in digest.md
   db.py check [--digest PATH] [--strict]    compare digest.md with the database: ideas no reel
-                                            points to, reels pointing to ideas that are gone,
+            [--fix]                            points to, reels pointing to ideas that are gone,
                                             repeated slugs and broken (#slug) links; --strict
-                                            exits with status 1 when something needs fixing
+                                            exits with status 1 when something needs fixing;
+                                            --fix runs the db.py rename it is sure about
 
 status, unavailable, next, dump, similar and recent accept --collection NAME to work only on
 one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive);
@@ -542,14 +543,24 @@ def cmd_rename(a):
         sys.exit(f"Not found: {digest}. Nothing was renamed.")
     db = load_db()
     entries = db.setdefault("entries", {})
-    moved = [r for r in db["reels"].values() if r.get("entry") == old]
-    if not moved and old not in entries:
+    if not any(r.get("entry") == old for r in db["reels"].values()) and old not in entries:
         known = sorted({r["entry"] for r in db["reels"].values() if r.get("entry")} | set(entries))
         guess = _closest(old, known)
         sys.exit(f"No reel points to {old!r} and it has no mark, so nothing was renamed (typo?)."
                  + (f" Did you mean {guess!r}?" if guess else "")
                  + (f" Known ideas: {', '.join(known[:15])}" + (" ..." if len(known) > 15 else "")
                     if known else ""))
+    msg = rename_in_db(db, old, new)
+    save_db(db)
+    print(msg)
+    if digest:
+        print(rename_in_digest(digest, old, new))
+
+
+def rename_in_db(db: dict, old: str, new: str) -> str:
+    """Point every reel of idea `old` (and its mark) to `new`, in memory; says what moved."""
+    entries = db.setdefault("entries", {})
+    moved = [r for r in db["reels"].values() if r.get("entry") == old]
     already = sum(1 for r in db["reels"].values() if r.get("entry") == new)
     for r in moved:
         r["entry"] = new
@@ -562,11 +573,8 @@ def cmd_rename(a):
         else:
             entries[new] = mark
             note = f" Its {mark.get('status', '?')} mark moved too."
-    save_db(db)
-    print(f"Moved {len(moved)} reels from {old!r} to {new!r}"
-          + (f" (merged with the {already} already there)." if already else ".") + note)
-    if digest:
-        print(rename_in_digest(digest, old, new))
+    return (f"Moved {len(moved)} reels from {old!r} to {new!r}"
+            + (f" (merged with the {already} already there)." if already else ".") + note)
 
 
 def rename_in_digest(path: Path, old: str, new: str) -> str:
@@ -585,16 +593,37 @@ def rename_in_digest(path: Path, old: str, new: str) -> str:
     return msg
 
 
+def _linked(db: dict) -> dict[str, list[str]]:
+    """Each idea slug reels point to, with the codes of those reels."""
+    linked = {}
+    for r in db["reels"].values():
+        if r.get("entry"):
+            linked.setdefault(r["entry"], []).append(r["shortcode"])
+    return linked
+
+
+def sure_rename(db: dict, digest_text: str) -> tuple[str, str] | None:
+    """(old, new) when exactly one slug lost its idea and exactly one idea has no reels.
+
+    That is what renaming an idea in digest.md (and forgetting db.py rename) leaves behind,
+    so it is the only fix db.py check --fix applies without asking.
+    """
+    from export_digest import parse_digest
+
+    slugs = {i["slug"] for i in parse_digest(digest_text)["ideas"]}
+    linked = _linked(db)
+    lost = sorted(set(linked) - slugs)
+    unbacked = sorted(slugs - set(linked))
+    return (lost[0], unbacked[0]) if len(lost) == 1 and len(unbacked) == 1 else None
+
+
 def check_digest(db: dict, digest_text: str) -> list[str]:
     """Problems between digest.md and reels.json, as lines to print. Empty when they agree."""
     from export_digest import ANCHOR_LINK_RE, parse_digest
 
     ideas = parse_digest(digest_text)["ideas"]
     slugs = Counter(i["slug"] for i in ideas)
-    linked = {}
-    for r in db["reels"].values():
-        if r.get("entry"):
-            linked.setdefault(r["entry"], []).append(r["shortcode"])
+    linked = _linked(db)
     problems = []
     for slug, n in sorted(slugs.items()):
         if n > 1:
@@ -632,6 +661,14 @@ def cmd_check(a):
     text = path.read_text("utf-8")
     db = load_db()
     ideas = len({i["slug"] for i in parse_digest(text)["ideas"]})
+    if a.fix:
+        pair = sure_rename(db, text)
+        if pair:
+            print(f"Fixed: {rename_in_db(db, *pair)}")
+            save_db(db)
+        else:
+            print("Nothing to fix automatically: --fix only renames when one slug lost its idea "
+                  "and one idea has no reels.")
     problems = check_digest(db, text)
     waiting = sum(1 for r in db["reels"].values()
                   if r.get("relevant") is True and not r.get("entry") and _has_content(r))
@@ -701,6 +738,8 @@ def main() -> None:
     p = sub.add_parser("check"); p.add_argument("--digest", default=str(HOME / "digest.md"))
     p.add_argument("--strict", action="store_true",
                    help="exit with status 1 when there is something to fix (for scripts and CI)")
+    p.add_argument("--fix", action="store_true",
+                   help="apply the one fix that needs no judgement: the rename check is sure of")
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
     for name in ("status", "unavailable", "next", "dump", "similar", "recent"):
