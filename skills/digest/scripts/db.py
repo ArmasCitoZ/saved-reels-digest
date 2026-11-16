@@ -27,7 +27,7 @@
                                             exits with status 1 when something needs fixing;
                                             --fix runs the db.py rename it is sure about
 
-status, unavailable, next, dump, similar and recent accept --collection NAME to work only on
+status, unavailable, next, dump, similar, recent and ideas accept --collection NAME to work only on
 one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive);
 a name no reel is in is an error that suggests the closest one.
   db.py show CODE [CODE ...]                full record
@@ -512,10 +512,11 @@ def cmd_ideas(a):
     marks = db.get("entries") or {}
     ideas = {}
     for r in db["reels"].values():
-        if r.get("entry"):
+        if r.get("entry") and in_collection(r, a.collection):
             ideas.setdefault(r["entry"], []).append(r)
     if not ideas:
-        print("No ideas yet: reels get one with db.py set entry SLUG CODE ... while merging.")
+        print(f"No idea has reels from collection {a.collection!r} yet." if a.collection
+              else "No ideas yet: reels get one with db.py set entry SLUG CODE ... while merging.")
         return
     def status(slug):
         return marks.get(slug, {}).get("status", "todo")
@@ -525,7 +526,8 @@ def cmd_ideas(a):
     if not rows:
         print(f"None of the {len(ideas)} ideas is {a.status}.")
         return
-    print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas (reels, newest saved, mark):")
+    where = f" with reels from {a.collection!r}" if a.collection else ""
+    print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas{where} (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
     for slug, rs in rows:
         newest = max((saved_ts(r) or 0 for r in rs), default=0) or None
@@ -742,7 +744,7 @@ def main() -> None:
                    help="apply the one fix that needs no judgement: the rename check is sure of")
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
-    for name in ("status", "unavailable", "next", "dump", "similar", "recent"):
+    for name in ("status", "unavailable", "next", "dump", "similar", "recent", "ideas"):
         sub.choices[name].add_argument("--collection",
                                        help="only reels from this Instagram collection or YouTube playlist")
     a = ap.parse_args()

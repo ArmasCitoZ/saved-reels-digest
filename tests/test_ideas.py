@@ -1,5 +1,5 @@
 """db.py ideas: every idea the database knows, to reuse slugs while merging."""
-from test_db import make_db, reel, run
+from test_db import make_db, reel, run, run_failing
 
 
 def rows(out):
@@ -44,3 +44,30 @@ def test_ideas_can_list_one_status(tmp_path):
 def test_ideas_status_with_no_match(tmp_path):
     make_db(tmp_path, reel("AAAAA1", entry="hooks"))
     assert "None of the 1 ideas is tried." in run(tmp_path, "ideas", "--status", "tried")
+
+
+def test_ideas_can_list_one_collection(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", collection="IA"),
+            reel("BBBBB2", entry="hooks", collection="Cocina"),
+            reel("CCCCC3", entry="hooks", collection="IA"),
+            reel("DDDDD4", entry="pasta", collection="Cocina"),
+            reel("EEEEE5", entry="subagents", collection="IA"))
+    out = run(tmp_path, "ideas", "--collection", "ia")
+    assert out.startswith("2 ideas with reels from 'ia'")
+    # only the reels saved in that collection are counted
+    assert [r[:2] for r in rows(out)] == [["hooks", "2"], ["subagents", "1"]]
+    run(tmp_path, "mark", "tried", "pasta")
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--collection", "Cocina", "--status", "tried"))] \
+        == ["pasta"]
+
+
+def test_ideas_collection_without_merged_reels(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", collection="IA"), reel("BBBBB2", collection="Cocina"))
+    out = run(tmp_path, "ideas", "--collection", "Cocina")
+    assert "No idea has reels from collection 'Cocina' yet." in out
+
+
+def test_ideas_unknown_collection_suggests_the_closest(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", collection="Ideas de IA"))
+    err = run_failing(tmp_path, "ideas", "--collection", "Ideas IA")
+    assert 'Did you mean --collection "Ideas de IA"' in err
