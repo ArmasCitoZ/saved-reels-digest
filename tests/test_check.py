@@ -181,3 +181,22 @@ def test_separator_only_differences_are_near(tmp_path):
     out = run(tmp_path, "check")
     assert "{#mcp_servers} (1 reels) and {#mcp-servers} (1 reels)" in out
     assert "db.py rename mcp_servers mcp-servers --digest" in out
+
+
+def test_reels_in_an_idea_that_are_no_longer_relevant(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=False, entry="subagents"),
+            reel("CCCCC3", relevant="maybe", entry="mcp-servers"),
+            reel("DDDDD4", relevant=True, entry="mcp-servers"),
+            reel("EEEEE5", relevant=False))
+    write(tmp_path)
+    out = run(tmp_path, "check")
+    assert "1 things to fix" in out
+    assert "2 reels back an idea but are not marked relevant" in out
+    assert "db.py set relevant true BBBBB2 CCCCC3" in out
+    assert "db.py set entry none BBBBB2 CCCCC3" in out
+    assert "EEEEE5" not in out
+    # following either suggestion makes them agree again
+    run(tmp_path, "set", "relevant", "true", "BBBBB2")
+    run(tmp_path, "set", "entry", "none", "CCCCC3")
+    assert "agree (2 ideas)" in run(tmp_path, "check")

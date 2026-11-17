@@ -25,7 +25,8 @@
                                             --dry-run only says what would change
   db.py check [--digest PATH] [--strict]    compare digest.md with the database: ideas no reel
             [--fix]                            points to, reels pointing to ideas that are gone,
-                                            repeated slugs and broken (#slug) links; --strict
+                                            repeated slugs, broken (#slug) links and reels in
+                                            an idea that are no longer relevant; --strict
                                             exits with status 1 when something needs fixing;
                                             --fix runs the db.py rename it is sure about;
                                             also hints at ideas with nearly the same slug
@@ -715,7 +716,19 @@ def check_digest(db: dict, digest_text: str) -> list[str]:
     for slug in sorted(set(db.get("entries") or {}) - set(slugs)):
         problems.append(f"{slug!r} is marked {db['entries'][slug].get('status', '?')} "
                         "but is not in the digest.")
+    demoted = reclassified(db)
+    if demoted:
+        codes = " ".join(demoted)
+        problems.append(f"{len(demoted)} reels back an idea but are not marked relevant (triaged again "
+                        f"after merging?), so dump and similar skip them: {codes}. If they belong "
+                        f"there: db.py set relevant true {codes}; if not: db.py set entry none {codes}")
     return problems
+
+
+def reclassified(db: dict) -> list[str]:
+    """Codes of reels that point to an idea but whose triage is no longer 'relevant'."""
+    return [r["shortcode"] for r in db["reels"].values()
+            if r.get("entry") and r.get("relevant") is not True]
 
 
 NEAR_SLUG = 0.85  # subagent/subagents, hook/hooks, mcp_servers/mcp-servers; not ai-video/ai-voice
