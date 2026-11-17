@@ -70,7 +70,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py ideas --sort reels|recent|name`: ordenar la lista como el visor (hoy solo por número de reels), para ver primero las ideas con reels guardados hace poco
 - [x] `db.py check`: señalar reels que apuntan a una idea pero no están marcados como relevantes (se reclasificaron después de fusionar), porque `dump` y `similar` ya no los ven aunque sigan respaldando la idea; decir el `db.py set` que lo arregla
 - [x] `db.py set relevant false|maybe|none`: avisar cuando alguno de esos reels respalda una idea del digest y decir cómo sacarlo de ella (`db.py set entry none CODE`)
-- [ ] Skill, README y CHANGELOG: documentar `ideas --sort` y los avisos de reels reclasificados
+- [x] Skill, README y CHANGELOG: documentar `ideas --sort` y los avisos de reels reclasificados
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

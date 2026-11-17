@@ -144,7 +144,7 @@ $PY slides.py pending                        # carruseles y fotos por leer (fetc
 $PY db.py recent --days 7                    # lo guardado esta semana y en qué idea acabó
 $PY db.py mark tried subagentes --note "útil"  # o discarded; el digest lo recuerda
 $PY db.py marks --status tried                # solo las ideas probadas (o discarded)
-$PY db.py ideas [--status todo] [--collection "IA"]  # cada idea con sus reels, el último guardado y su marca
+$PY db.py ideas [--status todo] [--collection "IA"] [--sort recent]  # cada idea con sus reels, el último guardado y su marca
 $PY db.py ideas subagentes                   # los reels de una idea: fecha, código, autor y enlace
 $PY db.py check [--strict] [--fix]           # digest.md y la base coinciden (ideas sin reels, slugs rotos); --strict sale con error si no; --fix aplica el rename que no tiene dudas
 $PY db.py rename sub-agentes subagentes --digest  # renombrar o fusionar una idea: mueve sus reels y su marca y cambia {#slug} y (#slug) en digest.md
@@ -156,9 +156,11 @@ $PY export_digest.py --vault ~/Obsidian/MiBoveda --prune  # y borra las notas de
 $PY export_digest.py --json                  # el resumen como JSON (lo usa Claude para Notion)
 ```
 
-¿Cambiaste el nombre de una idea o juntaste dos en una? `db.py rename VIEJO NUEVO` pasa todos sus reels (y lo que marcaste con `db.py mark`) al slug nuevo, así los reels que guardes después siguen yendo a la misma idea; con `--digest` cambia también el título y los enlaces en `digest.md`. Si ambas ideas estaban marcadas, se queda la marca de la nueva. Y si se te olvida, `db.py check` te dice el `rename` exacto que lo arregla; si solo hay un slug perdido y una sola idea sin reels, `db.py check --fix` lo aplica por ti (en cualquier otro caso solo avisa, porque elegir la idea correcta requiere criterio). Para ver qué ideas tienes ya (y no crear `sub-agentes` al lado de `subagentes`), `db.py ideas` las lista con cuántos reels tiene cada una, cuándo guardaste el último y si la marcaste; con `--status todo` solo las que te quedan por probar y con `--collection "IA"` solo las de esa colección o lista. ¿De dónde salió una idea? `db.py ideas subagentes` enseña sus reels, del más reciente al más antiguo, con el enlace a cada uno.
+¿Cambiaste el nombre de una idea o juntaste dos en una? `db.py rename VIEJO NUEVO` pasa todos sus reels (y lo que marcaste con `db.py mark`) al slug nuevo, así los reels que guardes después siguen yendo a la misma idea; con `--digest` cambia también el título y los enlaces en `digest.md`. Si ambas ideas estaban marcadas, se queda la marca de la nueva. Y si se te olvida, `db.py check` te dice el `rename` exacto que lo arregla; si solo hay un slug perdido y una sola idea sin reels, `db.py check --fix` lo aplica por ti (en cualquier otro caso solo avisa, porque elegir la idea correcta requiere criterio). Para ver qué ideas tienes ya (y no crear `sub-agentes` al lado de `subagentes`), `db.py ideas` las lista con cuántos reels tiene cada una, cuándo guardaste el último y si la marcaste; con `--status todo` solo las que te quedan por probar, con `--collection "IA"` solo las de esa colección o lista y con `--sort recent` (o `name`) primero las que tienen reels guardados hace menos (o por orden alfabético). ¿De dónde salió una idea? `db.py ideas subagentes` enseña sus reels, del más reciente al más antiguo, con el enlace a cada uno.
 
 Antes de fusionar, `db.py rename ... --dry-run` dice cuántos reels se moverían, qué pasa con las marcas y cuántos títulos y enlaces cambiarían en `digest.md`, sin tocar nada. Y para que una idea no acabe partida en dos: `db.py set entry subagente ...` avisa si ya existe `subagentes` (se guarda igual, pero te da el `rename` para juntarlas), y `db.py check` lista las ideas del digest con slugs casi iguales en "Maybe the same idea" (es solo una pista: `--strict` no falla por eso).
+
+¿Reclasificaste como no relevante un reel que ya estaba en una idea? `db.py set relevant false` lo guarda igual, pero avisa de que sigue respaldando esa idea y te da el `db.py set entry none CODE` para sacarlo. Si se te pasa, `db.py check` lo señala con los dos arreglos posibles: volver a marcarlo relevante o sacarlo de la idea.
 
 Para correr los tests y el linter igual que en CI:
 

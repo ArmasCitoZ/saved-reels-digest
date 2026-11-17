@@ -188,7 +188,8 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
 5. Run `PY SCRIPTS/db.py recent --days 7` and rebuild "Saved this week" from it
    (it shows each recent reel and the entry it went into).
 6. On later runs, merge new reels into existing entries before creating new ones
-   (`PY SCRIPTS/db.py ideas` lists them with how many reels each has and when the newest was saved),
+   (`PY SCRIPTS/db.py ideas` lists them with how many reels each has and when the newest was saved;
+   `--sort recent` puts the ideas with the newest saves first),
    and refresh the header counts, "Do these first" and "Saved this week".
    To rename an entry's slug, or to fold one entry into another, never retype its codes:
    `PY SCRIPTS/db.py rename <old-slug> <new-slug> --digest` moves its reels and its mark
@@ -207,7 +208,9 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    dropped (run the `db.py rename` it suggests, adding `--digest` only if the digest still
    has the old slug; check that its guess is right — when it is, `db.py check --fix` runs
    that rename for you; it never guesses when more than one idea could be the target), repeated `{#slug}`s, `(#slug)` links
-   that go nowhere and relevant reels not merged yet. Fix each one and run it again until it
+   that go nowhere, relevant reels not merged yet and reels that back an idea but were
+   triaged again as not relevant (if they still belong, `db.py set relevant true`; if not,
+   `db.py set entry none`; `set relevant` itself warns about them when it happens). Fix each one and run it again until it
    says they agree; otherwise the next run merges new reels into the wrong ideas. Under
    "Maybe the same idea" it also lists entries with nearly the same slug (`subagent` and
    `subagents`): read both, and only if they really are one idea run the rename it suggests

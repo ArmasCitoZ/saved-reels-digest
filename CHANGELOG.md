@@ -6,6 +6,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py ideas --sort recent` lists the ideas with the newest saved reel first (ideas without a known date last) and `--sort name` lists them by slug; most reels first (`--sort reels`) stays the default. It combines with `--status` and `--collection`.
+- `db.py check` reports reels that back an idea but are no longer marked relevant (triaged again after merging), which `dump` and `similar` skip, with both fixes: `db.py set relevant true CODES` or `db.py set entry none CODES`.
+- `db.py set relevant false` (or `maybe`, `none`) warns when one of those reels still backs an idea, names the idea and prints the `db.py set entry none` that takes it out; the triage is saved either way.
 - `db.py rename --dry-run` says how many reels would move, what happens to the marks and how many headings and links would change in `digest.md`, without writing anything.
 - `db.py set entry` warns when a new slug is nearly one already in use (`subagent` next to `subagents`, `mcp_servers` next to `mcp-servers`) and prints the `db.py rename` that joins them; the entry is still saved.
 - `db.py check` lists digest ideas whose slugs are nearly the same under "Maybe the same idea", with the `db.py rename ... --digest` that merges the one with fewer reels into the other. It is only a hint: slugs that differ in their numbers (`step-1`, `step-2`) are skipped and `--strict` does not fail on it.
