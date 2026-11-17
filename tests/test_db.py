@@ -352,6 +352,25 @@ def test_set_entry_does_not_warn_for_existing_or_unrelated_slugs(tmp_path):
 
 
 # ------------------------------------------------------------------- output encoding
+def test_set_relevant_warns_when_a_reel_still_backs_an_idea(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="hooks"),
+            reel("BBBBB2", relevant=True, entry="subagents"), reel("CCCCC3", relevant=True))
+    out = run(tmp_path, "set", "relevant", "false", "AAAAA1", "BBBBB2", "CCCCC3")
+    assert "Set relevant=False on 3 reels." in out
+    assert "2 of these reels still back an idea: AAAAA1 (hooks), BBBBB2 (subagents)" in out
+    assert "db.py set entry none AAAAA1 BBBBB2" in out
+    # the triage is saved anyway and the entries are left alone
+    reels = load(tmp_path)
+    assert reels["AAAAA1"]["relevant"] is False and reels["AAAAA1"]["entry"] == "hooks"
+    assert "still back an idea" in run(tmp_path, "set", "relevant", "maybe", "AAAAA1")
+
+
+def test_set_relevant_true_or_reels_without_idea_do_not_warn(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=False, entry="hooks"), reel("BBBBB2"))
+    assert "Warning" not in run(tmp_path, "set", "relevant", "true", "AAAAA1")
+    assert "Warning" not in run(tmp_path, "set", "relevant", "false", "BBBBB2")
+
+
 def test_emoji_captions_print_on_a_windows_style_pipe(tmp_path):
     make_db(tmp_path, reel("AAAAA1", caption="prueba 🤖 automatización"))
     env = {**os.environ, "SRD_HOME": str(tmp_path), "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}

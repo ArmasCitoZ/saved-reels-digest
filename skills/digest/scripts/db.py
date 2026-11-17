@@ -216,7 +216,7 @@ def cmd_set(a):
         sys.exit(_bad_slug(a.value) + " Nothing was changed.")
     db = load_db()
     known_before = Counter(r["entry"] for r in db["reels"].values() if r.get("entry"))
-    missing, done = [], 0
+    missing, done, in_ideas = [], 0, {}
     for name in split_codes(a.codes):
         key = resolve_code(db["reels"], name)
         if key is None:
@@ -224,11 +224,18 @@ def cmd_set(a):
         else:
             db["reels"][key][a.field] = val
             done += 1
+            if a.field == "relevant" and val is not True and db["reels"][key].get("entry"):
+                in_ideas[key] = db["reels"][key]["entry"]
     if not done:
         sys.exit(f"None of these codes are in the database, so nothing was changed: {', '.join(missing)}")
     save_db(db)
     print(f"Set {a.field}={val!r} on {done} reels."
           + (f" Unknown: {', '.join(missing)}" if missing else ""))
+    if in_ideas:
+        codes = " ".join(in_ideas)
+        print(f"Warning: {len(in_ideas)} of these reels still back an idea: "
+              + ", ".join(f"{k} ({slug})" for k, slug in in_ideas.items())
+              + f". If they no longer belong there, take them out with: db.py set entry none {codes}")
     if a.field == "entry" and val is not None:
         warning = _near_slug_warning(val, known_before)
         if warning:
