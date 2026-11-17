@@ -20,8 +20,9 @@
                                             the newest saved and its mark, to reuse slugs
   db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link
   db.py rename OLD NEW [--digest [PATH]]    move every reel of an idea (and its mark) to another
-                                            slug, after renaming it or merging it into NEW;
-                                            --digest also renames {#OLD} and (#OLD) in digest.md
+            [--dry-run]                        slug, after renaming it or merging it into NEW;
+                                            --digest also renames {#OLD} and (#OLD) in digest.md;
+                                            --dry-run only says what would change
   db.py check [--digest PATH] [--strict]    compare digest.md with the database: ideas no reel
             [--fix]                            points to, reels pointing to ideas that are gone,
                                             repeated slugs and broken (#slug) links; --strict
@@ -578,46 +579,61 @@ def cmd_rename(a):
                  + (f" Did you mean {guess!r}?" if guess else "")
                  + (f" Known ideas: {', '.join(known[:15])}" + (" ..." if len(known) > 15 else "")
                     if known else ""))
-    msg = rename_in_db(db, old, new)
-    save_db(db)
+    msg = rename_in_db(db, old, new, dry=a.dry_run)
+    if not a.dry_run:
+        save_db(db)
     print(msg)
     if digest:
-        print(rename_in_digest(digest, old, new))
+        print(rename_in_digest(digest, old, new, dry=a.dry_run))
+    if a.dry_run:
+        print("Dry run: nothing was changed. Run it again without --dry-run to apply it.")
 
 
-def rename_in_db(db: dict, old: str, new: str) -> str:
-    """Point every reel of idea `old` (and its mark) to `new`, in memory; says what moved."""
+def rename_in_db(db: dict, old: str, new: str, dry: bool = False) -> str:
+    """Point every reel of idea `old` (and its mark) to `new`, in memory; says what moved.
+
+    With dry=True nothing changes and the message says what would happen.
+    """
     entries = db.setdefault("entries", {})
     moved = [r for r in db["reels"].values() if r.get("entry") == old]
     already = sum(1 for r in db["reels"].values() if r.get("entry") == new)
-    for r in moved:
-        r["entry"] = new
+    if not dry:
+        for r in moved:
+            r["entry"] = new
     note = ""
     if old in entries:
-        mark = entries.pop(old)
+        mark = entries[old]
         if new in entries:
-            note = (f" Kept the {entries[new].get('status', '?')} mark of {new!r} and dropped the "
+            note = (f" {'Would keep' if dry else 'Kept'} the {entries[new].get('status', '?')} mark "
+                    f"of {new!r} and {'drop' if dry else 'dropped'} the "
                     f"{mark.get('status', '?')} mark of {old!r}.")
         else:
-            entries[new] = mark
-            note = f" Its {mark.get('status', '?')} mark moved too."
-    return (f"Moved {len(moved)} reels from {old!r} to {new!r}"
+            note = f" Its {mark.get('status', '?')} mark {'would move' if dry else 'moved'} too."
+        if not dry:
+            mark = entries.pop(old)
+            entries.setdefault(new, mark)
+    return (f"{'Would move' if dry else 'Moved'} {len(moved)} reels from {old!r} to {new!r}"
             + (f" (merged with the {already} already there)." if already else ".") + note)
 
 
-def rename_in_digest(path: Path, old: str, new: str) -> str:
-    """Rename the {#old} heading anchor and every (#old) link in digest.md; says what changed."""
+def rename_in_digest(path: Path, old: str, new: str, dry: bool = False) -> str:
+    """Rename the {#old} heading anchor and every (#old) link in digest.md; says what changed.
+
+    With dry=True the file is left alone and the message says what would change.
+    """
     text = path.read_text("utf-8")
     both = f"{{#{old}}}" in text and f"{{#{new}}}" in text
     text, headings = re.subn(r"\{#" + re.escape(old) + r"\}", f"{{#{new}}}", text)
     text, links = re.subn(r"\]\(#" + re.escape(old) + r"\)", f"](#{new})", text)
     if not headings and not links:
-        return f"{path.name} has no {{#{old}}} or (#{old}): left as it was."
-    path.write_text(text, "utf-8")
-    msg = f"In {path.name}: renamed {headings} headings and {links} links to {{#{new}}}."
+        return f"{path.name} has no {{#{old}}} or (#{old}): {'would be ' if dry else ''}left as it was."
+    if not dry:
+        path.write_text(text, "utf-8")
+    msg = (f"In {path.name}: {'would rename' if dry else 'renamed'} {headings} headings and "
+           f"{links} links to {{#{new}}}.")
     if both:
-        msg += (f" It now has two {{#{new}}} ideas: merge their text into one entry "
-                "(db.py check lists repeated slugs).")
+        msg += (f" It {'would then have' if dry else 'now has'} two {{#{new}}} ideas: merge their "
+                "text into one entry (db.py check lists repeated slugs).")
     return msg
 
 
@@ -763,6 +779,8 @@ def main() -> None:
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")
     p.add_argument("--digest", nargs="?", const=str(HOME / "digest.md"),
                    help="also rename {#OLD} and (#OLD) in this digest (default WORK/digest.md)")
+    p.add_argument("--dry-run", action="store_true",
+                   help="only say what would move and change, without writing anything")
     p.set_defaults(fn=cmd_rename)
     p = sub.add_parser("check"); p.add_argument("--digest", default=str(HOME / "digest.md"))
     p.add_argument("--strict", action="store_true",

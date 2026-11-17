@@ -111,3 +111,35 @@ def test_missing_digest_renames_nothing(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True, entry="old"))
     assert "Nothing was renamed" in run_failing(tmp_path, "rename", "old", "new", "--digest")
     assert entry_of(tmp_path) == {"AAAAA1": "old"}
+
+
+def test_dry_run_says_what_would_change_and_writes_nothing(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="sub-agents"),
+            reel("BBBBB2", relevant=True, entry="hooks"))
+    run(tmp_path, "mark", "tried", "sub-agents")
+    (tmp_path / "digest.md").write_text(DIGEST, encoding="utf-8")
+    before = (tmp_path / "reels.json").read_text(encoding="utf-8")
+    out = run(tmp_path, "rename", "sub-agents", "subagents", "--digest", "--dry-run")
+    assert "Would move 1 reels from 'sub-agents' to 'subagents'." in out
+    assert "Its tried mark would move too." in out
+    assert "would rename 1 headings and 2 links to {#subagents}" in out
+    assert "Dry run: nothing was changed" in out
+    assert (tmp_path / "reels.json").read_text(encoding="utf-8") == before
+    assert (tmp_path / "digest.md").read_text(encoding="utf-8") == DIGEST
+
+
+def test_dry_run_of_a_merge_into_a_marked_idea(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="hooks"),
+            reel("BBBBB2", relevant=True, entry="claude-hooks"))
+    run(tmp_path, "mark", "discarded", "hooks")
+    run(tmp_path, "mark", "tried", "claude-hooks")
+    out = run(tmp_path, "rename", "hooks", "claude-hooks", "--dry-run")
+    assert "Would move 1 reels" in out and "merged with the 1 already there" in out
+    assert "Would keep the tried mark of 'claude-hooks' and drop the discarded mark of 'hooks'" in out
+    assert entry_of(tmp_path) == {"AAAAA1": "hooks", "BBBBB2": "claude-hooks"}
+    assert set(db(tmp_path)["entries"]) == {"hooks", "claude-hooks"}
+
+
+def test_dry_run_still_refuses_unknown_slugs(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    assert "nothing was renamed" in run_failing(tmp_path, "rename", "sub-agents", "x", "--dry-run")
