@@ -98,3 +98,28 @@ def test_ideas_slug_respects_the_collection(tmp_path):
             reel("BBBBB2", entry="hooks", collection="Cocina"))
     out = run(tmp_path, "ideas", "hooks", "--collection", "IA")
     assert out.startswith("hooks: 1 reels") and "AAAAA1" in out and "BBBBB2" not in out
+
+
+def test_ideas_can_be_sorted_by_newest_save_or_by_name(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=1761600000),
+            reel("BBBBB2", entry="hooks", saved_at=1761000000),
+            reel("CCCCC3", entry="subagents", saved_at=1762000000),
+            reel("DDDDD4", entry="alfa", added_at=None),
+            reel("EEEEE5", entry="mcp", saved_at=1762000000))
+    def order(*extra):
+        return [r[0] for r in rows(run(tmp_path, "ideas", *extra))]
+
+    assert order() == ["hooks", "alfa", "mcp", "subagents"]
+    assert order("--sort", "reels") == order()
+    # newest saved reel first, ties by slug, ideas with no known date last
+    assert order("--sort", "recent") == ["mcp", "subagents", "hooks", "alfa"]
+    assert order("--sort", "name") == ["alfa", "hooks", "mcp", "subagents"]
+
+
+def test_ideas_sort_combines_with_status(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="zeta", saved_at=1762000000),
+            reel("BBBBB2", entry="beta", saved_at=1761000000),
+            reel("CCCCC3", entry="gamma", saved_at=1761500000))
+    run(tmp_path, "mark", "tried", "gamma")
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--status", "todo", "--sort", "recent"))] \
+        == ["zeta", "beta"]

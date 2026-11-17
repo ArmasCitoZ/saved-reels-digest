@@ -15,7 +15,7 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind)
-  db.py ideas [--status todo|tried|discarded]
+  db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
                                             every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark, to reuse slugs
   db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link
@@ -544,8 +544,14 @@ def cmd_ideas(a):
         _show_ideas(a.slugs, ideas, marks, a.collection)
         return
 
+    def newest(rs):
+        return max((saved_ts(r) or 0 for r in rs), default=0)
+
+    order = {"reels": lambda kv: (-len(kv[1]), kv[0]),
+             "recent": lambda kv: (-newest(kv[1]), kv[0]),  # unknown dates (0) go last
+             "name": lambda kv: kv[0]}[a.sort]
     rows = sorted(((slug, rs) for slug, rs in ideas.items() if not a.status or status(slug) == a.status),
-                  key=lambda kv: (-len(kv[1]), kv[0]))
+                  key=order)
     if not rows:
         print(f"None of the {len(ideas)} ideas is {a.status}.")
         return
@@ -553,8 +559,7 @@ def cmd_ideas(a):
     print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas{where} (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
     for slug, rs in rows:
-        newest = max((saved_ts(r) or 0 for r in rs), default=0) or None
-        print(f"  {slug:{width}}  {len(rs):3}  {_day(newest)}  {status(slug)}")
+        print(f"  {slug:{width}}  {len(rs):3}  {_day(newest(rs) or None)}  {status(slug)}")
 
 
 def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None) -> None:
@@ -829,6 +834,8 @@ def main() -> None:
     p = sub.add_parser("ideas")
     p.add_argument("slugs", nargs="*", help="list the reels of these ideas instead")
     p.add_argument("--status", choices=MARKS, help="only ideas with this mark (todo = not marked)")
+    p.add_argument("--sort", choices=("reels", "recent", "name"), default="reels",
+                   help="most reels first (default), newest saved reel first, or by slug")
     p.set_defaults(fn=cmd_ideas)
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")
     p.add_argument("--digest", nargs="?", const=str(HOME / "digest.md"),

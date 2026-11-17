@@ -67,7 +67,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py set entry`: avisar cuando el slug es nuevo pero hay uno casi igual en uso (`subagent` con `subagents` ya en la base), porque así una idea acaba partida en dos; se guarda igual y el aviso dice el `db.py rename` para juntarlas
 - [x] `db.py check`: señalar parejas de ideas con slugs casi iguales (`subagent` / `subagents`, `mcp_servers` / `mcp-servers`) y sugerir el `db.py rename` para fusionarlas
 - [x] Skill, README y CHANGELOG: documentar `rename --dry-run` y los avisos de slugs parecidos
-- [ ] `db.py ideas --sort reels|recent|name`: ordenar la lista como el visor (hoy solo por número de reels), para ver primero las ideas con reels guardados hace poco
+- [x] `db.py ideas --sort reels|recent|name`: ordenar la lista como el visor (hoy solo por número de reels), para ver primero las ideas con reels guardados hace poco
 - [ ] `db.py check`: señalar reels que apuntan a una idea pero no están marcados como relevantes (se reclasificaron después de fusionar), porque `dump` y `similar` ya no los ven aunque sigan respaldando la idea; decir el `db.py set` que lo arregla
 - [ ] `db.py set relevant false|maybe|none`: avisar cuando alguno de esos reels respalda una idea del digest y decir cómo sacarlo de ella (`db.py set entry none CODE`)
 - [ ] Skill, README y CHANGELOG: documentar `ideas --sort` y los avisos de reels reclasificados
