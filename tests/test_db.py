@@ -332,6 +332,25 @@ def test_set_entry_accepts_accents_and_clearing(tmp_path):
     assert load(tmp_path)["AAAAA1"]["entry"] is None
 
 
+def test_set_entry_warns_about_a_new_slug_close_to_one_in_use(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="subagents"), reel("CCCCC3", relevant=True))
+    out = run(tmp_path, "set", "entry", "subagent", "CCCCC3")
+    assert "Set entry='subagent' on 1 reels." in out
+    assert "'subagents' already has 2 reels" in out
+    assert "db.py rename subagent subagents" in out
+    assert load(tmp_path)["CCCCC3"]["entry"] == "subagent"  # only a warning: it is still saved
+
+
+def test_set_entry_does_not_warn_for_existing_or_unrelated_slugs(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="mcp_servers"),
+            reel("BBBBB2", relevant=True), reel("CCCCC3", relevant=True))
+    assert "Warning" not in run(tmp_path, "set", "entry", "mcp_servers", "BBBBB2")
+    assert "Warning" not in run(tmp_path, "set", "entry", "prompting", "CCCCC3")
+    # case and '-' / '_' differences count as near: they are the same idea typed differently
+    assert "'mcp_servers' already has 2 reels" in run(tmp_path, "set", "entry", "MCP-servers", "CCCCC3")
+
+
 # ------------------------------------------------------------------- output encoding
 def test_emoji_captions_print_on_a_windows_style_pipe(tmp_path):
     make_db(tmp_path, reel("AAAAA1", caption="prueba 🤖 automatización"))

@@ -213,6 +213,7 @@ def cmd_set(a):
     if a.field == "entry" and val is not None and not (isinstance(val, str) and SLUG_RE.match(val)):
         sys.exit(_bad_slug(a.value) + " Nothing was changed.")
     db = load_db()
+    known_before = Counter(r["entry"] for r in db["reels"].values() if r.get("entry"))
     missing, done = [], 0
     for name in split_codes(a.codes):
         key = resolve_code(db["reels"], name)
@@ -226,6 +227,21 @@ def cmd_set(a):
     save_db(db)
     print(f"Set {a.field}={val!r} on {done} reels."
           + (f" Unknown: {', '.join(missing)}" if missing else ""))
+    if a.field == "entry" and val is not None:
+        warning = _near_slug_warning(val, known_before)
+        if warning:
+            print(warning)
+
+
+def _near_slug_warning(slug: str, known: Counter) -> str:
+    """A warning when `slug` is new but nearly the same as one in use (one idea split in two)."""
+    if slug in known:
+        return ""
+    near = _closest(slug, known)
+    if not near:
+        return ""
+    return (f"Warning: {slug!r} is a new idea, but {near!r} already has {known[near]} reels. "
+            f"If they are the same idea, join them with: db.py rename {slug} {near}")
 
 
 def saved_ts(r: dict) -> int | None:
