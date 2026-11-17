@@ -138,3 +138,46 @@ def test_fix_on_an_agreeing_digest_leaves_it_alone(tmp_path):
     write(tmp_path)
     out = run(tmp_path, "check", "--fix", "--strict")
     assert "Nothing to fix automatically" in out and "agree (2 ideas)" in out
+
+
+NEAR = DIGEST + """
+### Subagent tricks {#subagent}
+More on splitting tasks.
+
+### Step 1 {#step-1}
+First.
+
+### Step 2 {#step-2}
+Second.
+"""
+
+
+def test_hints_at_ideas_with_nearly_the_same_slug(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("AAAAA2", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"),
+            reel("CCCCC3", relevant=True, entry="subagent"),
+            reel("DDDDD4", relevant=True, entry="step-1"), reel("EEEEE5", relevant=True, entry="step-2"))
+    write(tmp_path, NEAR)
+    out = run(tmp_path, "check", "--strict")  # a hint is not a problem: --strict still passes
+    assert "agree (5 ideas)" in out and "Maybe the same idea" in out
+    assert "{#subagent} (1 reels) and {#subagents} (2 reels)" in out
+    assert "db.py rename subagent subagents --digest" in out
+    assert "step-1" not in out.split("Maybe the same idea")[1]
+
+
+def test_no_hint_when_slugs_are_different_enough(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"))
+    write(tmp_path)
+    assert "Maybe the same idea" not in run(tmp_path, "check")
+
+
+def test_separator_only_differences_are_near(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp-servers"),
+            reel("CCCCC3", relevant=True, entry="mcp_servers"))
+    write(tmp_path, DIGEST + "\n### MCP again {#mcp_servers}\nSame.\n")
+    out = run(tmp_path, "check")
+    assert "{#mcp_servers} (1 reels) and {#mcp-servers} (1 reels)" in out
+    assert "db.py rename mcp_servers mcp-servers --digest" in out

@@ -27,7 +27,8 @@
             [--fix]                            points to, reels pointing to ideas that are gone,
                                             repeated slugs and broken (#slug) links; --strict
                                             exits with status 1 when something needs fixing;
-                                            --fix runs the db.py rename it is sure about
+                                            --fix runs the db.py rename it is sure about;
+                                            also hints at ideas with nearly the same slug
 
 status, unavailable, next, dump, similar, recent and ideas accept --collection NAME to work only on
 one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive);
@@ -712,6 +713,38 @@ def check_digest(db: dict, digest_text: str) -> list[str]:
     return problems
 
 
+NEAR_SLUG = 0.85  # subagent/subagents, hook/hooks, mcp_servers/mcp-servers; not ai-video/ai-voice
+
+
+def near_duplicate_slugs(db: dict, digest_text: str) -> list[str]:
+    """Pairs of digest ideas whose slugs are nearly the same, with the rename that merges them.
+
+    Only a hint: two ideas can have close slugs on purpose, so it never counts as a problem.
+    Slugs that differ in their numbers (step-1, step-2) are left alone.
+    """
+    from export_digest import parse_digest
+
+    slugs = sorted({i["slug"] for i in parse_digest(digest_text)["ideas"]})
+    reels = Counter(r["entry"] for r in db["reels"].values() if r.get("entry"))
+
+    def norm(x):
+        return x.casefold().replace("_", "-")
+
+    hints = []
+    for i, x in enumerate(slugs):
+        for y in slugs[i + 1:]:
+            if re.findall(r"\d+", x) != re.findall(r"\d+", y):
+                continue
+            if difflib.SequenceMatcher(None, norm(x), norm(y)).ratio() < NEAR_SLUG:
+                continue
+            # merge the idea with fewer reels into the one with more (on a tie, into the first)
+            old, new = sorted((x, y), key=lambda s: (reels[s], s == x))
+            hints.append(f"{{#{old}}} ({reels[old]} reels) and {{#{new}}} ({reels[new]} reels) look "
+                         f"like the same idea. If they are, merge them with: "
+                         f"db.py rename {old} {new} --digest (then join their text in digest.md)")
+    return hints
+
+
 def cmd_check(a):
     path = Path(a.digest).expanduser()
     if not path.exists():
@@ -734,13 +767,18 @@ def cmd_check(a):
                   if r.get("relevant") is True and not r.get("entry") and _has_content(r))
     if waiting:
         problems.append(f"{waiting} relevant reels are not in any idea yet: db.py dump --undigested")
+    near = near_duplicate_slugs(db, text)
     if not problems:
         print(f"digest.md and the database agree ({ideas} ideas).")
-        return
-    print(f"{len(problems)} things to fix in {path.name} ({ideas} ideas):")
-    for p in problems:
-        print(f"- {p}")
-    if a.strict:
+    else:
+        print(f"{len(problems)} things to fix in {path.name} ({ideas} ideas):")
+        for p in problems:
+            print(f"- {p}")
+    if near:
+        print("Maybe the same idea (only a hint, --strict ignores it):")
+        for h in near:
+            print(f"- {h}")
+    if problems and a.strict:
         sys.exit(1)
 
 

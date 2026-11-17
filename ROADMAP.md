@@ -65,7 +65,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Skill y README: documentar `check --fix`, `ideas --collection` e `ideas SLUG`
 - [x] `db.py rename --dry-run`: decir cuántos reels se moverían, qué pasa con la marca y cuántos títulos y enlaces cambiarían en `digest.md`, sin escribir nada, para revisar una fusión antes de hacerla
 - [x] `db.py set entry`: avisar cuando el slug es nuevo pero hay uno casi igual en uso (`subagent` con `subagents` ya en la base), porque así una idea acaba partida en dos; se guarda igual y el aviso dice el `db.py rename` para juntarlas
-- [ ] `db.py check`: señalar parejas de ideas con slugs casi iguales (`subagent` / `subagents`, `mcp_servers` / `mcp-servers`) y sugerir el `db.py rename` para fusionarlas
+- [x] `db.py check`: señalar parejas de ideas con slugs casi iguales (`subagent` / `subagents`, `mcp_servers` / `mcp-servers`) y sugerir el `db.py rename` para fusionarlas
 - [ ] Skill, README y CHANGELOG: documentar `rename --dry-run` y los avisos de slugs parecidos
 
 ## Robustez
