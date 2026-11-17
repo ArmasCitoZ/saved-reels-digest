@@ -6,6 +6,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py rename --dry-run` says how many reels would move, what happens to the marks and how many headings and links would change in `digest.md`, without writing anything.
+- `db.py set entry` warns when a new slug is nearly one already in use (`subagent` next to `subagents`, `mcp_servers` next to `mcp-servers`) and prints the `db.py rename` that joins them; the entry is still saved.
+- `db.py check` lists digest ideas whose slugs are nearly the same under "Maybe the same idea", with the `db.py rename ... --digest` that merges the one with fewer reels into the other. It is only a hint: slugs that differ in their numbers (`step-1`, `step-2`) are skipped and `--strict` does not fail on it.
 - `db.py check --fix` runs the `db.py rename` that check is sure about (exactly one slug lost its idea and exactly one idea has no reels) and moves the mark with it; in any other case it only reports, since choosing the target needs judgement.
 - `db.py ideas --collection NAME` lists only the ideas with reels from that Instagram collection or YouTube playlist, counting only those reels.
 - `db.py ideas SLUG ...` lists the reels behind an idea (save date, code, author, link), newest first, with its mark and note; a mistyped slug gets a "Did you mean" hint.

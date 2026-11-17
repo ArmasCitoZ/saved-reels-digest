@@ -182,7 +182,8 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    `PY SCRIPTS/db.py ideas` to see the slugs already in use (add `--collection NAME` when the
    user asked for one collection or playlist), and reuse the existing one when a reel belongs
    to that idea instead of inventing a near-copy (`sub-agents` next to `subagents` splits one
-   idea in two). Unsure whether a reel fits an idea? `PY SCRIPTS/db.py ideas <slug>` lists the
+   idea in two). If `set entry` warns that a new slug is nearly one already in use, it is
+   almost always the same idea: run the `db.py rename` it prints. Unsure whether a reel fits an idea? `PY SCRIPTS/db.py ideas <slug>` lists the
    reels already in it (date, code, author, link); `db.py show CODE` has their full text.
 5. Run `PY SCRIPTS/db.py recent --days 7` and rebuild "Saved this week" from it
    (it shows each recent reel and the entry it went into).
@@ -192,7 +193,9 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    To rename an entry's slug, or to fold one entry into another, never retype its codes:
    `PY SCRIPTS/db.py rename <old-slug> <new-slug> --digest` moves its reels and its mark
    and rewrites `{#old-slug}` and every `(#old-slug)` link in `digest.md`. When it says two
-   entries now share the slug, merge their text into one `###` entry.
+   entries now share the slug, merge their text into one `###` entry. Add `--dry-run` first
+   when folding entries together to see how many reels and links would move, without changing
+   anything.
 7. Respect what the user already did: run `PY SCRIPTS/db.py marks`. For each marked
    entry, make the first line under its `###` heading `**Status:** ✅ Tried: <note>` or
    `**Status:** 🚫 Discarded: <note>` (keep the heading itself unchanged), and leave both
@@ -205,7 +208,10 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    has the old slug; check that its guess is right — when it is, `db.py check --fix` runs
    that rename for you; it never guesses when more than one idea could be the target), repeated `{#slug}`s, `(#slug)` links
    that go nowhere and relevant reels not merged yet. Fix each one and run it again until it
-   says they agree; otherwise the next run merges new reels into the wrong ideas.
+   says they agree; otherwise the next run merges new reels into the wrong ideas. Under
+   "Maybe the same idea" it also lists entries with nearly the same slug (`subagent` and
+   `subagents`): read both, and only if they really are one idea run the rename it suggests
+   and join their text.
 
 When the user says they tried an idea or it is not for them ("ya probé lo de los
 subagentes", "eso no me sirve"), record it right away:
