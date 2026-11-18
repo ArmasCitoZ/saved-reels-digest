@@ -123,3 +123,35 @@ def test_ideas_sort_combines_with_status(tmp_path):
     run(tmp_path, "mark", "tried", "gamma")
     assert [r[0] for r in rows(run(tmp_path, "ideas", "--status", "todo", "--sort", "recent"))] \
         == ["zeta", "beta"]
+
+
+DAY = 86400
+NOW = 1762000000
+
+
+def test_ideas_older_than_lists_ideas_with_no_recent_reel(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=NOW - 100 * DAY),
+            reel("BBBBB2", entry="hooks", saved_at=NOW - 2 * DAY),  # a new reel keeps it fresh
+            reel("CCCCC3", entry="subagents", saved_at=NOW - 45 * DAY),
+            reel("DDDDD4", entry="mcp", saved_at=NOW - 90 * DAY),
+            reel("EEEEE5", entry="alfa", added_at=None))  # no known date: not listed
+    run(tmp_path, "mark", "tried", "mcp")
+    out = run(tmp_path, "ideas", "--older-than", "30", "--now", str(NOW), "--sort", "recent")
+    assert out.startswith("2 ideas with no reel saved in the last 30 days")
+    assert [r[0] for r in rows(out)] == ["subagents", "mcp"]
+    out = run(tmp_path, "ideas", "--older-than", "30", "--status", "todo", "--now", str(NOW))
+    assert out.startswith("1 todo ideas with no reel saved in the last 30 days")
+    assert [r[0] for r in rows(out)] == ["subagents"]
+
+
+def test_ideas_older_than_with_no_match(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=NOW - DAY))
+    out = run(tmp_path, "ideas", "--older-than", "30", "--now", str(NOW))
+    assert "None of the 1 ideas has gone 30 days without a new reel." in out
+    out = run(tmp_path, "ideas", "--older-than", "30", "--status", "tried", "--now", str(NOW))
+    assert "None of the 1 ideas is tried and has gone 30 days without a new reel." in out
+
+
+def test_ideas_older_than_needs_the_list(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"))
+    assert "leave out the slugs" in run_failing(tmp_path, "ideas", "hooks", "--older-than", "30")

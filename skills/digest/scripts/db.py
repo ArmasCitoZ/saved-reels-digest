@@ -16,8 +16,10 @@
                                             remember what the user did with a digest idea
   db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind)
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
-                                            every idea (slug) reels point to: how many reels,
-                                            the newest saved and its mark, to reuse slugs
+            [--older-than DAYS]                every idea (slug) reels point to: how many reels,
+                                            the newest saved and its mark, to reuse slugs;
+                                            --older-than DAYS: only ideas with no reel saved
+                                            lately (with --status todo: forgotten ideas)
   db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link
   db.py rename OLD NEW [--digest [PATH]]    move every reel of an idea (and its mark) to another
             [--dry-run]                        slug, after renaming it or merging it into NEW;
@@ -551,22 +553,36 @@ def cmd_ideas(a):
         return marks.get(slug, {}).get("status", "todo")
 
     if a.slugs:
+        if a.older_than is not None:
+            sys.exit("--older-than filters the list of ideas; leave out the slugs to use it.")
         _show_ideas(a.slugs, ideas, marks, a.collection)
         return
 
     def newest(rs):
         return max((saved_ts(r) or 0 for r in rs), default=0)
 
+    def old_enough(rs):
+        # an idea with no known save date cannot be said to be old, so it is left out
+        if a.older_than is None:
+            return True
+        n = newest(rs)
+        return bool(n) and n < (a.now or time.time()) - a.older_than * 86400
+
     order = {"reels": lambda kv: (-len(kv[1]), kv[0]),
              "recent": lambda kv: (-newest(kv[1]), kv[0]),  # unknown dates (0) go last
              "name": lambda kv: kv[0]}[a.sort]
-    rows = sorted(((slug, rs) for slug, rs in ideas.items() if not a.status or status(slug) == a.status),
+    rows = sorted(((slug, rs) for slug, rs in ideas.items()
+                   if (not a.status or status(slug) == a.status) and old_enough(rs)),
                   key=order)
+    old = f" with no reel saved in the last {a.older_than} days" if a.older_than is not None else ""
     if not rows:
-        print(f"None of the {len(ideas)} ideas is {a.status}.")
+        what = [f"is {a.status}"] if a.status else []
+        if a.older_than is not None:
+            what.append(f"has gone {a.older_than} days without a new reel")
+        print(f"None of the {len(ideas)} ideas {' and '.join(what)}.")
         return
     where = f" with reels from {a.collection!r}" if a.collection else ""
-    print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas{where} (reels, newest saved, mark):")
+    print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas{where}{old} (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
     for slug, rs in rows:
         print(f"  {slug:{width}}  {len(rs):3}  {_day(newest(rs) or None)}  {status(slug)}")
@@ -859,6 +875,9 @@ def main() -> None:
     p.add_argument("--status", choices=MARKS, help="only ideas with this mark (todo = not marked)")
     p.add_argument("--sort", choices=("reels", "recent", "name"), default="reels",
                    help="most reels first (default), newest saved reel first, or by slug")
+    p.add_argument("--older-than", type=int, metavar="DAYS",
+                   help="only ideas whose newest reel was saved more than DAYS days ago")
+    p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests
     p.set_defaults(fn=cmd_ideas)
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")
     p.add_argument("--digest", nargs="?", const=str(HOME / "digest.md"),

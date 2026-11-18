@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py ideas --older-than DAYS` lists only the ideas whose newest reel was saved more than DAYS days ago (ideas with no known date are left out). With `--status todo` it shows the pending ideas nothing new has been saved for, to try or discard them; it combines with `--sort` and `--collection`.
 - `db.py ideas --sort recent` lists the ideas with the newest saved reel first (ideas without a known date last) and `--sort name` lists them by slug; most reels first (`--sort reels`) stays the default. It combines with `--status` and `--collection`.
 - `db.py check` reports reels that back an idea but are no longer marked relevant (triaged again after merging), which `dump` and `similar` skip, with both fixes: `db.py set relevant true CODES` or `db.py set entry none CODES`.
 - `db.py set relevant false` (or `maybe`, `none`) warns when one of those reels still backs an idea, names the idea and prints the `db.py set entry none` that takes it out; the triage is saved either way.
