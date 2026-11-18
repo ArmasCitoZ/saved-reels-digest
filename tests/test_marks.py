@@ -100,3 +100,20 @@ def test_marks_can_list_one_status(tmp_path):
     run(tmp_path, "mark", "todo", "mcp-servers")
     assert "No ideas marked as discarded yet." in run(tmp_path, "marks", "--status", "discarded")
     assert "invalid choice" in run_failing(tmp_path, "marks", "--status", "todo")
+
+
+def test_marking_again_without_note_keeps_it(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    run(tmp_path, "mark", "tried", "subagents", "--note", "worked for refactors")
+    run(tmp_path, "mark", "discarded", "subagents")
+    e = entries(tmp_path)["subagents"]
+    assert e["status"] == "discarded" and e["note"] == "worked for refactors"
+    run(tmp_path, "mark", "tried", "subagents", "--note", "back in use")
+    assert entries(tmp_path)["subagents"]["note"] == "back in use"
+
+
+def test_empty_note_clears_it(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    run(tmp_path, "mark", "tried", "subagents", "--note", "worked for refactors")
+    run(tmp_path, "mark", "tried", "subagents", "--note", "")
+    assert "note" not in entries(tmp_path)["subagents"]

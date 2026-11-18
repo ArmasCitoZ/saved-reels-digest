@@ -8,6 +8,9 @@ export interface Change {
   status: Status;
   /** Only kept for tried / discarded, like db.py mark --note. */
   note: string;
+  /** The idea had a note and this change removes it: db.py mark keeps a note given no --note,
+   *  so the command clears the mark first (mark todo) and then sets it without one. */
+  clearNote?: boolean;
 }
 
 /** Changes that actually differ from what the idea already shows. */
@@ -17,7 +20,9 @@ export function pending(ideas: ViewIdea[], changes: Map<string, Change>): Map<st
     const c = changes.get(idea.slug);
     if (!c) continue;
     const note = c.status === "todo" ? "" : c.note.trim();
-    if (c.status !== idea.status || note !== (idea.note ?? "")) out.set(idea.slug, { status: c.status, note });
+    if (c.status === idea.status && note === (idea.note ?? "")) continue;
+    const clearNote = c.status !== "todo" && !note && !!idea.note;
+    out.set(idea.slug, clearNote ? { status: c.status, note, clearNote } : { status: c.status, note });
   }
   return out;
 }
@@ -31,15 +36,19 @@ export function quoteNote(note: string): string {
 
 /** One `db.py mark` command per status and note, slugs in digest order. */
 export function markCommands(changes: Map<string, Change>, prefix = "$PY db.py"): string[] {
-  const groups = new Map<string, { status: Status; note: string; slugs: string[] }>();
+  const groups = new Map<string, { status: Status; note: string; clearNote: boolean; slugs: string[] }>();
   for (const [slug, c] of changes) {
-    const key = `${c.status}\u0000${c.note}`;
-    const g = groups.get(key) ?? { status: c.status, note: c.note, slugs: [] };
+    const clearNote = !!c.clearNote;
+    const key = `${c.status}\u0000${c.note}\u0000${clearNote}`;
+    const g = groups.get(key) ?? { status: c.status, note: c.note, clearNote, slugs: [] };
     g.slugs.push(slug);
     groups.set(key, g);
   }
-  return [...groups.values()].map((g) =>
-    `${prefix} mark ${g.status} ${g.slugs.join(" ")}` + (g.note && g.status !== "todo" ? ` --note ${quoteNote(g.note)}` : ""));
+  return [...groups.values()].flatMap((g) => [
+    // not `--note ""`: Windows PowerShell 5.1 drops empty arguments to programs
+    ...(g.clearNote ? [`${prefix} mark todo ${g.slugs.join(" ")}`] : []),
+    `${prefix} mark ${g.status} ${g.slugs.join(" ")}` + (g.note && g.status !== "todo" ? ` --note ${quoteNote(g.note)}` : ""),
+  ]);
 }
 
 /** The ideas with the viewer's changes applied, so filters and badges show them right away. */

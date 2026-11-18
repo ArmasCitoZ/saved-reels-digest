@@ -512,8 +512,10 @@ def cmd_mark(a):
             entries.pop(slug, None)
             continue
         e = {"status": a.status, "updated": int(time.time())}
-        if a.note:
-            e["note"] = a.note
+        # without --note the old note stays (marking again must not lose it); --note "" clears it
+        note = (entries.get(slug) or {}).get("note") if a.note is None else a.note
+        if note:
+            e["note"] = note
         entries[slug] = e
     save_db(db)
     print(f"Marked {len(slugs)} entries as {a.status}."
@@ -846,7 +848,8 @@ def main() -> None:
     p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests
     p.set_defaults(fn=cmd_recent)
     p = sub.add_parser("mark"); p.add_argument("status", choices=MARKS)
-    p.add_argument("slugs", nargs="+"); p.add_argument("--note", help="why, in a few words")
+    p.add_argument("slugs", nargs="+")
+    p.add_argument("--note", help="why, in a few words; kept when marking again without it, \"\" clears it")
     p.set_defaults(fn=cmd_mark)
     p = sub.add_parser("marks")
     p.add_argument("--status", choices=("tried", "discarded"), help="list only this kind of mark")

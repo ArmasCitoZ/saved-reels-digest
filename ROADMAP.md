@@ -71,7 +71,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py check`: señalar reels que apuntan a una idea pero no están marcados como relevantes (se reclasificaron después de fusionar), porque `dump` y `similar` ya no los ven aunque sigan respaldando la idea; decir el `db.py set` que lo arregla
 - [x] `db.py set relevant false|maybe|none`: avisar cuando alguno de esos reels respalda una idea del digest y decir cómo sacarlo de ella (`db.py set entry none CODE`)
 - [x] Skill, README y CHANGELOG: documentar `ideas --sort` y los avisos de reels reclasificados
-- [ ] `db.py mark`: conservar la nota de una idea al marcarla otra vez sin `--note` (hoy `mark discarded X` después de `mark tried X --note "..."` borra la nota sin avisar); `--note ""` la quita a propósito
+- [x] `db.py mark`: conservar la nota de una idea al marcarla otra vez sin `--note` (hoy `mark discarded X` después de `mark tried X --note "..."` borra la nota sin avisar); `--note ""` la quita a propósito
 - [ ] `db.py ideas --older-than DÍAS`: listar solo las ideas cuyo último reel se guardó hace más de DÍAS días; con `--status todo` salen las ideas pendientes olvidadas, para repasarlas y probarlas o descartarlas
 - [ ] Skill y README: documentar la nota que se conserva en `db.py mark` e `ideas --older-than` (y usarlo en el repaso semanal de la skill)
 

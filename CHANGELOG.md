@@ -46,6 +46,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `setup_env.py` leaves a complete environment alone instead of running pip every time, so repeating the setup is instant and works offline; `--upgrade` updates the packages.
 
 ### Fixed
+- `db.py mark` keeps an idea's note when it is marked again without `--note`; before, `db.py mark discarded SLUG` after `db.py mark tried SLUG --note "..."` dropped the note silently. `--note ""` clears it. The viewer's commands clear a note removed there with `db.py mark todo` first.
 - `db.py next`, `dump`, `similar` and `recent` stop with an error on a `--collection` no reel is in, like `status` and `unavailable`; before, a typo looked like an empty collection ("Nothing left to triage"). All six suggest the closest name (`--collection "Ideas IA"` → "Ideas de IA").
 - `db.py set entry` refuses slugs with spaces, `#`, parentheses and other characters a `{#slug}` heading or `(#slug)` link cannot hold, and suggests a valid one (`"Claude Code"` → `claude-code`); before, the reels were saved under a slug no digest idea could ever match.
 - `export_digest.py --json` takes each idea's status from the marks `db.py mark` saved in `reels.json`, like the viewer, and adds their `note`; before, an idea marked as tried still went to Notion as pending unless the digest text had been edited too. A missing or damaged `reels.json` falls back to the digest's Status lines.

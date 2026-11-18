@@ -61,6 +61,11 @@ describe("markCommands", () => {
       "$PY db.py mark tried a c", '$PY db.py mark discarded b d --note "no"', "$PY db.py mark todo e"]);
   });
 
+  it("clears an old note with mark todo first, since db.py mark keeps it otherwise", () => {
+    const p = pending(ideas, changes([["two", { status: "tried", note: "" }], ["three", { status: "tried", note: "" }]]));
+    expect(markCommands(p)).toEqual(["$PY db.py mark todo two", "$PY db.py mark tried two", "$PY db.py mark tried three"]);
+  });
+
   it("quotes notes so no shell expands or ends them", () => {
     expect(quoteNote('dijo "wow" $(rm -rf ~) `x` C:\\temp !!\n ok')).toBe(
       "\"dijo 'wow' (rm -rf ~) x C:temp .. ok\"");
@@ -95,5 +100,20 @@ describe.skipIf(!python || !bash)("commands run in db.py", () => {
     expect(entries.one).toMatchObject({ status: "discarded", note: "not 'for' me HOME" });
     expect(entries.two).toBeUndefined();
     expect(entries.three).toMatchObject({ status: "tried", note: "¡útil." });
+  });
+
+  it("removes a note the viewer cleared", () => {
+    const home = mkdtempSync(join(tmpdir(), "srd-marks-"));
+    writeFileSync(join(home, "reels.json"), JSON.stringify(DB), "utf-8");
+    for (const cmd of markCommands(pending(ideas, changes([["two", { status: "tried", note: " " }]])))) {
+      const r = spawnSync("bash", ["-c", cmd], {
+        encoding: "utf-8", cwd: `${root}skills/digest/scripts`,
+        env: { ...process.env, SRD_HOME: home, PY: python!, PYTHONIOENCODING: "utf-8" },
+      });
+      expect(r.status, r.stderr).toBe(0);
+    }
+    const entries = JSON.parse(readFileSync(join(home, "reels.json"), "utf-8")).entries;
+    expect(entries.two.status).toBe("tried");
+    expect(entries.two.note).toBeUndefined();
   });
 });
