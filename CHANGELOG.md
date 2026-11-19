@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py marks` says how many reels were saved about each idea after it was last marked (`+2 new`), and names the discarded ideas that keep getting reels, with the `db.py ideas` that lists them; maybe they deserve another look. Reels with no known save date are never counted as new.
 - `db.py ideas --older-than DAYS` lists only the ideas whose newest reel was saved more than DAYS days ago (ideas with no known date are left out). With `--status todo` it shows the pending ideas nothing new has been saved for, to try or discard them; it combines with `--sort` and `--collection`.
 - `db.py ideas --sort recent` lists the ideas with the newest saved reel first (ideas without a known date last) and `--sort name` lists them by slug; most reels first (`--sort reels`) stays the default. It combines with `--status` and `--collection`.
 - `db.py check` reports reels that back an idea but are no longer marked relevant (triaged again after merging), which `dump` and `similar` skip, with both fixes: `db.py set relevant true CODES` or `db.py set entry none CODES`.

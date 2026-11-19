@@ -14,7 +14,8 @@
   db.py recent [--days 7]                   relevant reels saved lately and their digest entry
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
-  db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind)
+  db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind),
+                                            with how many reels were saved about it since
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS]                every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark, to reuse slugs;
@@ -526,16 +527,39 @@ def cmd_mark(a):
 
 
 def cmd_marks(a):
-    entries = load_db().get("entries") or {}
+    db = load_db()
+    entries = db.get("entries") or {}
     if a.status:
         entries = {k: e for k, e in entries.items() if e.get("status") == a.status}
     if not entries:
         print(f"No ideas marked as {a.status} yet." if a.status
               else "No ideas marked as tried or discarded yet.")
         return
+    newer = _saved_since_mark(db["reels"].values(), entries)
     for slug, e in sorted(entries.items(), key=lambda kv: (kv[1].get("status", ""), kv[0])):
+        n = newer.get(slug, 0)
         print(f"  {e.get('status', '?'):10} {slug:32} {_day(e.get('updated'))}"
+              + (f"  +{n} new" if n else "")
               + (f"  {e['note']}" if e.get("note") else ""))
+    back = sorted(s for s, e in entries.items() if newer.get(s) and e.get("status") == "discarded")
+    if back:
+        print(f"Discarded but still saving reels about: {', '.join(back)}. Maybe worth another look:"
+              f" db.py ideas {' '.join(back)}")
+    elif newer:
+        print("+N new: reels saved about that idea after it was marked (db.py ideas SLUG lists them).")
+
+
+def _saved_since_mark(reels, entries: dict) -> dict:
+    """{slug: how many of its reels were saved after the idea was last marked}.
+
+    A reel with no known save date, or a mark with no date, is never counted as new."""
+    out = Counter()
+    for r in reels:
+        e = entries.get(r.get("entry"))
+        ts = saved_ts(r)
+        if e and ts and isinstance(e.get("updated"), (int, float)) and ts > e["updated"]:
+            out[r["entry"]] += 1
+    return dict(out)
 
 
 def cmd_ideas(a):

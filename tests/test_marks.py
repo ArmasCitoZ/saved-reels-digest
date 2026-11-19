@@ -117,3 +117,40 @@ def test_empty_note_clears_it(tmp_path):
     run(tmp_path, "mark", "tried", "subagents", "--note", "worked for refactors")
     run(tmp_path, "mark", "tried", "subagents", "--note", "")
     assert "note" not in entries(tmp_path)["subagents"]
+
+
+def _with_marks(home, marks):
+    db = json.loads((home / "reels.json").read_text(encoding="utf-8"))
+    db["entries"] = marks
+    (home / "reels.json").write_text(json.dumps(db), encoding="utf-8")
+
+
+def test_marks_count_reels_saved_after_the_mark(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path,
+            reel("AAAAA1", relevant=True, entry="subagents", saved_at=marked - 86400),
+            reel("BBBBB2", relevant=True, entry="subagents", saved_at=marked + 86400),
+            reel("CCCCC3", relevant=True, entry="subagents", saved_at=marked + 2 * 86400),
+            reel("DDDDD4", relevant=True, entry="hooks", saved_at=marked - 86400),
+            reel("EEEEE5", relevant=True, entry="mcp-servers", saved_at=marked + 86400),
+            reel("FFFFF6", relevant=True, entry="mcp-servers", added_at=None))  # no date: not new
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": marked},
+                           "hooks": {"status": "discarded", "updated": marked},
+                           "mcp-servers": {"status": "discarded", "updated": marked, "note": "setup"}})
+    out = run(tmp_path, "marks")
+    lines = {line.split()[1]: line for line in out.splitlines() if line.startswith("  ")}
+    assert "+2 new" in lines["subagents"]
+    assert "+1 new" in lines["mcp-servers"] and "setup" in lines["mcp-servers"]
+    assert "new" not in lines["hooks"]
+    assert "Discarded but still saving reels about: mcp-servers" in out
+    assert "db.py ideas mcp-servers" in out
+
+
+def test_marking_again_resets_the_count(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents", saved_at=1762000000))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": 1761000000}})
+    assert "+1 new" in run(tmp_path, "marks")
+    assert "+N new: reels saved" in run(tmp_path, "marks")  # explained when no discarded idea is involved
+    run(tmp_path, "mark", "tried", "subagents")  # now: the reel was saved before this mark
+    out = run(tmp_path, "marks")
+    assert "new" not in out
