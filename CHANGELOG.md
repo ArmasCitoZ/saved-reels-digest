@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Obsidian notes have a `reels` property (how many reels back the idea) and `last_saved` (the date the newest one was saved), read from `reels.json`, so Bases or Dataview can sort and filter ideas the way `db.py ideas --sort` does. Ideas no reel points to get neither; a missing or damaged `reels.json` just leaves them out.
 - `db.py marks` says how many reels were saved about each idea after it was last marked (`+2 new`), and names the discarded ideas that keep getting reels, with the `db.py ideas` that lists them; maybe they deserve another look. Reels with no known save date are never counted as new.
 - `db.py ideas --older-than DAYS` lists only the ideas whose newest reel was saved more than DAYS days ago (ideas with no known date are left out). With `--status todo` it shows the pending ideas nothing new has been saved for, to try or discard them; it combines with `--sort` and `--collection`.
 - `db.py ideas --sort recent` lists the ideas with the newest saved reel first (ideas without a known date last) and `--sort name` lists them by slug; most reels first (`--sort reels`) stays the default. It combines with `--status` and `--collection`.

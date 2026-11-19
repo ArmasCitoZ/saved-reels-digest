@@ -9,8 +9,8 @@ VAULT/FOLDER:
   INDEX.md          map of content: "Do these first" and every idea by category,
                     with ✅ / 🚫 next to the ideas marked tried / discarded
   <Idea title>.md   one note per idea, with frontmatter (title, date, tags,
-                    aliases, status, sources) and links to the other ideas of its
-                    category
+                    aliases, status, reels, last_saved, sources) and links to the
+                    other ideas of its category
 
 Links are relative markdown links, so the notes also render on GitHub and in
 VS Code. Safe to re-run: notes are rewritten from the digest, but anything you
@@ -28,6 +28,8 @@ through its connector, without re-parsing the markdown by hand.
 
 An idea's status comes from the marks `db.py mark` saved in reels.json when
 there is one (like the viewer does), else from the digest's own Status line.
+`reels` (how many reels back the idea) and `last_saved` (when the newest was saved)
+also come from reels.json, so Bases or Dataview can sort ideas like `db.py ideas --sort`.
 """
 from __future__ import annotations
 
@@ -36,7 +38,7 @@ import json
 import re
 import sys
 from collections import Counter
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
@@ -193,7 +195,7 @@ def rewrite_anchors(text: str, by_slug: dict) -> str:
 
 
 def render_note(idea: dict, ideas: list, by_slug: dict, day: str, index_name: str,
-                marks: dict | None = None) -> str:
+                marks: dict | None = None, stats: dict | None = None) -> str:
     sources = list(dict.fromkeys(URL_RE.findall(idea["body"])))
     tags = ["saved-reels", slugify(idea["category"])]
     status, note = resolve_status(idea, marks)
@@ -203,6 +205,12 @@ def render_note(idea: dict, ideas: list, by_slug: dict, day: str, index_name: st
           f"category: {_yaml_str(idea['category'])}", f"status: {status}"]
     if note:
         fm.append(f"note: {_yaml_str(note)}")
+    # numbers and dates (not strings), so Bases and Dataview can sort and compare them
+    st = (stats or {}).get(idea["slug"])
+    if st:
+        fm.append(f"reels: {st['reels']}")
+        if st["last_saved"]:
+            fm.append(f"last_saved: {st['last_saved']}")
     fm.append(f"generator: {MARKER}")
     if sources:
         fm.append("sources:")
@@ -259,7 +267,7 @@ def _has_my_notes(path: Path) -> bool:
 
 
 def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dict | None = None,
-           prune: bool = False) -> dict:
+           prune: bool = False, stats: dict | None = None) -> dict:
     digest = parse_digest(digest_text)
     if not digest["ideas"]:
         raise ValueError("no ideas found: expected '### Idea title {#slug}' entries under '## Category'")
@@ -270,7 +278,7 @@ def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dic
     report = {"written": [], "skipped": [], "stale": [], "pruned": []}
     files = {"INDEX.md": render_index(digest, by_slug, day, marks)}
     for i in digest["ideas"]:
-        files[i["file"]] = render_note(i, digest["ideas"], by_slug, day, "INDEX.md", marks)
+        files[i["file"]] = render_note(i, digest["ideas"], by_slug, day, "INDEX.md", marks, stats)
     for name, content in files.items():
         path = out_dir / name
         if path.exists():
@@ -312,6 +320,34 @@ def load_marks(path: Path = DB_PATH) -> dict:
             note = e.get("note")
             marks[slug] = {"status": e["status"], "note": note if isinstance(note, str) and note else None}
     return marks
+
+
+def load_reel_stats(path: Path = DB_PATH) -> dict:
+    """{slug: {"reels": n, "last_saved": "YYYY-MM-DD" or None}} from the reels in reels.json.
+
+    Like load_marks it never fails: no file or a damaged one just means no stats
+    (load_marks already warns about a damaged file).
+    """
+    try:
+        reels = json.loads(path.read_text("utf-8-sig")).get("reels") or {}
+    except (OSError, ValueError, AttributeError):
+        return {}
+    stats = {}
+    for r in reels.values() if isinstance(reels, dict) else ():
+        slug = r.get("entry") if isinstance(r, dict) else None
+        if not isinstance(slug, str) or not slug:
+            continue
+        st = stats.setdefault(slug, {"reels": 0, "newest": 0})
+        st["reels"] += 1
+        try:
+            ts = int(r.get("saved_at") or r.get("added_at") or 0)
+        except (TypeError, ValueError):
+            ts = 0
+        st["newest"] = max(st["newest"], ts)
+    return {slug: {"reels": st["reels"],
+                   "last_saved": (datetime.fromtimestamp(st["newest"], timezone.utc).date().isoformat()
+                                  if st["newest"] > 0 else None)}
+            for slug, st in stats.items()}
 
 
 def resolve_status(idea: dict, marks: dict | None) -> tuple[str, str | None]:
@@ -361,7 +397,8 @@ def main(argv=None) -> int:
         return 0
     out_dir = Path(args.vault).expanduser() / args.folder
     try:
-        report = export(src.read_text("utf-8"), out_dir, marks=load_marks(), prune=args.prune)
+        report = export(src.read_text("utf-8"), out_dir, marks=load_marks(), prune=args.prune,
+                        stats=load_reel_stats())
     except ValueError as e:
         sys.exit(f"Could not export {src}: {e}")
     print(f"Wrote {len(report['written'])} notes to {out_dir} (open INDEX.md).")

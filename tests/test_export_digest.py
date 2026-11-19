@@ -393,3 +393,49 @@ def test_cli_prune_says_what_it_deleted_and_kept(tmp_path):
     assert r.returncode == 0, r.stderr
     assert "Deleted, no longer in the digest: Give examples, not adjectives.md" in r.stdout
     assert not (vault / "Saved reels" / "Give examples, not adjectives.md").exists()
+
+
+def test_notes_have_reels_and_last_saved_properties(tmp_path):
+    import json
+
+    reels = {"A1": {"entry": "plan-mode", "saved_at": 1761955200},  # 2025-11-01
+             "A2": {"entry": "plan-mode", "saved_at": 1762300800},  # 2025-11-05
+             "B1": {"entry": "claude-md", "added_at": None},       # no known date
+             "C1": {"entry": None, "saved_at": 1762300800}}
+    (tmp_path / "reels.json").write_text(json.dumps({"reels": reels}), encoding="utf-8")
+    stats = ed.load_reel_stats(tmp_path / "reels.json")
+    assert stats == {"plan-mode": {"reels": 2, "last_saved": "2025-11-05"},
+                     "claude-md": {"reels": 1, "last_saved": None}}
+    vault = tmp_path / "vault"
+    ed.export(DIGEST, vault, stats=stats)
+    plan = _frontmatter((vault / "Plan mode before big changes.md").read_text(encoding="utf-8"))
+    assert "\nreels: 2\n" in plan and "\nlast_saved: 2025-11-05\n" in plan  # a YAML date, unquoted
+    claude = _frontmatter((vault / "Keep a CLAUDE.md project memory.md").read_text(encoding="utf-8"))
+    assert "\nreels: 1\n" in claude and "last_saved" not in claude
+    examples = _frontmatter((vault / "Give examples, not adjectives.md").read_text(encoding="utf-8"))
+    assert "reels:" not in examples and "last_saved" not in examples  # no reel points to it
+
+
+def test_missing_or_damaged_database_means_no_stats(tmp_path):
+    assert ed.load_reel_stats(tmp_path / "reels.json") == {}
+    (tmp_path / "reels.json").write_text("{not json", encoding="utf-8")
+    assert ed.load_reel_stats(tmp_path / "reels.json") == {}
+    (tmp_path / "reels.json").write_text('{"reels": {"X": "oops", "Y": {"entry": "a", "saved_at": "bad"}}}',
+                                         encoding="utf-8")
+    assert ed.load_reel_stats(tmp_path / "reels.json") == {"a": {"reels": 1, "last_saved": None}}
+
+
+def test_cli_vault_writes_the_reel_properties(tmp_path):
+    import json
+
+    db = {"reels": {"A1": {"entry": "claude-md", "saved_at": 1762300800}}}
+    (tmp_path / "reels.json").write_text(json.dumps(db), encoding="utf-8")
+    src = tmp_path / "digest.md"
+    src.write_text(DIGEST, encoding="utf-8")
+    vault = tmp_path / "vault"
+    r = subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py"), "--vault", str(vault),
+                        "--digest", str(src)], env={**os.environ, "SRD_HOME": str(tmp_path)},
+                       capture_output=True, text=True, encoding="utf-8", check=False)
+    assert r.returncode == 0, r.stderr
+    note = (vault / "Saved reels" / "Keep a CLAUDE.md project memory.md").read_text(encoding="utf-8")
+    assert "\nreels: 1\n" in note and "\nlast_saved: 2025-11-05\n" in note

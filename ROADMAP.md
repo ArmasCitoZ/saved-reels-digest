@@ -75,7 +75,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py ideas --older-than DÍAS`: listar solo las ideas cuyo último reel se guardó hace más de DÍAS días; con `--status todo` salen las ideas pendientes olvidadas, para repasarlas y probarlas o descartarlas
 - [x] Skill y README: documentar la nota que se conserva en `db.py mark` e `ideas --older-than` (y usarlo en el repaso semanal de la skill)
 - [x] `db.py marks`: decir cuántos reels se guardaron sobre cada idea después de marcarla (una idea descartada que sigue recibiendo reels quizá merece otra oportunidad; una probada con reels nuevos puede tener trucos nuevos)
-- [ ] Obsidian: propiedades `reels` (cuántos reels respaldan la idea) y `last_saved` (fecha del último) en cada nota, leídas de `reels.json`, para ordenar y filtrar con Bases o Dataview como hace `db.py ideas --sort`
+- [x] Obsidian: propiedades `reels` (cuántos reels respaldan la idea) y `last_saved` (fecha del último) en cada nota, leídas de `reels.json`, para ordenar y filtrar con Bases o Dataview como hace `db.py ideas --sort`
 - [ ] Skill, README y CHANGELOG: documentar los reels nuevos tras una marca y las propiedades `reels` / `last_saved` de Obsidian
 
 ## Robustez
