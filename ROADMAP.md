@@ -73,7 +73,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Skill, README y CHANGELOG: documentar `ideas --sort` y los avisos de reels reclasificados
 - [x] `db.py mark`: conservar la nota de una idea al marcarla otra vez sin `--note` (hoy `mark discarded X` después de `mark tried X --note "..."` borra la nota sin avisar); `--note ""` la quita a propósito
 - [x] `db.py ideas --older-than DÍAS`: listar solo las ideas cuyo último reel se guardó hace más de DÍAS días; con `--status todo` salen las ideas pendientes olvidadas, para repasarlas y probarlas o descartarlas
-- [ ] Skill y README: documentar la nota que se conserva en `db.py mark` e `ideas --older-than` (y usarlo en el repaso semanal de la skill)
+- [x] Skill y README: documentar la nota que se conserva en `db.py mark` e `ideas --older-than` (y usarlo en el repaso semanal de la skill)
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

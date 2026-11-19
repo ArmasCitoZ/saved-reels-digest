@@ -221,6 +221,8 @@ subagentes", "eso no me sirve"), record it right away:
 `PY SCRIPTS/db.py mark tried <slug> --note "worked for refactors"` (or `discarded`;
 `todo` clears the mark) and update the entry in `digest.md`. Only slugs some reel points to
 can be marked; if it says nothing was marked, pick the right slug from the list it prints.
+Marking an idea again keeps its note unless you pass `--note` (so `mark discarded <slug>`
+after a `mark tried ... --note` keeps the reason); `--note ""` clears it on purpose.
 
 ## Optional: export to Obsidian
 
@@ -260,6 +262,11 @@ export or the plain `digest.md` instead.
 Tell the user in 2–3 lines: how many saves were read, how many were on topic, how
 many unique ideas remained after merging, the path to `digest.md`, and the top 3
 items. Offer one next step (e.g. "want me to apply #1 to this project?").
+
+Weekly review: run `PY SCRIPTS/db.py ideas --status todo --older-than 30 --sort recent`.
+It lists the pending ideas no new reel has come in for in a month, which tend to be
+forgotten. If it lists any, name up to three of them in the summary and ask whether the
+user tried them or wants to drop them; record the answer with `db.py mark`.
 
 ## Troubleshooting
 
