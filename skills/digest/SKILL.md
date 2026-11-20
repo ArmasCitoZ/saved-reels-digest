@@ -201,7 +201,11 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    entry, make the first line under its `###` heading `**Status:** ✅ Tried: <note>` or
    `**Status:** 🚫 Discarded: <note>` (keep the heading itself unchanged), and leave both
    kinds out of "Do these first". Never drop a discarded entry: new reels about it still merge
-   into it, so the user is not pitched the same idea again.
+   into it, so the user is not pitched the same idea again. `marks` also shows `+N new`
+   next to ideas that got reels saved after they were marked: for a tried idea, read those
+   reels for new tricks and add them to the entry; when it ends with "Discarded but still
+   saving reels about", tell the user in the summary which discarded ideas keep coming back
+   (they may deserve another look) and leave the mark as it is unless they say otherwise.
 8. Before telling the user it is done, run `PY SCRIPTS/db.py check`. It compares
    `digest.md` with the database and lists what does not match: ideas no reel points to
    (run `db.py set entry` for their sources), reels pointing to an idea that was renamed or
@@ -229,7 +233,8 @@ after a `mark tried ... --note` keeps the reason); `--note ""` clears it on purp
 If the user keeps notes in Obsidian (or asks for one note per idea), run
 `PY SCRIPTS/export_digest.py --vault <vault folder>` (`--folder` changes the subfolder,
 default `Saved reels`). It writes one note per `### idea` with frontmatter (including a
-`status` property that follows `db.py mark`), tags by category, the source reels and links between ideas of the same category, plus an
+`status` property that follows `db.py mark`, plus `reels` and `last_saved` with how many
+reels back the idea and when the newest was saved, read from `reels.json`), tags by category, the source reels and links between ideas of the same category, plus an
 `INDEX.md` map of content. Re-running updates the notes and keeps whatever the user wrote
 under `## My notes`; files it did not create are never overwritten.
 Notes of ideas that left the digest are only listed; if the user wants them gone, re-run
