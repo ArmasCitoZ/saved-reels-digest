@@ -250,14 +250,16 @@ export or the plain `digest.md` instead.
 
 1. `PY SCRIPTS/export_digest.py --json` prints the digest as JSON: `title`, `date`,
    `top`, `categories` and `ideas` (each with `title`, `slug`, `category`, `status`
-   = todo / tried / discarded, the `note` saved with `db.py mark` or null, `sources` and
-   the markdown `body`). The status already takes the marks in `reels.json` into account,
-   so use it instead of re-reading `digest.md`.
+   = todo / tried / discarded, the `note` saved with `db.py mark` or null, `reels` = how
+   many reels in `reels.json` back it, `last_saved` = the date of the newest one or null,
+   `sources` and the markdown `body`). The status already takes the marks in `reels.json`
+   into account, so use it instead of re-reading `digest.md`.
 2. Ask where it should go (a parent page; search for it by name). Create one page titled
    like the digest with "Do these first" as a numbered list and every idea grouped under
    its category, then one child page per idea with the `body` as content, and a first line
-   with category, status and the number of source reels. Link the top list to the child
-   pages.
+   with category, status, `reels` (not the count of `sources`: it also includes reels
+   saved after the entry was written) and `last_saved` when it is not null. Link the top
+   list to the child pages.
 3. On later exports, search the parent page for an existing page with the same idea title
    and update it instead of creating a duplicate. Never delete pages the user made.
 4. Finish with the link to the parent page and how many idea pages were created or updated.
@@ -272,6 +274,10 @@ Weekly review: run `PY SCRIPTS/db.py ideas --status todo --older-than 30 --sort 
 It lists the pending ideas no new reel has come in for in a month, which tend to be
 forgotten. If it lists any, name up to three of them in the summary and ask whether the
 user tried them or wants to drop them; record the answer with `db.py mark`.
+Then run `PY SCRIPTS/db.py marks --new`: it lists only the tried or discarded ideas that
+got reels after they were marked. Read the new reels of a tried idea for tricks worth
+adding to its entry, and mention the discarded ones that keep coming back (add
+`--status tried` or `--status discarded` to look at one kind).
 
 ## Troubleshooting
 

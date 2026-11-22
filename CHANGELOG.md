@@ -48,6 +48,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `db.py check` compares `digest.md` with the database: ideas no reel points to, reels pointing to ideas that were renamed or lost while merging, repeated slugs, `(#slug)` links that go nowhere, marks for ideas no longer in the digest and relevant reels still waiting.
 
 ### Changed
+- The Notion export shows how many reels back each idea (`reels`, which also counts reels saved after the entry was written) and when the newest was saved, and the skill's weekly review runs `db.py marks --new` to bring up tried ideas with new reels and discarded ones that keep coming back.
 - `setup_env.py` leaves a complete environment alone instead of running pip every time, so repeating the setup is instant and works offline; `--upgrade` updates the packages.
 
 ### Fixed
