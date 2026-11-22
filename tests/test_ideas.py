@@ -155,3 +155,43 @@ def test_ideas_older_than_with_no_match(tmp_path):
 def test_ideas_older_than_needs_the_list(tmp_path):
     make_db(tmp_path, reel("AAAAA1", entry="hooks"))
     assert "leave out the slugs" in run_failing(tmp_path, "ideas", "hooks", "--older-than", "30")
+
+
+def _mark_at(home, slug, status, when, note=None):
+    import json
+    db = json.loads((home / "reels.json").read_text(encoding="utf-8"))
+    mark = {"status": status, "updated": when}
+    if note:
+        mark["note"] = note
+    db.setdefault("entries", {})[slug] = mark
+    (home / "reels.json").write_text(json.dumps(db), encoding="utf-8")
+
+
+def test_ideas_since_mark_lists_only_reels_saved_after_the_mark(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=marked - 86400),
+            reel("BBBBB2", entry="hooks", saved_at=marked + 86400),
+            reel("CCCCC3", entry="hooks", saved_at=marked + 2 * 86400),
+            reel("DDDDD4", entry="hooks", added_at=None))  # no date: never new
+    _mark_at(tmp_path, "hooks", "discarded", marked, "too slow")
+    out = run(tmp_path, "ideas", "hooks", "--since-mark").splitlines()
+    assert out[0] == "hooks: 4 reels, discarded (too slow); 2 saved since it was marked on 2025-11-01"
+    assert [line.split()[1] for line in out[1:]] == ["CCCCC3", "BBBBB2"]
+    # the count matches the +N new of db.py marks
+    assert "+2 new" in run(tmp_path, "marks")
+
+
+def test_ideas_since_mark_with_nothing_new_or_no_mark(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=1761000000),
+            reel("BBBBB2", entry="subagents", saved_at=1761000000))
+    _mark_at(tmp_path, "hooks", "tried", 1762000000)
+    out = run(tmp_path, "ideas", "hooks", "subagents", "--since-mark").splitlines()
+    assert out[0].endswith("; 0 saved since it was marked on 2025-11-01")
+    assert out[1].startswith("subagents: 1 reels, todo; not marked")
+    assert "db.py ideas subagents lists them all" in out[1]
+    assert len(out) == 2
+
+
+def test_ideas_since_mark_needs_slugs(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"))
+    assert "db.py marks --new" in run_failing(tmp_path, "ideas", "--since-mark")

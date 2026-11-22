@@ -22,7 +22,9 @@
                                             the newest saved and its mark, to reuse slugs;
                                             --older-than DAYS: only ideas with no reel saved
                                             lately (with --status todo: forgotten ideas)
-  db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link
+  db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link;
+            [--since-mark]                     --since-mark: only those saved after the idea was
+                                            marked (the +N new of db.py marks)
   db.py rename OLD NEW [--digest [PATH]]    move every reel of an idea (and its mark) to another
             [--dry-run]                        slug, after renaming it or merging it into NEW;
                                             --digest also renames {#OLD} and (#OLD) in digest.md;
@@ -586,8 +588,11 @@ def cmd_ideas(a):
     if a.slugs:
         if a.older_than is not None:
             sys.exit("--older-than filters the list of ideas; leave out the slugs to use it.")
-        _show_ideas(a.slugs, ideas, marks, a.collection)
+        _show_ideas(a.slugs, ideas, marks, a.collection, a.since_mark)
         return
+    if a.since_mark:
+        sys.exit("--since-mark lists the new reels of the ideas you name: db.py ideas SLUG --since-mark."
+                 " To see which marked ideas have new reels: db.py marks --new")
 
     def newest(rs):
         return max((saved_ts(r) or 0 for r in rs), default=0)
@@ -619,8 +624,12 @@ def cmd_ideas(a):
         print(f"  {slug:{width}}  {len(rs):3}  {_day(newest(rs) or None)}  {status(slug)}")
 
 
-def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None) -> None:
-    """The reels behind each slug, newest saved first, to see where an idea comes from."""
+def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None,
+                since_mark: bool = False) -> None:
+    """The reels behind each slug, newest saved first, to see where an idea comes from.
+
+    since_mark: only the reels saved after the idea was marked, the ones db.py marks
+    counts as +N new (a reel with no known save date is never new)."""
     slugs = list(dict.fromkeys(slugs))
     unknown = [s for s in slugs if s not in ideas]
     if len(unknown) == len(slugs):
@@ -632,8 +641,16 @@ def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None) -> None
             continue
         rs = sorted(ideas[slug], key=lambda r: saved_ts(r) or 0, reverse=True)
         m = marks.get(slug, {})
-        print(f"{slug}: {len(rs)} reels, {m.get('status', 'todo')}"
-              + (f" ({m['note']})" if m.get("note") else ""))
+        head = (f"{slug}: {len(rs)} reels, {m.get('status', 'todo')}"
+                + (f" ({m['note']})" if m.get("note") else ""))
+        if since_mark:
+            when = m.get("updated")
+            if not m.get("status") or not isinstance(when, (int, float)):
+                print(f"{head}; not marked, so no reel counts as new (db.py ideas {slug} lists them all)")
+                continue
+            rs = [r for r in rs if (saved_ts(r) or 0) > when]
+            head += f"; {len(rs)} saved since it was marked on {_day(when)}"
+        print(head)
         for r in rs:
             print(f"  {_day(saved_ts(r))}  {r['shortcode']}  @{r.get('author') or '?'}  {r['url']}")
     if unknown:
@@ -910,6 +927,8 @@ def main() -> None:
                    help="most reels first (default), newest saved reel first, or by slug")
     p.add_argument("--older-than", type=int, metavar="DAYS",
                    help="only ideas whose newest reel was saved more than DAYS days ago")
+    p.add_argument("--since-mark", action="store_true",
+                   help="with slugs: only the reels saved after the idea was marked")
     p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests
     p.set_defaults(fn=cmd_ideas)
     p = sub.add_parser("rename"); p.add_argument("old"); p.add_argument("new")

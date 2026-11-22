@@ -80,7 +80,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `export_digest.py --json`: incluir `reels` y `last_saved` en cada idea, como ya tienen las notas de Obsidian, para que las páginas de Notion digan cuántos reels respaldan la idea y cuándo se guardó el último (hoy Claude solo cuenta los `sources`, que no incluyen los reels guardados después de escribir la entrada)
 - [x] `db.py marks --new`: listar solo las ideas marcadas que recibieron reels después de la marca, para repasar de un vistazo qué probadas tienen trucos nuevos y qué descartadas siguen apareciendo; combina con `--status`
 - [x] Skill, README y CHANGELOG: documentar `reels` / `last_saved` en el JSON (y usarlos en el paso de Notion) y `marks --new` (usarlo en el repaso semanal de la skill)
-- [ ] `db.py ideas SLUG --since-mark`: enseñar solo los reels de esa idea guardados después de marcarla, para leer justo los que `marks --new` cuenta como `+N new` (hoy salen todos mezclados y hay que comparar fechas a mano)
+- [x] `db.py ideas SLUG --since-mark`: enseñar solo los reels de esa idea guardados después de marcarla, para leer justo los que `marks --new` cuenta como `+N new` (hoy salen todos mezclados y hay que comparar fechas a mano)
 - [ ] Exportadores: `new_since_mark` (reels guardados después de la marca) en las notas de Obsidian y en `--json`, para filtrar con Bases las ideas probadas que tienen trucos nuevos o las descartadas que siguen apareciendo, como `db.py marks --new`
 - [ ] Skill, README y CHANGELOG: documentar `ideas --since-mark` (usarlo en el repaso semanal tras `marks --new`) y `new_since_mark`
 
