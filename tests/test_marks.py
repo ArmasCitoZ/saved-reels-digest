@@ -154,3 +154,26 @@ def test_marking_again_resets_the_count(tmp_path):
     run(tmp_path, "mark", "tried", "subagents")  # now: the reel was saved before this mark
     out = run(tmp_path, "marks")
     assert "new" not in out
+
+
+def test_marks_new_lists_only_ideas_with_reels_after_the_mark(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path,
+            reel("AAAAA1", relevant=True, entry="subagents", saved_at=marked + 86400),
+            reel("DDDDD4", relevant=True, entry="hooks", saved_at=marked - 86400),
+            reel("EEEEE5", relevant=True, entry="mcp-servers", saved_at=marked + 86400),
+            reel("FFFFF6", relevant=True, entry="plan-mode", added_at=None))  # no date: never new
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": marked},
+                           "hooks": {"status": "discarded", "updated": marked},
+                           "mcp-servers": {"status": "discarded", "updated": marked},
+                           "plan-mode": {"status": "tried", "updated": marked}})
+    out = run(tmp_path, "marks", "--new")
+    listed = [line.split()[1] for line in out.splitlines() if line.startswith("  ")]
+    assert listed == ["mcp-servers", "subagents"]
+    assert "Discarded but still saving reels about: mcp-servers" in out
+    tried = run(tmp_path, "marks", "--new", "--status", "tried")
+    assert [line.split()[1] for line in tried.splitlines() if line.startswith("  ")] == ["subagents"]
+    run(tmp_path, "mark", "tried", "subagents", "mcp-servers")  # marked again: nothing new since
+    assert "No reels saved about any tried idea since it was marked." in run(
+        tmp_path, "marks", "--new", "--status", "tried")
+    assert "No reels saved about any idea since it was marked." in run(tmp_path, "marks", "--new")

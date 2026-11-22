@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py marks --new` lists only the marked ideas that got reels saved after the mark, to see at a glance which tried ideas have new tricks and which discarded ones keep coming back. It combines with `--status`.
 - `export_digest.py --json` gives every idea `reels` (how many reels in `reels.json` back it, `0` if none) and `last_saved` (the date of the newest one, or `null`), like the Obsidian notes, so a Notion export can show them; unlike `sources`, they count reels saved after the entry was written.
 - Obsidian notes have a `reels` property (how many reels back the idea) and `last_saved` (the date the newest one was saved), read from `reels.json`, so Bases or Dataview can sort and filter ideas the way `db.py ideas --sort` does. Ideas no reel points to get neither; a missing or damaged `reels.json` just leaves them out.
 - `db.py marks` says how many reels were saved about each idea after it was last marked (`+2 new`), and names the discarded ideas that keep getting reels, with the `db.py ideas` that lists them; maybe they deserve another look. Reels with no known save date are never counted as new.

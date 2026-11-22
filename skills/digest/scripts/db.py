@@ -15,7 +15,8 @@
   db.py mark tried|discarded|todo SLUG ... [--note TEXT]
                                             remember what the user did with a digest idea
   db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind),
-                                            with how many reels were saved about it since
+            [--new]                            with how many reels were saved about it since;
+                                            --new: only ideas with reels saved after the mark
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS]                every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark, to reuse slugs;
@@ -536,6 +537,12 @@ def cmd_marks(a):
               else "No ideas marked as tried or discarded yet.")
         return
     newer = _saved_since_mark(db["reels"].values(), entries)
+    if a.new:
+        entries = {k: e for k, e in entries.items() if newer.get(k)}
+        if not entries:
+            kind = f"{a.status} " if a.status else ""
+            print(f"No reels saved about any {kind}idea since it was marked.")
+            return
     for slug, e in sorted(entries.items(), key=lambda kv: (kv[1].get("status", ""), kv[0])):
         n = newer.get(slug, 0)
         print(f"  {e.get('status', '?'):10} {slug:32} {_day(e.get('updated'))}"
@@ -893,6 +900,8 @@ def main() -> None:
     p.set_defaults(fn=cmd_mark)
     p = sub.add_parser("marks")
     p.add_argument("--status", choices=("tried", "discarded"), help="list only this kind of mark")
+    p.add_argument("--new", action="store_true",
+                   help="list only the ideas with reels saved after they were marked")
     p.set_defaults(fn=cmd_marks)
     p = sub.add_parser("ideas")
     p.add_argument("slugs", nargs="*", help="list the reels of these ideas instead")
