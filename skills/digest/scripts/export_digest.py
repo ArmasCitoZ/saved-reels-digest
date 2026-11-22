@@ -22,9 +22,10 @@ and left alone; --prune deletes them, except the ones with something written
 under "## My notes", which are kept and listed.
 
 With --json it writes nothing and prints the digest as structured JSON instead
-(title, date, top list and every idea with its category, body, source links and
-tried/discarded status). Claude uses that to fill other tools, such as Notion
-through its connector, without re-parsing the markdown by hand.
+(title, date, top list and every idea with its category, body, source links,
+tried/discarded status, and `reels` / `last_saved` from reels.json). Claude uses
+that to fill other tools, such as Notion through its connector, without
+re-parsing the markdown by hand.
 
 An idea's status comes from the marks `db.py mark` saved in reels.json when
 there is one (like the viewer does), else from the digest's own Status line.
@@ -358,16 +359,23 @@ def resolve_status(idea: dict, marks: dict | None) -> tuple[str, str | None]:
     return idea_status(idea["body"]), None
 
 
-def to_json(digest_text: str, marks: dict | None = None) -> dict:
-    """The digest as plain data, for exporters that are not files (e.g. Notion via a connector)."""
+def to_json(digest_text: str, marks: dict | None = None, stats: dict | None = None) -> dict:
+    """The digest as plain data, for exporters that are not files (e.g. Notion via a connector).
+
+    Every idea has `reels` (how many reels in reels.json back it, 0 if none) and
+    `last_saved` (YYYY-MM-DD of the newest one, or null), like the Obsidian notes.
+    Unlike `sources` they also count reels saved after the entry was written.
+    """
     digest = parse_digest(digest_text)
     if not digest["ideas"]:
         raise ValueError("no ideas found: expected '### Idea title {#slug}' entries under '## Category'")
     ideas = []
     for i in digest["ideas"]:
         status, note = resolve_status(i, marks)
+        st = (stats or {}).get(i["slug"]) or {}
         ideas.append({"title": i["title"], "slug": i["slug"], "category": i["category"],
                       "status": status, "note": note,
+                      "reels": st.get("reels", 0), "last_saved": st.get("last_saved"),
                       "sources": list(dict.fromkeys(URL_RE.findall(i["body"]))),
                       "body": i["body"]})
     return {"title": digest["title"], "date": digest["date"], "top": digest["top"],
@@ -390,7 +398,7 @@ def main(argv=None) -> int:
         sys.exit(f"Not found: {src}. Write the digest first (step 5).")
     if args.json:
         try:
-            data = to_json(src.read_text("utf-8"), load_marks())
+            data = to_json(src.read_text("utf-8"), load_marks(), load_reel_stats())
         except ValueError as e:
             sys.exit(f"Could not export {src}: {e}")
         print(json.dumps(data, ensure_ascii=False, indent=1))

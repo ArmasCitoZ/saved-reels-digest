@@ -439,3 +439,32 @@ def test_cli_vault_writes_the_reel_properties(tmp_path):
     assert r.returncode == 0, r.stderr
     note = (vault / "Saved reels" / "Keep a CLAUDE.md project memory.md").read_text(encoding="utf-8")
     assert "\nreels: 1\n" in note and "\nlast_saved: 2025-11-05\n" in note
+
+
+def test_to_json_has_reels_and_last_saved():
+    stats = {"plan-mode": {"reels": 3, "last_saved": "2025-11-05"},
+             "claude-md": {"reels": 1, "last_saved": None}}
+    by_slug = {i["slug"]: i for i in ed.to_json(DIGEST, stats=stats)["ideas"]}
+    assert (by_slug["plan-mode"]["reels"], by_slug["plan-mode"]["last_saved"]) == (3, "2025-11-05")
+    assert (by_slug["claude-md"]["reels"], by_slug["claude-md"]["last_saved"]) == (1, None)
+    # no reel points to it: still there, so Notion always gets the same fields
+    give = by_slug["give-examples-not-adjectives"]
+    assert (give["reels"], give["last_saved"]) == (0, None)
+    assert all(i["reels"] == 0 and i["last_saved"] is None for i in ed.to_json(DIGEST)["ideas"])
+
+
+def test_cli_json_reads_the_reel_stats_from_reels_json(tmp_path):
+    import json
+
+    db = {"reels": {"A1": {"entry": "plan-mode", "saved_at": 1761955200},
+                    "A2": {"entry": "plan-mode", "saved_at": 1762300800}}}
+    (tmp_path / "reels.json").write_text(json.dumps(db), encoding="utf-8")
+    src = tmp_path / "digest.md"
+    src.write_text(DIGEST, encoding="utf-8")
+    r = subprocess.run([sys.executable, str(SCRIPTS / "export_digest.py"), "--json",
+                        "--digest", str(src)], env={**os.environ, "SRD_HOME": str(tmp_path)},
+                       capture_output=True, text=True, encoding="utf-8", check=False)
+    assert r.returncode == 0, r.stderr
+    by_slug = {i["slug"]: i for i in json.loads(r.stdout)["ideas"]}
+    assert (by_slug["plan-mode"]["reels"], by_slug["plan-mode"]["last_saved"]) == (2, "2025-11-05")
+    assert by_slug["claude-md"]["reels"] == 0
