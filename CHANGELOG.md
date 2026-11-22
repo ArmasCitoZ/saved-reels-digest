@@ -6,6 +6,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py ideas SLUG --since-mark` lists only the reels of an idea saved after it was marked, the ones `db.py marks` counts as `+N new`, so reviewing them no longer means comparing dates by hand. An idea with no mark says so instead of listing everything; without slugs it points to `db.py marks --new`.
+- Obsidian notes and `export_digest.py --json` have `new_since_mark` on ideas marked tried or discarded in `reels.json`: how many of their reels were saved after the mark (`0` included), so Bases or Dataview can filter tried ideas with new tricks and discarded ones that keep coming back. Unmarked ideas have no such property (`null` in the JSON).
 - `db.py marks --new` lists only the marked ideas that got reels saved after the mark, to see at a glance which tried ideas have new tricks and which discarded ones keep coming back. It combines with `--status`.
 - `export_digest.py --json` gives every idea `reels` (how many reels in `reels.json` back it, `0` if none) and `last_saved` (the date of the newest one, or `null`), like the Obsidian notes, so a Notion export can show them; unlike `sources`, they count reels saved after the entry was written.
 - Obsidian notes have a `reels` property (how many reels back the idea) and `last_saved` (the date the newest one was saved), read from `reels.json`, so Bases or Dataview can sort and filter ideas the way `db.py ideas --sort` does. Ideas no reel points to get neither; a missing or damaged `reels.json` just leaves them out.
@@ -48,6 +50,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `db.py check` compares `digest.md` with the database: ideas no reel points to, reels pointing to ideas that were renamed or lost while merging, repeated slugs, `(#slug)` links that go nowhere, marks for ideas no longer in the digest and relevant reels still waiting.
 
 ### Changed
+- The skill's weekly review reads the new reels of each idea `db.py marks --new` lists with `db.py ideas SLUG --since-mark`, and the Notion export notes "N new since marked" on ideas with reels saved after their mark.
 - The Notion export shows how many reels back each idea (`reels`, which also counts reels saved after the entry was written) and when the newest was saved, and the skill's weekly review runs `db.py marks --new` to bring up tried ideas with new reels and discarded ones that keep coming back.
 - `setup_env.py` leaves a complete environment alone instead of running pip every time, so repeating the setup is instant and works offline; `--upgrade` updates the packages.
 

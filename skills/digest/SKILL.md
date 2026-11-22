@@ -234,7 +234,8 @@ If the user keeps notes in Obsidian (or asks for one note per idea), run
 `PY SCRIPTS/export_digest.py --vault <vault folder>` (`--folder` changes the subfolder,
 default `Saved reels`). It writes one note per `### idea` with frontmatter (including a
 `status` property that follows `db.py mark`, plus `reels` and `last_saved` with how many
-reels back the idea and when the newest was saved, read from `reels.json`), tags by category, the source reels and links between ideas of the same category, plus an
+reels back the idea and when the newest was saved, read from `reels.json`, and, on ideas
+marked tried or discarded, `new_since_mark` with how many reels came in after the mark), tags by category, the source reels and links between ideas of the same category, plus an
 `INDEX.md` map of content. Re-running updates the notes and keeps whatever the user wrote
 under `## My notes`; files it did not create are never overwritten.
 Notes of ideas that left the digest are only listed; if the user wants them gone, re-run
@@ -252,13 +253,15 @@ export or the plain `digest.md` instead.
    `top`, `categories` and `ideas` (each with `title`, `slug`, `category`, `status`
    = todo / tried / discarded, the `note` saved with `db.py mark` or null, `reels` = how
    many reels in `reels.json` back it, `last_saved` = the date of the newest one or null,
-   `sources` and the markdown `body`). The status already takes the marks in `reels.json`
+   `new_since_mark` = how many were saved after the idea was marked, or null if it is not
+   marked, `sources` and the markdown `body`). The status already takes the marks in `reels.json`
    into account, so use it instead of re-reading `digest.md`.
 2. Ask where it should go (a parent page; search for it by name). Create one page titled
    like the digest with "Do these first" as a numbered list and every idea grouped under
    its category, then one child page per idea with the `body` as content, and a first line
    with category, status, `reels` (not the count of `sources`: it also includes reels
-   saved after the entry was written) and `last_saved` when it is not null. Link the top
+   saved after the entry was written), `last_saved` when it is not null and, when
+   `new_since_mark` is above 0, "N new since marked". Link the top
    list to the child pages.
 3. On later exports, search the parent page for an existing page with the same idea title
    and update it instead of creating a duplicate. Never delete pages the user made.
@@ -275,7 +278,8 @@ It lists the pending ideas no new reel has come in for in a month, which tend to
 forgotten. If it lists any, name up to three of them in the summary and ask whether the
 user tried them or wants to drop them; record the answer with `db.py mark`.
 Then run `PY SCRIPTS/db.py marks --new`: it lists only the tried or discarded ideas that
-got reels after they were marked. Read the new reels of a tried idea for tricks worth
+got reels after they were marked. For each one, `PY SCRIPTS/db.py ideas SLUG --since-mark`
+lists just those new reels (the `+N new`); read the ones of a tried idea for tricks worth
 adding to its entry, and mention the discarded ones that keep coming back (add
 `--status tried` or `--status discarded` to look at one kind).
 

@@ -82,7 +82,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Skill, README y CHANGELOG: documentar `reels` / `last_saved` en el JSON (y usarlos en el paso de Notion) y `marks --new` (usarlo en el repaso semanal de la skill)
 - [x] `db.py ideas SLUG --since-mark`: enseñar solo los reels de esa idea guardados después de marcarla, para leer justo los que `marks --new` cuenta como `+N new` (hoy salen todos mezclados y hay que comparar fechas a mano)
 - [x] Exportadores: `new_since_mark` (reels guardados después de la marca) en las notas de Obsidian y en `--json`, para filtrar con Bases las ideas probadas que tienen trucos nuevos o las descartadas que siguen apareciendo, como `db.py marks --new`
-- [ ] Skill, README y CHANGELOG: documentar `ideas --since-mark` (usarlo en el repaso semanal tras `marks --new`) y `new_since_mark`
+- [x] Skill, README y CHANGELOG: documentar `ideas --since-mark` (usarlo en el repaso semanal tras `marks --new`) y `new_since_mark`
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
