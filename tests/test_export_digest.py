@@ -468,3 +468,55 @@ def test_cli_json_reads_the_reel_stats_from_reels_json(tmp_path):
     by_slug = {i["slug"]: i for i in json.loads(r.stdout)["ideas"]}
     assert (by_slug["plan-mode"]["reels"], by_slug["plan-mode"]["last_saved"]) == (2, "2025-11-05")
     assert by_slug["claude-md"]["reels"] == 0
+
+
+def _db_with_dated_marks(tmp_path):
+    import json
+
+    marked = 1762000000  # 2025-11-01
+    db = {"reels": {"A1": {"entry": "plan-mode", "saved_at": marked - 86400},
+                    "A2": {"entry": "plan-mode", "saved_at": marked + 86400},
+                    "A3": {"entry": "plan-mode", "added_at": None},           # no date: never new
+                    "B1": {"entry": "claude-md", "saved_at": marked - 86400},
+                    "C1": {"entry": "give-examples-not-adjectives", "saved_at": marked + 86400}},
+          "entries": {"plan-mode": {"status": "tried", "updated": marked},
+                      "claude-md": {"status": "discarded", "updated": marked, "note": "meh"},
+                      "ghost": {"status": "tried", "updated": marked}}}
+    (tmp_path / "reels.json").write_text(json.dumps(db), encoding="utf-8")
+
+
+def test_reel_stats_count_reels_saved_after_the_mark(tmp_path):
+    _db_with_dated_marks(tmp_path)
+    stats = ed.load_reel_stats(tmp_path / "reels.json")
+    assert stats["plan-mode"]["new_since_mark"] == 1
+    assert stats["claude-md"]["new_since_mark"] == 0  # marked, nothing new: 0, not missing
+    assert "new_since_mark" not in stats["give-examples-not-adjectives"]  # not marked
+    assert "ghost" not in stats  # a mark with no reels gives no stats
+
+
+def test_notes_and_json_have_new_since_mark(tmp_path):
+    _db_with_dated_marks(tmp_path)
+    stats = ed.load_reel_stats(tmp_path / "reels.json")
+    marks = ed.load_marks(tmp_path / "reels.json")
+    vault = tmp_path / "vault"
+    ed.export(DIGEST, vault, marks=marks, stats=stats)
+    plan = _frontmatter((vault / "Plan mode before big changes.md").read_text(encoding="utf-8"))
+    assert "\nstatus: tried\n" in plan and "\nnew_since_mark: 1\n" in plan
+    claude = _frontmatter((vault / "Keep a CLAUDE.md project memory.md").read_text(encoding="utf-8"))
+    assert "\nnew_since_mark: 0\n" in claude
+    examples = _frontmatter((vault / "Give examples, not adjectives.md").read_text(encoding="utf-8"))
+    assert "new_since_mark" not in examples
+    by_slug = {i["slug"]: i for i in ed.to_json(DIGEST, marks, stats)["ideas"]}
+    assert by_slug["plan-mode"]["new_since_mark"] == 1
+    assert by_slug["claude-md"]["new_since_mark"] == 0
+    assert by_slug["give-examples-not-adjectives"]["new_since_mark"] is None
+
+
+def test_marks_without_a_date_count_nothing_as_new(tmp_path):
+    import json
+
+    db = {"reels": {"A1": {"entry": "plan-mode", "saved_at": 1762300800}},
+          "entries": {"plan-mode": {"status": "tried"}}}
+    (tmp_path / "reels.json").write_text(json.dumps(db), encoding="utf-8")
+    assert ed.load_reel_stats(tmp_path / "reels.json") == {
+        "plan-mode": {"reels": 1, "last_saved": "2025-11-05"}}

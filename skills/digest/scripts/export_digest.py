@@ -9,7 +9,8 @@ VAULT/FOLDER:
   INDEX.md          map of content: "Do these first" and every idea by category,
                     with ✅ / 🚫 next to the ideas marked tried / discarded
   <Idea title>.md   one note per idea, with frontmatter (title, date, tags,
-                    aliases, status, reels, last_saved, sources) and links to the
+                    aliases, status, reels, last_saved, new_since_mark, sources)
+                    and links to the
                     other ideas of its category
 
 Links are relative markdown links, so the notes also render on GitHub and in
@@ -23,7 +24,8 @@ under "## My notes", which are kept and listed.
 
 With --json it writes nothing and prints the digest as structured JSON instead
 (title, date, top list and every idea with its category, body, source links,
-tried/discarded status, and `reels` / `last_saved` from reels.json). Claude uses
+tried/discarded status, and `reels` / `last_saved` / `new_since_mark` from
+reels.json). Claude uses
 that to fill other tools, such as Notion through its connector, without
 re-parsing the markdown by hand.
 
@@ -31,6 +33,9 @@ An idea's status comes from the marks `db.py mark` saved in reels.json when
 there is one (like the viewer does), else from the digest's own Status line.
 `reels` (how many reels back the idea) and `last_saved` (when the newest was saved)
 also come from reels.json, so Bases or Dataview can sort ideas like `db.py ideas --sort`.
+Ideas marked in reels.json also get `new_since_mark`: how many of their reels were saved
+after the mark, the +N new of `db.py marks`, to find tried ideas with new tricks or
+discarded ones that keep coming back (`db.py ideas SLUG --since-mark` lists those reels).
 """
 from __future__ import annotations
 
@@ -212,6 +217,8 @@ def render_note(idea: dict, ideas: list, by_slug: dict, day: str, index_name: st
         fm.append(f"reels: {st['reels']}")
         if st["last_saved"]:
             fm.append(f"last_saved: {st['last_saved']}")
+        if "new_since_mark" in st:
+            fm.append(f"new_since_mark: {st['new_since_mark']}")
     fm.append(f"generator: {MARKER}")
     if sources:
         fm.append("sources:")
@@ -323,14 +330,30 @@ def load_marks(path: Path = DB_PATH) -> dict:
     return marks
 
 
+def _mark_times(entries) -> dict:
+    """{slug: when it was marked} for the tried / discarded marks that have a date."""
+    out = {}
+    for slug, e in entries.items() if isinstance(entries, dict) else ():
+        if (isinstance(e, dict) and e.get("status") in ("tried", "discarded")
+                and isinstance(e.get("updated"), (int, float)) and not isinstance(e["updated"], bool)):
+            out[slug] = e["updated"]
+    return out
+
+
 def load_reel_stats(path: Path = DB_PATH) -> dict:
     """{slug: {"reels": n, "last_saved": "YYYY-MM-DD" or None}} from the reels in reels.json.
+
+    An idea marked tried or discarded (with a date) also gets "new_since_mark": how many
+    of its reels were saved after the mark, counted like `db.py marks` (a reel with no
+    known date is never new). Unmarked ideas have no such key.
 
     Like load_marks it never fails: no file or a damaged one just means no stats
     (load_marks already warns about a damaged file).
     """
     try:
-        reels = json.loads(path.read_text("utf-8-sig")).get("reels") or {}
+        db = json.loads(path.read_text("utf-8-sig"))
+        reels = db.get("reels") or {}
+        marked = _mark_times(db.get("entries") or {})
     except (OSError, ValueError, AttributeError):
         return {}
     stats = {}
@@ -338,17 +361,23 @@ def load_reel_stats(path: Path = DB_PATH) -> dict:
         slug = r.get("entry") if isinstance(r, dict) else None
         if not isinstance(slug, str) or not slug:
             continue
-        st = stats.setdefault(slug, {"reels": 0, "newest": 0})
+        st = stats.setdefault(slug, {"reels": 0, "newest": 0, "new": 0})
         st["reels"] += 1
         try:
             ts = int(r.get("saved_at") or r.get("added_at") or 0)
         except (TypeError, ValueError):
             ts = 0
         st["newest"] = max(st["newest"], ts)
-    return {slug: {"reels": st["reels"],
-                   "last_saved": (datetime.fromtimestamp(st["newest"], timezone.utc).date().isoformat()
-                                  if st["newest"] > 0 else None)}
-            for slug, st in stats.items()}
+        if slug in marked and ts > marked[slug]:
+            st["new"] += 1
+    out = {}
+    for slug, st in stats.items():
+        out[slug] = {"reels": st["reels"],
+                     "last_saved": (datetime.fromtimestamp(st["newest"], timezone.utc).date().isoformat()
+                                    if st["newest"] > 0 else None)}
+        if slug in marked:
+            out[slug]["new_since_mark"] = st["new"]
+    return out
 
 
 def resolve_status(idea: dict, marks: dict | None) -> tuple[str, str | None]:
@@ -365,6 +394,8 @@ def to_json(digest_text: str, marks: dict | None = None, stats: dict | None = No
     Every idea has `reels` (how many reels in reels.json back it, 0 if none) and
     `last_saved` (YYYY-MM-DD of the newest one, or null), like the Obsidian notes.
     Unlike `sources` they also count reels saved after the entry was written.
+    `new_since_mark` is how many were saved after the idea was marked in reels.json,
+    or null when it is not marked there.
     """
     digest = parse_digest(digest_text)
     if not digest["ideas"]:
@@ -376,6 +407,7 @@ def to_json(digest_text: str, marks: dict | None = None, stats: dict | None = No
         ideas.append({"title": i["title"], "slug": i["slug"], "category": i["category"],
                       "status": status, "note": note,
                       "reels": st.get("reels", 0), "last_saved": st.get("last_saved"),
+                      "new_since_mark": st.get("new_since_mark"),
                       "sources": list(dict.fromkeys(URL_RE.findall(i["body"]))),
                       "body": i["body"]})
     return {"title": digest["title"], "date": digest["date"], "top": digest["top"],
