@@ -55,6 +55,10 @@ export function markCommands(changes: Map<string, Change>, prefix = "$PY db.py")
 export function applyChanges(ideas: ViewIdea[], changes: Map<string, Change>): ViewIdea[] {
   return ideas.map((i) => {
     const c = changes.get(i.slug);
-    return c ? { ...i, status: c.status, note: c.status === "todo" ? null : c.note.trim() || null } : i;
+    if (!c) return i;
+    const note = c.status === "todo" ? null : c.note.trim() || null;
+    // the db.py mark the change turns into stamps a new date, so nothing is new any more
+    const same = c.status === i.status && note === i.note;
+    return { ...i, status: c.status, note, newSinceMark: same ? i.newSinceMark : 0 };
   });
 }

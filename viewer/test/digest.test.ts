@@ -130,8 +130,11 @@ describe.skipIf(!python)("same result as export_digest.py --json", () => {
       expect({ title: ts.title, date: ts.date, top: ts.top }).toEqual({ title: py.title, date: py.date, top: py.top });
       expect(ts.ideas.map(({ title, slug, category, status, sources, body }) =>
         ({ title, slug, category, status, sources, body }))).toEqual(
-        // `note` comes from db.py mark in reels.json, which the digest parser does not read
-        py.ideas.map(({ note, ...idea }: { note: string | null }) => (expect(note).toBeNull(), idea)));
+        // `note`, `reels`, `last_saved` and `new_since_mark` come from reels.json, which the digest
+        // parser does not read (the viewer joins it in reels.ts); with no reels.json they are empty
+        py.ideas.map(({ note, reels, last_saved, new_since_mark, ...idea }: {
+          note: string | null; reels: number; last_saved: string | null; new_since_mark: number | null;
+        }) => (expect([note, reels, last_saved, new_since_mark]).toEqual([null, 0, null, null]), idea)));
     });
   }
 });

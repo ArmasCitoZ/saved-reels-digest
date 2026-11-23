@@ -39,6 +39,14 @@ function reelLink(r: Reel): string {
   return `<li>${label}${when}${r.platform !== "instagram" ? ` <span class="muted">${escapeHtml(platformName(r.platform))}</span>` : ""}</li>`;
 }
 
+/** "+N nuevos" on a marked idea with reels saved after the mark, like `db.py marks --new`. */
+function newBadge(i: ViewIdea): string {
+  if (i.status === "todo" || i.newSinceMark <= 0) return "";
+  const n = i.newSinceMark;
+  return ` <span class="badge new" title="${n} reel${n === 1 ? "" : "s"} guardado${n === 1 ? "" : "s"} después de marcarla. ` +
+    `Cuando los leas, vuelve a marcarla para poner el contador a cero.">+${n} nuevo${n === 1 ? "" : "s"}</span>`;
+}
+
 function card(i: ViewIdea): string {
   const note = i.note ? `<p class="note"><strong>Nota:</strong> ${escapeHtml(i.note)}</p>` : "";
   const reels = i.reels.length
@@ -52,7 +60,7 @@ function card(i: ViewIdea): string {
     `placeholder="Nota (opcional): por qué" aria-label="Nota">`;
   return `<article id="${escapeHtml(i.slug)}" data-slug="${escapeHtml(i.slug)}" class="idea status-${i.status}">
   <header><h3>${escapeHtml(i.title)}</h3>
-  <span class="tag">${escapeHtml(i.category)}</span> <span class="badge">${STATUS_LABEL[i.status]}</span></header>
+  <span class="tag">${escapeHtml(i.category)}</span> <span class="badge">${STATUS_LABEL[i.status]}</span>${newBadge(i)}</header>
   ${render(i.body)}${note}${reels}
   <div class="mark">${buttons}${noteInput}</div>
 </article>`;
@@ -63,6 +71,7 @@ function applyView(view: View): void {
   $<HTMLInputElement>("q").value = view.q;
   $<HTMLSelectElement>("status").value = view.status;
   $<HTMLSelectElement>("sort").value = view.sort;
+  $<HTMLInputElement>("news").checked = view.news === "1";
   for (const id of ["category", "platform"] as const) {
     const select = $<HTMLSelectElement>(id);
     select.value = [...select.options].some((o) => o.value === view[id]) ? view[id] : "";
@@ -89,9 +98,11 @@ function show(): void {
   const status = ($<HTMLSelectElement>("status").value || null) as Status | null;
   const platform = $<HTMLSelectElement>("platform").value || null;
   const sort = $<HTMLSelectElement>("sort").value as View["sort"];
-  saveView({ q: query, category: category ?? "", status: status ?? "", platform: platform ?? "", sort });
-  const found = sortIdeas(filterIdeas(state.ideas, { query, category, status, platform }), (sort || "digest") as Sort);
-  const filtering = Boolean(query.trim() || category || status || platform);
+  // a hidden checkbox (no idea has news) never filters, even if a link checked it
+  const news = $<HTMLInputElement>("news").checked && !$("news-label").hidden;
+  saveView({ q: query, category: category ?? "", status: status ?? "", platform: platform ?? "", sort, news: news ? "1" : "" });
+  const found = sortIdeas(filterIdeas(state.ideas, { query, category, status, platform, news }), (sort || "digest") as Sort);
+  const filtering = Boolean(query.trim() || category || status || platform || news);
 
   $("count").textContent = `${found.length} de ${state.ideas.length} ideas` +
     (state.db ? ` · ${state.db.total} reels en la base de datos` : "");
@@ -145,6 +156,11 @@ function refresh(): void {
   platform.hidden = found.length < 2;
   // Sorting by date or number of reels needs reels.json; without it every idea ties
   $("sort").hidden = !state.db;
+  // "With news" only means something when some marked idea got reels after its mark
+  const news = $<HTMLInputElement>("news");
+  const anyNews = state.base.some((i) => i.status !== "todo" && i.newSinceMark > 0);
+  $("news-label").hidden = !anyNews;
+  if (!anyNews) news.checked = false; // a link with novedades=1 still applies below if it has news
   if (state.urlView) {
     applyView(state.urlView);
     state.urlView = null;
@@ -187,7 +203,7 @@ function openOwn(files: FileList): void {
 function init(): void {
   const input = $<HTMLInputElement>("files");
   input.addEventListener("change", () => input.files && openOwn(input.files));
-  for (const id of ["q", "category", "status", "platform", "sort"]) $(id).addEventListener("input", show);
+  for (const id of ["q", "category", "status", "platform", "sort", "news"]) $(id).addEventListener("input", show);
   $("ideas").addEventListener("click", (e) => {
     const button = (e.target as HTMLElement).closest<HTMLButtonElement>("button[data-mark]");
     const slug = button?.closest<HTMLElement>("article")?.dataset.slug;

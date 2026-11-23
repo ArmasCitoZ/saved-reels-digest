@@ -35,6 +35,9 @@
   .status-tried .badge { color: var(--tried); border-color: currentColor; }
   .status-discarded { opacity: .75; }
   .status-discarded .badge { color: var(--discarded); border-color: currentColor; }
+  .idea .badge.new { color: var(--accent); border-color: currentColor; font-weight: 600; }
+  .controls label { display: flex; align-items: center; gap: .35rem; }
+  .controls label input { flex: none; padding: 0; }
   pre { overflow-x: auto; background: var(--bg); padding: .75rem; border-radius: 8px; }
   code { font-size: .9em; }
   details summary { cursor: pointer; color: var(--muted); }
@@ -84,6 +87,8 @@
       <option value="recent">Guardadas hace menos</option>
       <option value="reels">Con más reels</option>
     </select>
+    <label id="news-label" hidden title="Ideas probadas o descartadas con reels guardados después de marcarlas">
+      <input id="news" type="checkbox"> Con novedades</label>
     <div id="count"></div>
   </div>
   <section id="top"></section>

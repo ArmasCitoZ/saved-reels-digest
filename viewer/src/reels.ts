@@ -32,6 +32,9 @@ export interface ViewIdea extends Idea {
   /** The mark from reels.json if there is one, else what the digest says. */
   status: Status;
   note: string | null;
+  /** Reels saved after the idea was marked tried or discarded, like the +N new of `db.py marks`;
+   *  0 for pending ideas, marks without a date and reels without one. */
+  newSinceMark: number;
 }
 
 const str = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
@@ -86,11 +89,14 @@ export function parseDatabase(text: string): Database {
 export function joinIdeas(digest: Digest, db: Database | null): ViewIdea[] {
   return digest.ideas.map((idea) => {
     const mark = db?.marks.get(idea.slug);
+    const reels = db?.byEntry.get(idea.slug) ?? [];
+    const since = mark?.updated ?? null;
     return {
       ...idea,
-      reels: db?.byEntry.get(idea.slug) ?? [],
+      reels,
       status: mark?.status ?? idea.status,
       note: mark?.note ?? null,
+      newSinceMark: since === null ? 0 : reels.filter((r) => r.savedAt !== null && r.savedAt > since).length,
     };
   });
 }
@@ -108,6 +114,8 @@ export interface Filter {
   status?: Status | null;
   /** Only ideas with at least one reel saved on this platform. */
   platform?: string | null;
+  /** Only marked ideas with reels saved after the mark (`db.py marks --new`). */
+  news?: boolean;
 }
 
 /** Case- and accent-insensitive: "automatizacion" finds "Automatización". */
@@ -122,6 +130,7 @@ export function filterIdeas(ideas: ViewIdea[], f: Filter): ViewIdea[] {
     if (f.category && i.category !== f.category) return false;
     if (f.status && i.status !== f.status) return false;
     if (f.platform && !i.reels.some((r) => r.platform === f.platform)) return false;
+    if (f.news && !(i.status !== "todo" && i.newSinceMark > 0)) return false;
     if (!words.length) return true;
     const hay = fold([i.title, i.body, i.category, i.slug, i.note ?? "",
       ...i.reels.map((r) => r.author ?? "")].join("\n"));

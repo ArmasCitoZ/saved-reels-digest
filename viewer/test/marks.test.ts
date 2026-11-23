@@ -75,6 +75,14 @@ describe("markCommands", () => {
     const shown = applyChanges(ideas, changes([["three", { status: "discarded", note: " too slow " }]]));
     expect(shown.find((i) => i.slug === "three")).toMatchObject({ status: "discarded", note: "too slow" });
   });
+
+  it("resets the new reels of an idea marked again, as db.py mark does", () => {
+    const withNews = ideas.map((i) => (i.slug === "two" ? { ...i, newSinceMark: 3 } : i));
+    const same = applyChanges(withNews, changes([["two", { status: "discarded", note: "meh" }]]));
+    expect(same.find((i) => i.slug === "two")?.newSinceMark).toBe(3); // no command, nothing changes
+    const tried = applyChanges(withNews, changes([["two", { status: "tried", note: "meh" }]]));
+    expect(tried.find((i) => i.slug === "two")?.newSinceMark).toBe(0);
+  });
 });
 
 // The commands must work as they are when pasted into a shell.

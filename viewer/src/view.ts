@@ -11,13 +11,15 @@ export interface View {
   platform: string;
   /** "" is the digest's own order. */
   sort: Exclude<Sort, "digest"> | "";
+  /** "1": only marked ideas with reels saved after the mark. */
+  news: "1" | "";
 }
 
-export const EMPTY_VIEW: View = { q: "", category: "", status: "", platform: "", sort: "" };
+export const EMPTY_VIEW: View = { q: "", category: "", status: "", platform: "", sort: "", news: "" };
 
 // Spanish keys, like the rest of the page; "q" is the usual name for a search
 const KEYS: Record<keyof View, string> = {
-  q: "q", category: "categoria", status: "estado", platform: "plataforma", sort: "orden",
+  q: "q", category: "categoria", status: "estado", platform: "plataforma", sort: "orden", news: "novedades",
 };
 const STATUSES: readonly string[] = ["todo", "tried", "discarded"];
 const SORTS: readonly string[] = ["recent", "reels"];
@@ -34,6 +36,7 @@ export function readView(hash: string): View {
     status: STATUSES.includes(status) ? (status as Status) : "",
     platform: get("platform"),
     sort: SORTS.includes(sort) ? (sort as View["sort"]) : "",
+    news: get("news") === "1" ? "1" : "",
   };
 }
 

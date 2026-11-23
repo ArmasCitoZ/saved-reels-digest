@@ -106,6 +106,38 @@ describe("joinIdeas and filterIdeas", () => {
   });
 });
 
+describe("reels saved after the mark", () => {
+  const MARKED = 1762000000;
+  const ideas = joinIdeas(parseDigest(DIGEST), parseDatabase(JSON.stringify({
+    reels: {
+      A: { entry: "revision", saved_at: MARKED - 86400 },
+      B: { entry: "revision", saved_at: MARKED + 86400 },
+      C: { entry: "revision", saved_at: MARKED + 2 * 86400 },
+      D: { entry: "revision" }, // no date: never new, as in db.py marks
+      E: { entry: "automatizacion", saved_at: MARKED + 86400 },
+      F: { entry: "ejemplos", saved_at: MARKED + 86400 },
+    },
+    entries: {
+      revision: { status: "tried", updated: MARKED },
+      automatizacion: { status: "discarded" }, // a mark with no date counts nothing
+    },
+  })));
+  const bySlug = (s: string) => ideas.find((i) => i.slug === s)!;
+
+  it("counts them like db.py marks --new", () => {
+    expect(bySlug("revision").newSinceMark).toBe(2);
+    expect(bySlug("automatizacion").newSinceMark).toBe(0);
+    expect(bySlug("ejemplos").newSinceMark).toBe(0); // not marked in reels.json
+    expect(joinIdeas(parseDigest(DIGEST), null).every((i) => i.newSinceMark === 0)).toBe(true);
+  });
+
+  it("filters the marked ideas with news", () => {
+    expect(filterIdeas(ideas, { news: true }).map((i) => i.slug)).toEqual(["revision"]);
+    expect(filterIdeas(ideas, { news: true, status: "discarded" })).toEqual([]);
+    expect(filterIdeas(ideas, { news: false })).toHaveLength(3);
+  });
+});
+
 describe("the sample in examples/", () => {
   const dir = new URL("../../examples/", import.meta.url);
   const ideas = joinIdeas(
