@@ -19,7 +19,8 @@
                                             --new: only ideas with reels saved after the mark
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS]                every idea (slug) reels point to: how many reels,
-                                            the newest saved and its mark, to reuse slugs;
+                                            the newest saved and its mark (+N new: reels saved
+                                            after it was marked), to reuse slugs;
                                             --older-than DAYS: only ideas with no reel saved
                                             lately (with --status todo: forgotten ideas)
   db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link;
@@ -628,8 +629,15 @@ def cmd_ideas(a):
     where = f" with reels from {a.collection!r}" if a.collection else ""
     print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas{where}{old} (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
+    newer = _saved_since_mark(db["reels"].values(), marks)
     for slug, rs in rows:
-        print(f"  {slug:{width}}  {len(rs):3}  {_day(newest(rs) or None)}  {status(slug)}")
+        # +N new counts every reel of the idea saved after the mark, like db.py marks,
+        # even when --collection only shows some of them
+        n = newer.get(slug, 0) if status(slug) != "todo" else 0
+        print(f"  {slug:{width}}  {len(rs):3}  {_day(newest(rs) or None)}  {status(slug)}"
+              + (f"  +{n} new" if n else ""))
+    if any(newer.get(slug) and status(slug) != "todo" for slug, _ in rows):
+        print("+N new: reels saved after the idea was marked (db.py ideas SLUG --since-mark lists them).")
 
 
 def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None,

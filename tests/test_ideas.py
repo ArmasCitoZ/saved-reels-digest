@@ -195,3 +195,28 @@ def test_ideas_since_mark_with_nothing_new_or_no_mark(tmp_path):
 def test_ideas_since_mark_needs_slugs(tmp_path):
     make_db(tmp_path, reel("AAAAA1", entry="hooks"))
     assert "db.py marks --new" in run_failing(tmp_path, "ideas", "--since-mark")
+
+
+def test_ideas_list_shows_new_reels_since_the_mark(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=marked - 86400),
+            reel("BBBBB2", entry="hooks", saved_at=marked + 86400),
+            reel("CCCCC3", entry="hooks", saved_at=marked + 2 * 86400),
+            reel("DDDDD4", entry="subagents", saved_at=marked - 86400),
+            reel("EEEEE5", entry="mcp", saved_at=marked + 86400))
+    _mark_at(tmp_path, "hooks", "tried", marked)
+    _mark_at(tmp_path, "subagents", "discarded", marked)
+    out = run(tmp_path, "ideas").splitlines()
+    # same count as db.py marks; nothing new on subagents and no +N on an unmarked idea
+    assert out[1].split() == ["hooks", "3", "2025-11-03", "tried", "+2", "new"]
+    assert out[2].split() == ["mcp", "1", "2025-11-02", "todo"]
+    assert out[3].split() == ["subagents", "1", "2025-10-31", "discarded"]
+    assert out[4].startswith("+N new: reels saved after the idea was marked")
+    assert "+2 new" in run(tmp_path, "marks")
+
+
+def test_ideas_list_has_no_footer_without_new_reels(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=1761000000))
+    _mark_at(tmp_path, "hooks", "tried", 1762000000)
+    out = run(tmp_path, "ideas")
+    assert "+" not in out and len(out.splitlines()) == 2
