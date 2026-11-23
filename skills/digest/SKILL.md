@@ -188,7 +188,8 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
 5. Run `PY SCRIPTS/db.py recent --days 7` and rebuild "Saved this week" from it
    (it shows each recent reel and the entry it went into).
 6. On later runs, merge new reels into existing entries before creating new ones
-   (`PY SCRIPTS/db.py ideas` lists them with how many reels each has and when the newest was saved;
+   (`PY SCRIPTS/db.py ideas` lists them with how many reels each has, when the newest was saved
+   and their mark, with `+N new` on marked ideas that got reels after the mark;
    `--sort recent` puts the ideas with the newest saves first),
    and refresh the header counts, "Do these first" and "Saved this week".
    To rename an entry's slug, or to fold one entry into another, never retype its codes:
@@ -271,7 +272,10 @@ export or the plain `digest.md` instead.
 
 Tell the user in 2–3 lines: how many saves were read, how many were on topic, how
 many unique ideas remained after merging, the path to `digest.md`, and the top 3
-items. Offer one next step (e.g. "want me to apply #1 to this project?").
+items. To pick those, also run `PY SCRIPTS/db.py ideas --status todo --min-reels 3`: the
+pending ideas backed by three or more reels are the ones the user keeps coming back to,
+so put them first when they are not tried yet (lower the number if it lists nothing).
+Offer one next step (e.g. "want me to apply #1 to this project?").
 
 Weekly review: run `PY SCRIPTS/db.py ideas --status todo --older-than 30 --sort recent`.
 It lists the pending ideas no new reel has come in for in a month, which tend to be
