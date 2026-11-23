@@ -6,6 +6,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- The viewer shows `+N nuevos` next to the mark of a tried or discarded idea with reels saved after it was marked (counted like `db.py marks --new`), and a "Con novedades" checkbox, kept in the URL as `#novedades=1`, lists only those ideas. Marking an idea again in the viewer clears its badge, as the `db.py mark` command it gives resets the count.
+- The Obsidian `INDEX.md` puts `+N` next to the ✅ / 🚫 of ideas with N reels saved after their mark, and the summary line says how many ideas have new reels, so the news shows without Bases or Dataview.
+- `db.py marks --new` ends with the `db.py mark` commands that reset `+N` once the new reels are read (marking again keeps the note), and the skill's weekly review runs them, so the same ideas stop coming back every week.
 - `db.py ideas SLUG --since-mark` lists only the reels of an idea saved after it was marked, the ones `db.py marks` counts as `+N new`, so reviewing them no longer means comparing dates by hand. An idea with no mark says so instead of listing everything; without slugs it points to `db.py marks --new`.
 - Obsidian notes and `export_digest.py --json` have `new_since_mark` on ideas marked tried or discarded in `reels.json`: how many of their reels were saved after the mark (`0` included), so Bases or Dataview can filter tried ideas with new tricks and discarded ones that keep coming back. Unmarked ideas have no such property (`null` in the JSON).
 - `db.py marks --new` lists only the marked ideas that got reels saved after the mark, to see at a glance which tried ideas have new tricks and which discarded ones keep coming back. It combines with `--status`.
@@ -55,6 +58,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 - `setup_env.py` leaves a complete environment alone instead of running pip every time, so repeating the setup is instant and works offline; `--upgrade` updates the packages.
 
 ### Fixed
+- The viewer's test that compares its digest parser with `export_digest.py --json` passes again (it failed, and with it the viewer CI job, since the JSON gained `reels`, `last_saved` and `new_since_mark`).
 - `db.py mark` keeps an idea's note when it is marked again without `--note`; before, `db.py mark discarded SLUG` after `db.py mark tried SLUG --note "..."` dropped the note silently. `--note ""` clears it. The viewer's commands clear a note removed there with `db.py mark todo` first.
 - `db.py next`, `dump`, `similar` and `recent` stop with an error on a `--collection` no reel is in, like `status` and `unavailable`; before, a typo looked like an empty collection ("Nothing left to triage"). All six suggest the closest name (`--collection "Ideas IA"` → "Ideas de IA").
 - `db.py set entry` refuses slugs with spaces, `#`, parentheses and other characters a `{#slug}` heading or `(#slug)` link cannot hold, and suggests a valid one (`"Claude Code"` → `claude-code`); before, the reels were saved under a slug no digest idea could ever match.

@@ -24,7 +24,12 @@ without your own data, open `examples/digest.md` and `examples/reels.json` (inve
   (Instagram, TikTok, YouTube): it keeps the ideas with at least one reel saved there.
 - With `reels.json` open, sort the ideas by their most recently saved reel or by how many reels
   back them, instead of the digest's own ranking.
-- The search, filters and order live in the address bar (`#q=agentes&estado=todo&orden=recent`):
+- With `reels.json` open, a tried or discarded idea that got reels after it was marked shows
+  `+N nuevos` next to its mark (the `+N new` of `db.py marks`; reels with no known date never
+  count), and a "Con novedades" box keeps only those ideas. The box only appears when some idea
+  has news. Marking the idea again, here or with `db.py mark`, resets the count.
+- The search, filters and order live in the address bar (`#q=agentes&estado=todo&orden=recent`,
+  `#novedades=1`):
   reloading keeps them, and a bookmark opens the same view once the files are loaded again.
 - Mark ideas as tried, discarded or pending (with an optional note) right on the page. The
   viewer never writes your files: it lists the `db.py mark` commands that save those marks.
