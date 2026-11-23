@@ -18,11 +18,13 @@
             [--new]                            with how many reels were saved about it since;
                                             --new: only ideas with reels saved after the mark
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
-            [--older-than DAYS]                every idea (slug) reels point to: how many reels,
+            [--older-than DAYS] [--min-reels N]
+                                            every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark (+N new: reels saved
                                             after it was marked), to reuse slugs;
                                             --older-than DAYS: only ideas with no reel saved
-                                            lately (with --status todo: forgotten ideas)
+                                            lately (with --status todo: forgotten ideas);
+                                            --min-reels N: only ideas with N or more reels
   db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link;
             [--since-mark]                     --since-mark: only those saved after the idea was
                                             marked (the +N new of db.py marks)
@@ -595,10 +597,13 @@ def cmd_ideas(a):
         return marks.get(slug, {}).get("status", "todo")
 
     if a.slugs:
-        if a.older_than is not None:
-            sys.exit("--older-than filters the list of ideas; leave out the slugs to use it.")
+        if a.older_than is not None or a.min_reels is not None:
+            flag = "--older-than" if a.older_than is not None else "--min-reels"
+            sys.exit(f"{flag} filters the list of ideas; leave out the slugs to use it.")
         _show_ideas(a.slugs, ideas, marks, a.collection, a.since_mark)
         return
+    if a.min_reels is not None and a.min_reels < 1:
+        sys.exit("--min-reels needs a number of reels of 1 or more.")
     if a.since_mark:
         sys.exit("--since-mark lists the new reels of the ideas you name: db.py ideas SLUG --since-mark."
                  " To see which marked ideas have new reels: db.py marks --new")
@@ -617,13 +622,18 @@ def cmd_ideas(a):
              "recent": lambda kv: (-newest(kv[1]), kv[0]),  # unknown dates (0) go last
              "name": lambda kv: kv[0]}[a.sort]
     rows = sorted(((slug, rs) for slug, rs in ideas.items()
-                   if (not a.status or status(slug) == a.status) and old_enough(rs)),
+                   if (not a.status or status(slug) == a.status) and old_enough(rs)
+                   and len(rs) >= (a.min_reels or 0)),
                   key=order)
     old = f" with no reel saved in the last {a.older_than} days" if a.older_than is not None else ""
+    if a.min_reels is not None:
+        old = f" with {a.min_reels}+ reels" + (old.replace(" with ", " and ", 1) if old else "")
     if not rows:
         what = [f"is {a.status}"] if a.status else []
         if a.older_than is not None:
             what.append(f"has gone {a.older_than} days without a new reel")
+        if a.min_reels is not None:
+            what.append(f"has {a.min_reels} or more reels")
         print(f"None of the {len(ideas)} ideas {' and '.join(what)}.")
         return
     where = f" with reels from {a.collection!r}" if a.collection else ""
@@ -944,6 +954,8 @@ def main() -> None:
                    help="most reels first (default), newest saved reel first, or by slug")
     p.add_argument("--older-than", type=int, metavar="DAYS",
                    help="only ideas whose newest reel was saved more than DAYS days ago")
+    p.add_argument("--min-reels", type=int, metavar="N",
+                   help="only ideas backed by at least N reels (with --collection, N reels from it)")
     p.add_argument("--since-mark", action="store_true",
                    help="with slugs: only the reels saved after the idea was marked")
     p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests

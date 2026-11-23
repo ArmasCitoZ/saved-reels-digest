@@ -87,7 +87,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py marks --new`: explicar al final que, una vez leídos los reels nuevos, `db.py mark tried|discarded SLUG` otra vez pone el contador a cero (la nota se conserva), y que la skill lo haga tras el repaso semanal; hoy el `+N new` se queda para siempre y el repaso vuelve a enseñar las mismas ideas cada semana
 - [x] Visor: insignia `+N nuevos` en las ideas marcadas que recibieron reels después de la marca (el visor ya lee `updated` de `reels.json`) y un filtro "con novedades", como `db.py marks --new`, guardado en la URL como los demás
 - [x] `db.py ideas`: poner `+N new` junto a la marca de las ideas probadas o descartadas con reels guardados después de marcarlas, como ya hacen `db.py marks`, `INDEX.md` y el visor; hoy la lista de ideas, que es la que Claude mira al fusionar, no lo dice
-- [ ] `db.py ideas --min-reels N`: listar solo las ideas respaldadas por al menos N reels (las que más se repiten en lo que guardas), para elegir qué probar primero; combina con `--status`, `--sort` y `--collection`
+- [x] `db.py ideas --min-reels N`: listar solo las ideas respaldadas por al menos N reels (las que más se repiten en lo que guardas), para elegir qué probar primero; combina con `--status`, `--sort` y `--collection`
 - [ ] Skill, README y CHANGELOG: documentar `+N new` en `db.py ideas` e `ideas --min-reels` (y usar `--status todo --min-reels 3` en el resumen final de la skill para proponer qué probar primero)
 
 ## Robustez

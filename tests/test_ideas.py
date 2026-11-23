@@ -220,3 +220,39 @@ def test_ideas_list_has_no_footer_without_new_reels(tmp_path):
     _mark_at(tmp_path, "hooks", "tried", 1762000000)
     out = run(tmp_path, "ideas")
     assert "+" not in out and len(out.splitlines()) == 2
+
+
+def test_ideas_min_reels_keeps_the_ideas_saved_most(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", collection="IA"),
+            reel("BBBBB2", entry="hooks", collection="IA"),
+            reel("CCCCC3", entry="hooks", collection="Cocina"),
+            reel("DDDDD4", entry="subagents", collection="IA"),
+            reel("EEEEE5", entry="subagents", collection="IA"),
+            reel("FFFFF6", entry="mcp", collection="IA"))
+    run(tmp_path, "mark", "tried", "subagents")
+    out = run(tmp_path, "ideas", "--min-reels", "2")
+    assert out.startswith("2 ideas with 2+ reels")
+    assert [r[:2] for r in rows(out)] == [["hooks", "3"], ["subagents", "2"]]
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--min-reels", "2", "--status", "todo"))] \
+        == ["hooks"]
+    # with --collection only the reels from it count: hooks has 2 in IA, so 3 leaves nothing
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--min-reels", "2", "--collection", "IA",
+                                   "--sort", "name"))] == ["hooks", "subagents"]
+    assert "None of the 3 ideas has 3 or more reels." in \
+        run(tmp_path, "ideas", "--min-reels", "3", "--collection", "IA")
+
+
+def test_ideas_min_reels_with_older_than(tmp_path):
+    now = 1762000000
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=now - 60 * 86400),
+            reel("BBBBB2", entry="hooks", saved_at=now - 50 * 86400),
+            reel("CCCCC3", entry="mcp", saved_at=now - 60 * 86400))
+    out = run(tmp_path, "ideas", "--min-reels", "2", "--older-than", "30", "--now", str(now))
+    assert out.startswith("1 ideas with 2+ reels and no reel saved in the last 30 days")
+    assert [r[0] for r in rows(out)] == ["hooks"]
+
+
+def test_ideas_min_reels_needs_a_positive_number_and_no_slugs(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"))
+    assert "1 or more" in run_failing(tmp_path, "ideas", "--min-reels", "0")
+    assert "--min-reels filters the list" in run_failing(tmp_path, "ideas", "hooks", "--min-reels", "2")
