@@ -171,8 +171,14 @@ def test_marks_new_lists_only_ideas_with_reels_after_the_mark(tmp_path):
     listed = [line.split()[1] for line in out.splitlines() if line.startswith("  ")]
     assert listed == ["mcp-servers", "subagents"]
     assert "Discarded but still saving reels about: mcp-servers" in out
+    assert ("mark the idea again to reset its +N (the note is kept):"
+            " db.py mark discarded mcp-servers; db.py mark tried subagents") in out
+    assert "reset" not in run(tmp_path, "marks")  # only the --new review suggests it
     tried = run(tmp_path, "marks", "--new", "--status", "tried")
     assert [line.split()[1] for line in tried.splitlines() if line.startswith("  ")] == ["subagents"]
+    assert tried.rstrip().endswith("(the note is kept): db.py mark tried subagents")
+    run(tmp_path, "mark", "discarded", "mcp-servers")  # the reset the hint suggests
+    assert "+1 new" not in run(tmp_path, "marks").split("mcp-servers", 1)[1].split("\n", 1)[0]
     run(tmp_path, "mark", "tried", "subagents", "mcp-servers")  # marked again: nothing new since
     assert "No reels saved about any tried idea since it was marked." in run(
         tmp_path, "marks", "--new", "--status", "tried")

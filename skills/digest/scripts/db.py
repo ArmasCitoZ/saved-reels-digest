@@ -556,6 +556,14 @@ def cmd_marks(a):
               f" db.py ideas {' '.join(back)}")
     elif newer:
         print("+N new: reels saved about that idea after it was marked (db.py ideas SLUG lists them).")
+    if a.new:
+        # marking again stamps a new date, so +N goes back to 0 (and the note is kept)
+        by_status = {}
+        for slug in sorted(entries):
+            by_status.setdefault(entries[slug].get("status", "tried"), []).append(slug)
+        again = "; ".join(f"db.py mark {st} {' '.join(slugs)}" for st, slugs in sorted(by_status.items()))
+        print("Once you have read the new reels (db.py ideas SLUG --since-mark), mark the idea again"
+              f" to reset its +N (the note is kept): {again}")
 
 
 def _saved_since_mark(reels, entries: dict) -> dict:
@@ -918,7 +926,8 @@ def main() -> None:
     p = sub.add_parser("marks")
     p.add_argument("--status", choices=("tried", "discarded"), help="list only this kind of mark")
     p.add_argument("--new", action="store_true",
-                   help="list only the ideas with reels saved after they were marked")
+                   help="list only the ideas with reels saved after they were marked;"
+                        " marking an idea again resets its count")
     p.set_defaults(fn=cmd_marks)
     p = sub.add_parser("ideas")
     p.add_argument("slugs", nargs="*", help="list the reels of these ideas instead")

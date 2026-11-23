@@ -281,7 +281,12 @@ Then run `PY SCRIPTS/db.py marks --new`: it lists only the tried or discarded id
 got reels after they were marked. For each one, `PY SCRIPTS/db.py ideas SLUG --since-mark`
 lists just those new reels (the `+N new`); read the ones of a tried idea for tricks worth
 adding to its entry, and mention the discarded ones that keep coming back (add
-`--status tried` or `--status discarded` to look at one kind).
+`--status tried` or `--status discarded` to look at one kind). Once an idea's new reels
+are read (and anything useful added to its entry), mark it again with the same status,
+as the last line of `marks --new` spells out (`PY SCRIPTS/db.py mark tried SLUG`): that
+resets its `+N` while keeping the note, so next week's review only brings up reels saved
+since. If the user decides a discarded idea deserves a try after all, mark it with the
+new status instead.
 
 ## Troubleshooting
 

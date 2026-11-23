@@ -84,7 +84,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] Exportadores: `new_since_mark` (reels guardados después de la marca) en las notas de Obsidian y en `--json`, para filtrar con Bases las ideas probadas que tienen trucos nuevos o las descartadas que siguen apareciendo, como `db.py marks --new`
 - [x] Skill, README y CHANGELOG: documentar `ideas --since-mark` (usarlo en el repaso semanal tras `marks --new`) y `new_since_mark`
 - [x] Obsidian: en `INDEX.md`, poner `+N` junto al ✅ / 🚫 de las ideas con reels guardados después de la marca, y cuántas son en la línea de resumen, para ver las novedades sin abrir Bases ni Dataview
-- [ ] `db.py marks --new`: explicar al final que, una vez leídos los reels nuevos, `db.py mark tried|discarded SLUG` otra vez pone el contador a cero (la nota se conserva), y que la skill lo haga tras el repaso semanal; hoy el `+N new` se queda para siempre y el repaso vuelve a enseñar las mismas ideas cada semana
+- [x] `db.py marks --new`: explicar al final que, una vez leídos los reels nuevos, `db.py mark tried|discarded SLUG` otra vez pone el contador a cero (la nota se conserva), y que la skill lo haga tras el repaso semanal; hoy el `+N new` se queda para siempre y el repaso vuelve a enseñar las mismas ideas cada semana
 - [ ] Visor: insignia `+N nuevos` en las ideas marcadas que recibieron reels después de la marca (el visor ya lee `updated` de `reels.json`) y un filtro "con novedades", como `db.py marks --new`, guardado en la URL como los demás
 
 ## Robustez
