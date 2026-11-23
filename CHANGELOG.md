@@ -6,6 +6,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py ideas` puts `+N new` next to the mark of tried or discarded ideas with reels saved after the mark (counted like `db.py marks`) and ends with a line pointing to `db.py ideas SLUG --since-mark`, so the list Claude reads while merging shows the news too.
+- `db.py ideas --min-reels N` lists only the ideas backed by at least N reels, the ones that keep showing up in what you save. It combines with `--status`, `--sort`, `--older-than` and `--collection` (which counts only the reels from that collection). The skill runs `--status todo --min-reels 3` when it sums up a run, to suggest what to try first.
 - The viewer shows `+N nuevos` next to the mark of a tried or discarded idea with reels saved after it was marked (counted like `db.py marks --new`), and a "Con novedades" checkbox, kept in the URL as `#novedades=1`, lists only those ideas. Marking an idea again in the viewer clears its badge, as the `db.py mark` command it gives resets the count.
 - The Obsidian `INDEX.md` puts `+N` next to the ✅ / 🚫 of ideas with N reels saved after their mark, and the summary line says how many ideas have new reels, so the news shows without Bases or Dataview.
 - `db.py marks --new` ends with the `db.py mark` commands that reset `+N` once the new reels are read (marking again keeps the note), and the skill's weekly review runs them, so the same ideas stop coming back every week.
