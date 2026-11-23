@@ -520,3 +520,26 @@ def test_marks_without_a_date_count_nothing_as_new(tmp_path):
     (tmp_path / "reels.json").write_text(json.dumps(db), encoding="utf-8")
     assert ed.load_reel_stats(tmp_path / "reels.json") == {
         "plan-mode": {"reels": 1, "last_saved": "2025-11-05"}}
+
+
+def test_index_shows_new_reels_since_the_mark(tmp_path):
+    _db_with_dated_marks(tmp_path)
+    stats = ed.load_reel_stats(tmp_path / "reels.json")
+    marks = ed.load_marks(tmp_path / "reels.json")
+    ed.export(DIGEST, tmp_path / "vault", marks=marks, stats=stats)
+    index = (tmp_path / "vault" / "INDEX.md").read_text(encoding="utf-8")
+    assert "(Plan%20mode%20before%20big%20changes.md) ✅ +1\n" in index
+    assert "(Keep%20a%20CLAUDE.md%20project%20memory.md) 🚫\n" in index  # marked, nothing new
+    assert " · 1 with new reels since the mark_" in index
+
+
+def test_index_has_no_new_count_for_pending_ideas_or_without_stats(tmp_path):
+    marks = {"plan-mode": {"status": "tried", "note": None}}
+    stats = {"plan-mode": {"reels": 2, "last_saved": None, "new_since_mark": 0},
+             "claude-md": {"reels": 3, "last_saved": None, "new_since_mark": 2}}  # pending
+    ed.export(DIGEST, tmp_path, marks=marks, stats=stats)
+    index = (tmp_path / "INDEX.md").read_text(encoding="utf-8")
+    assert "+" not in index.split("\n---", 1)[1].replace("](", "")  # no badge anywhere
+    assert "with new reels" not in index
+    ed.export(DIGEST, tmp_path / "plain", marks=marks)
+    assert "with new reels" not in (tmp_path / "plain" / "INDEX.md").read_text("utf-8")

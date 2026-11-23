@@ -7,7 +7,8 @@ Reads the digest written in step 5 (default: WORK/digest.md) and writes into
 VAULT/FOLDER:
 
   INDEX.md          map of content: "Do these first" and every idea by category,
-                    with ✅ / 🚫 next to the ideas marked tried / discarded
+                    with ✅ / 🚫 next to the ideas marked tried / discarded,
+                    plus +N when N reels were saved about them after the mark
   <Idea title>.md   one note per idea, with frontmatter (title, date, tags,
                     aliases, status, reels, last_saved, new_since_mark, sources)
                     and links to the
@@ -236,12 +237,25 @@ def render_note(idea: dict, ideas: list, by_slug: dict, day: str, index_name: st
 INDEX_MARKS = {"tried": " ✅", "discarded": " 🚫", "todo": ""}
 
 
-def render_index(digest: dict, by_slug: dict, day: str, marks: dict | None = None) -> str:
+def _new_badge(slug: str, status: str, stats: dict | None) -> str:
+    """" +N" for a tried/discarded idea with N reels saved after its mark, else ""."""
+    if status == "todo":
+        return ""
+    n = ((stats or {}).get(slug) or {}).get("new_since_mark") or 0
+    return f" +{n}" if n > 0 else ""
+
+
+def render_index(digest: dict, by_slug: dict, day: str, marks: dict | None = None,
+                 stats: dict | None = None) -> str:
     status = {i["slug"]: resolve_status(i, marks)[0] for i in digest["ideas"]}
+    badge = {s: _new_badge(s, st, stats) for s, st in status.items()}
     done = Counter(status.values())
     summary = f"_Exported from digest.md on {day} · {len(digest['ideas'])} ideas"
     if done["tried"] or done["discarded"]:
         summary += f" · ✅ {done['tried']} tried · 🚫 {done['discarded']} discarded"
+        fresh = sum(1 for b in badge.values() if b)
+        if fresh:
+            summary += f" · {fresh} with new reels since the mark"
     lines = ["---", f"title: {_yaml_str(digest['title'])}", f"date: {day}",
              "tags: [saved-reels]", f"generator: {MARKER}", "---", "",
              f"# {digest['title']}", "", summary + "_", ""]
@@ -252,7 +266,7 @@ def render_index(digest: dict, by_slug: dict, day: str, marks: dict | None = Non
     categories = list(dict.fromkeys(i["category"] for i in digest["ideas"]))
     for cat in categories:
         lines += [f"## {cat}", ""]
-        lines += [f"- {link(i['title'], i['file'])}{INDEX_MARKS[status[i['slug']]]}"
+        lines += [f"- {link(i['title'], i['file'])}{INDEX_MARKS[status[i['slug']]]}{badge[i['slug']]}"
                   for i in digest["ideas"] if i["category"] == cat]
         lines.append("")
     return "\n".join(lines)
@@ -284,7 +298,7 @@ def export(digest_text: str, out_dir: Path, today: str | None = None, marks: dic
     by_slug = {i["slug"]: i for i in digest["ideas"]}
     out_dir.mkdir(parents=True, exist_ok=True)
     report = {"written": [], "skipped": [], "stale": [], "pruned": []}
-    files = {"INDEX.md": render_index(digest, by_slug, day, marks)}
+    files = {"INDEX.md": render_index(digest, by_slug, day, marks, stats)}
     for i in digest["ideas"]:
         files[i["file"]] = render_note(i, digest["ideas"], by_slug, day, "INDEX.md", marks, stats)
     for name, content in files.items():
