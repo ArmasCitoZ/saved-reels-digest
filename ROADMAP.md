@@ -90,7 +90,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py ideas --min-reels N`: listar solo las ideas respaldadas por al menos N reels (las que más se repiten en lo que guardas), para elegir qué probar primero; combina con `--status`, `--sort` y `--collection`
 - [x] Skill, README y CHANGELOG: documentar `+N new` en `db.py ideas` e `ideas --min-reels` (y usar `--status todo --min-reels 3` en el resumen final de la skill para proponer qué probar primero)
 - [x] `db.py ideas --newer-than DÍAS`: listar solo las ideas con algún reel guardado en los últimos DÍAS días (los temas que estás guardando ahora), lo contrario de `--older-than`; combina con `--status`, `--min-reels`, `--sort` y `--collection`, y no se puede usar junto a `--older-than`
-- [ ] `db.py ideas --limit N`: enseñar solo las N primeras ideas después de filtrar y ordenar, y decir cuántas quedan fuera, para que el resumen de la skill proponga unas pocas ideas en vez de una lista de 40
+- [x] `db.py ideas --limit N`: enseñar solo las N primeras ideas después de filtrar y ordenar, y decir cuántas quedan fuera, para que el resumen de la skill proponga unas pocas ideas en vez de una lista de 40
 - [ ] Skill, README y CHANGELOG: documentar `ideas --newer-than` e `ideas --limit` (y usar `--status todo --min-reels 3 --limit 5` en el resumen final de la skill)
 
 ## Robustez

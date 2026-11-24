@@ -291,3 +291,34 @@ def test_ideas_newer_than_is_checked(tmp_path):
     assert "opposite" in run_failing(tmp_path, "ideas", "--newer-than", "7", "--older-than", "30")
     assert "1 or more" in run_failing(tmp_path, "ideas", "--newer-than", "0")
     assert "--newer-than filters the list" in run_failing(tmp_path, "ideas", "hooks", "--newer-than", "7")
+
+
+def test_ideas_limit_shows_the_first_ones_and_says_how_many_are_left(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"), reel("BBBBB2", entry="hooks"),
+            reel("CCCCC3", entry="hooks"), reel("DDDDD4", entry="mcp"), reel("EEEEE5", entry="mcp"),
+            reel("FFFFF6", entry="subagents"), reel("GGGGG7", entry="alfa"))
+    out = run(tmp_path, "ideas", "--limit", "2")
+    lines = out.splitlines()
+    assert lines[0].startswith("Top 2 of 4 ideas")
+    # the limit applies after sorting: the ideas with most reels stay
+    assert [line.split()[0] for line in lines[1:3]] == ["hooks", "mcp"]
+    assert lines[3].startswith("... and 2 more")
+    # with --sort name the first two by slug stay instead
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--limit", "2", "--sort", "name"))[:2]] \
+        == ["alfa", "hooks"]
+    # and after filtering: only one todo idea with 2+ reels left once hooks is tried
+    run(tmp_path, "mark", "tried", "hooks")
+    out = run(tmp_path, "ideas", "--status", "todo", "--min-reels", "2", "--limit", "5")
+    assert out.startswith("1 todo ideas with 2+ reels") and "more" not in out
+
+
+def test_ideas_limit_equal_to_the_list_prints_everything(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"), reel("BBBBB2", entry="mcp"))
+    out = run(tmp_path, "ideas", "--limit", "2")
+    assert out.startswith("2 ideas") and len(out.splitlines()) == 3
+
+
+def test_ideas_limit_is_checked(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"))
+    assert "1 or more" in run_failing(tmp_path, "ideas", "--limit", "0")
+    assert "--limit filters the list" in run_failing(tmp_path, "ideas", "hooks", "--limit", "3")

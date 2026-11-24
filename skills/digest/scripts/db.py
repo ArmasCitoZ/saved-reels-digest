@@ -598,7 +598,7 @@ def cmd_ideas(a):
 
     if a.slugs:
         used = [f for f, v in (("--older-than", a.older_than), ("--newer-than", a.newer_than),
-                               ("--min-reels", a.min_reels)) if v is not None]
+                               ("--min-reels", a.min_reels), ("--limit", a.limit)) if v is not None]
         if used:
             flag = used[0]
             sys.exit(f"{flag} filters the list of ideas; leave out the slugs to use it.")
@@ -606,6 +606,8 @@ def cmd_ideas(a):
         return
     if a.min_reels is not None and a.min_reels < 1:
         sys.exit("--min-reels needs a number of reels of 1 or more.")
+    if a.limit is not None and a.limit < 1:
+        sys.exit("--limit needs a number of ideas of 1 or more.")
     if a.newer_than is not None:
         if a.older_than is not None:
             sys.exit("--newer-than and --older-than ask opposite things; use one of them.")
@@ -654,7 +656,12 @@ def cmd_ideas(a):
         print(f"None of the {len(ideas)} ideas {' and '.join(what)}.")
         return
     where = f" with reels from {a.collection!r}" if a.collection else ""
-    print(f"{len(rows)} {a.status + ' ' if a.status else ''}ideas{where}{old} (reels, newest saved, mark):")
+    hidden = 0
+    if a.limit is not None and len(rows) > a.limit:
+        hidden = len(rows) - a.limit
+        rows = rows[:a.limit]
+    top = f"Top {len(rows)} of " if hidden else ""
+    print(f"{top}{len(rows) + hidden} {a.status + ' ' if a.status else ''}ideas{where}{old} (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
     newer = _saved_since_mark(db["reels"].values(), marks)
     for slug, rs in rows:
@@ -665,6 +672,8 @@ def cmd_ideas(a):
               + (f"  +{n} new" if n else ""))
     if any(newer.get(slug) and status(slug) != "todo" for slug, _ in rows):
         print("+N new: reels saved after the idea was marked (db.py ideas SLUG --since-mark lists them).")
+    if hidden:
+        print(f"... and {hidden} more (raise --limit or leave it out to see them all).")
 
 
 def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None,
@@ -973,6 +982,8 @@ def main() -> None:
                    help="only ideas whose newest reel was saved more than DAYS days ago")
     p.add_argument("--newer-than", type=int, metavar="DAYS",
                    help="only ideas with a reel saved in the last DAYS days (what you save now)")
+    p.add_argument("--limit", type=int, metavar="N",
+                   help="show only the first N ideas after filtering and sorting")
     p.add_argument("--min-reels", type=int, metavar="N",
                    help="only ideas backed by at least N reels (with --collection, N reels from it)")
     p.add_argument("--since-mark", action="store_true",
