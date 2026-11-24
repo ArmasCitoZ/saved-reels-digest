@@ -256,3 +256,38 @@ def test_ideas_min_reels_needs_a_positive_number_and_no_slugs(tmp_path):
     make_db(tmp_path, reel("AAAAA1", entry="hooks"))
     assert "1 or more" in run_failing(tmp_path, "ideas", "--min-reels", "0")
     assert "--min-reels filters the list" in run_failing(tmp_path, "ideas", "hooks", "--min-reels", "2")
+
+
+def test_ideas_newer_than_keeps_what_you_are_saving_now(tmp_path):
+    now = 1762000000
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", saved_at=now - 60 * 86400),
+            reel("BBBBB2", entry="hooks", saved_at=now - 2 * 86400),
+            reel("CCCCC3", entry="mcp", saved_at=now - 3 * 86400),
+            reel("DDDDD4", entry="subagents", saved_at=now - 40 * 86400),
+            reel("EEEEE5", entry="nodate", added_at=None))
+    out = run(tmp_path, "ideas", "--newer-than", "7", "--now", str(now))
+    assert out.startswith("2 ideas with a reel saved in the last 7 days")
+    # one recent reel is enough; an idea with no known date never counts as recent
+    assert [r[:2] for r in rows(out)] == [["hooks", "2"], ["mcp", "1"]]
+    run(tmp_path, "mark", "tried", "mcp")
+    assert [r[0] for r in rows(run(tmp_path, "ideas", "--newer-than", "7", "--status", "todo",
+                                   "--now", str(now)))] == ["hooks"]
+    out = run(tmp_path, "ideas", "--newer-than", "7", "--min-reels", "2", "--now", str(now))
+    assert out.startswith("1 ideas with 2+ reels and a reel saved in the last 7 days")
+    assert "None of the 4 ideas has a reel saved in the last 1 days." in \
+        run(tmp_path, "ideas", "--newer-than", "1", "--now", str(now))
+
+
+def test_ideas_newer_than_with_collection_counts_only_its_reels(tmp_path):
+    now = 1762000000
+    make_db(tmp_path, reel("AAAAA1", entry="hooks", collection="IA", saved_at=now - 50 * 86400),
+            reel("BBBBB2", entry="hooks", collection="Cocina", saved_at=now - 86400))
+    assert "None of the 1 ideas" in run(tmp_path, "ideas", "--newer-than", "7", "--collection", "IA",
+                                        "--now", str(now))
+
+
+def test_ideas_newer_than_is_checked(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", entry="hooks"))
+    assert "opposite" in run_failing(tmp_path, "ideas", "--newer-than", "7", "--older-than", "30")
+    assert "1 or more" in run_failing(tmp_path, "ideas", "--newer-than", "0")
+    assert "--newer-than filters the list" in run_failing(tmp_path, "ideas", "hooks", "--newer-than", "7")
