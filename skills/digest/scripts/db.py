@@ -661,7 +661,8 @@ def cmd_ideas(a):
         hidden = len(rows) - a.limit
         rows = rows[:a.limit]
     top = f"Top {len(rows)} of " if hidden else ""
-    print(f"{top}{len(rows) + hidden} {a.status + ' ' if a.status else ''}ideas{where}{old} (reels, newest saved, mark):")
+    kind = f"{a.status} " if a.status else ""
+    print(f"{top}{len(rows) + hidden} {kind}ideas{where}{old} (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
     newer = _saved_since_mark(db["reels"].values(), marks)
     for slug, rs in rows:
