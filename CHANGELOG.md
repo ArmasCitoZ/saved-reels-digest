@@ -5,6 +5,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
 ### Added
 - `db.py ideas` puts `+N new` next to the mark of tried or discarded ideas with reels saved after the mark (counted like `db.py marks`) and ends with a line pointing to `db.py ideas SLUG --since-mark`, so the list Claude reads while merging shows the news too.
 - `db.py ideas --min-reels N` lists only the ideas backed by at least N reels, the ones that keep showing up in what you save. It combines with `--status`, `--sort`, `--older-than` and `--collection` (which counts only the reels from that collection). The skill runs `--status todo --min-reels 3` when it sums up a run, to suggest what to try first.

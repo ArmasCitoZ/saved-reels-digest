@@ -120,7 +120,7 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 ## Comunidad
 - [x] CONTRIBUTING.md y plantillas de issues
 - [x] CHANGELOG.md y releases versionadas por etiqueta (`release.yml`)
-- [ ] Publicar la primera versión con novedades (v0.2.0). Aún no hay ninguna etiqueta en el repositorio: o se etiqueta v0.2.0 en el commit de esa fecha, o se saca v0.3.0 con todo lo de "Unreleased" del CHANGELOG (subir `version` en `.claude-plugin/plugin.json` y `git tag v0.3.0 && git push --tags`; `release.yml` hace el resto)
+- [x] Publicar la primera versión con novedades: v0.3.0 (incluye todo lo de "Unreleased" desde 0.2.0)
 - [x] Ejemplo de `digest.md` de muestra (con datos inventados) en `examples/`
 - [x] GIF de demo en el README
 
