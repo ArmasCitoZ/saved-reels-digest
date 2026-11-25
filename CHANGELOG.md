@@ -8,6 +8,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [0.3.0] - 2026-11-25
 
 ### Added
+- `db.py ideas --newer-than DAYS` lists only the ideas with a reel saved in the last DAYS days, the topics you are saving right now; it is the opposite of `--older-than` (using both is an error) and combines with `--status`, `--min-reels`, `--sort` and `--collection`.
+- `db.py ideas --limit N` shows only the first N ideas after filtering and sorting, says "Top N of M" in the header and how many were left out at the end. The skill runs `--status todo --min-reels 3 --limit 5` when it sums up a run, so the suggestions stay short.
 - `db.py ideas` puts `+N new` next to the mark of tried or discarded ideas with reels saved after the mark (counted like `db.py marks`) and ends with a line pointing to `db.py ideas SLUG --since-mark`, so the list Claude reads while merging shows the news too.
 - `db.py ideas --min-reels N` lists only the ideas backed by at least N reels, the ones that keep showing up in what you save. It combines with `--status`, `--sort`, `--older-than` and `--collection` (which counts only the reels from that collection). The skill runs `--status todo --min-reels 3` when it sums up a run, to suggest what to try first.
 - The viewer shows `+N nuevos` next to the mark of a tried or discarded idea with reels saved after it was marked (counted like `db.py marks --new`), and a "Con novedades" checkbox, kept in the URL as `#novedades=1`, lists only those ideas. Marking an idea again in the viewer clears its badge, as the `db.py mark` command it gives resets the count.

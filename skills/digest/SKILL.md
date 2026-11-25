@@ -272,9 +272,12 @@ export or the plain `digest.md` instead.
 
 Tell the user in 2–3 lines: how many saves were read, how many were on topic, how
 many unique ideas remained after merging, the path to `digest.md`, and the top 3
-items. To pick those, also run `PY SCRIPTS/db.py ideas --status todo --min-reels 3`: the
-pending ideas backed by three or more reels are the ones the user keeps coming back to,
-so put them first when they are not tried yet (lower the number if it lists nothing).
+items. To pick those, also run `PY SCRIPTS/db.py ideas --status todo --min-reels 3 --limit 5`:
+the pending ideas backed by three or more reels are the ones the user keeps coming back to,
+so put them first when they are not tried yet (lower the number if it lists nothing;
+`--limit 5` keeps the list short and its last line says how many were left out).
+To see what the user is saving right now, `--newer-than 7` lists only the ideas with a
+reel saved in the last week (it cannot be combined with `--older-than`).
 Offer one next step (e.g. "want me to apply #1 to this project?").
 
 Weekly review: run `PY SCRIPTS/db.py ideas --status todo --older-than 30 --sort recent`.
