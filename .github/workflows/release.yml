@@ -18,7 +18,14 @@ jobs:
       - run: python -m pip install pytest
       - run: python -m pytest -q
       - run: python .github/scripts/release_notes.py "$GITHUB_REF_NAME" > notes.md
-      - run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
+      # the release may already exist when it was published from GitHub's "Draft a new release" page,
+      # which creates the tag too: then only fill in the notes from the CHANGELOG
+      - run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
 
