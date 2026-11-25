@@ -183,3 +183,40 @@ def test_marks_new_lists_only_ideas_with_reels_after_the_mark(tmp_path):
     assert "No reels saved about any tried idea since it was marked." in run(
         tmp_path, "marks", "--new", "--status", "tried")
     assert "No reels saved about any idea since it was marked." in run(tmp_path, "marks", "--new")
+
+
+def test_marks_collection_lists_only_ideas_with_reels_from_it(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path,
+            reel("AAAAA1", relevant=True, entry="subagents", collection="IA", saved_at=marked + 86400),
+            reel("BBBBB2", relevant=True, entry="subagents", collection="Cocina", saved_at=marked + 86400),
+            reel("CCCCC3", relevant=True, entry="hooks", collection="IA", saved_at=marked - 86400),
+            reel("DDDDD4", relevant=True, entry="mcp-servers", collection="Cocina",
+                 saved_at=marked + 86400),
+            reel("EEEEE5", relevant=True, entry="risotto", collection="Cocina", saved_at=marked + 86400))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": marked},
+                           "hooks": {"status": "discarded", "updated": marked},
+                           "mcp-servers": {"status": "discarded", "updated": marked}})
+    out = run(tmp_path, "marks", "--collection", "ia")  # case-insensitive, like the other commands
+    lines = {line.split()[1]: line for line in out.splitlines() if line.startswith("  ")}
+    assert sorted(lines) == ["hooks", "subagents"]  # mcp-servers only has reels from Cocina
+    assert "+1 new" in lines["subagents"]  # the Cocina reel saved after the mark does not count
+    assert "new" not in lines["hooks"]
+    assert "+N new: reels from collection 'ia' saved" in out
+    # --new: the discarded idea with new reels in Cocina only shows up there
+    assert "No reels from collection 'IA' saved about any discarded idea since it was marked." in run(
+        tmp_path, "marks", "--new", "--status", "discarded", "--collection", "IA")
+    cocina = run(tmp_path, "marks", "--new", "--status", "discarded", "--collection", "Cocina")
+    assert "Discarded but still saving reels from collection 'Cocina' about: mcp-servers." in cocina
+    assert 'db.py ideas mcp-servers --collection "Cocina"' in cocina
+
+
+def test_marks_collection_without_marked_ideas_in_it(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents", collection="IA"),
+            reel("BBBBB2", relevant=True, entry="risotto", collection="Cocina"))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": 1762000000}})
+    assert "No marked idea has reels from collection 'Cocina'." in run(
+        tmp_path, "marks", "--collection", "Cocina")
+    assert "No tried idea has reels from collection 'Cocina'." in run(
+        tmp_path, "marks", "--status", "tried", "--collection", "Cocina")
+    assert "Did you mean" in run_failing(tmp_path, "marks", "--collection", "Cocin")

@@ -48,9 +48,9 @@
                                             --fix runs the db.py rename it is sure about;
                                             also hints at ideas with nearly the same slug
 
-status, unavailable, next, dump, similar, recent and ideas accept --collection NAME to work only on
-one Instagram collection or YouTube playlist (as db.py collections names it, case-insensitive);
-a name no reel is in is an error that suggests the closest one.
+status, unavailable, next, dump, similar, recent, marks and ideas accept --collection NAME to work
+only on one Instagram collection or YouTube playlist (as db.py collections names it,
+case-insensitive); a name no reel is in is an error that suggests the closest one.
   db.py show CODE [CODE ...]                full record
 
 In set and show, a CODE can also be a pasted Instagram, TikTok or YouTube link.
@@ -549,12 +549,22 @@ def cmd_marks(a):
         print(f"No ideas marked as {a.status} yet." if a.status
               else "No ideas marked as tried or discarded yet.")
         return
-    newer = _saved_since_mark(db["reels"].values(), entries)
+    # with --collection, only the ideas with reels from it, and +N counts only those reels
+    reels = [r for r in db["reels"].values() if in_collection(r, a.collection)]
+    where = f" from collection {a.collection!r}" if a.collection else ""
+    if a.collection:
+        linked = {r.get("entry") for r in reels}
+        entries = {k: e for k, e in entries.items() if k in linked}
+        if not entries:
+            kind = f"{a.status} " if a.status else "marked "
+            print(f"No {kind}idea has reels{where}.")
+            return
+    newer = _saved_since_mark(reels, entries)
     if a.new:
         entries = {k: e for k, e in entries.items() if newer.get(k)}
         if not entries:
             kind = f"{a.status} " if a.status else ""
-            print(f"No reels saved about any {kind}idea since it was marked.")
+            print(f"No reels{where} saved about any {kind}idea since it was marked.")
             return
     for slug, e in sorted(entries.items(), key=lambda kv: (kv[1].get("status", ""), kv[0])):
         n = newer.get(slug, 0)
@@ -563,10 +573,12 @@ def cmd_marks(a):
               + (f"  {e['note']}" if e.get("note") else ""))
     back = sorted(s for s, e in entries.items() if newer.get(s) and e.get("status") == "discarded")
     if back:
-        print(f"Discarded but still saving reels about: {', '.join(back)}. Maybe worth another look:"
-              f" db.py ideas {' '.join(back)}")
+        flag = f' --collection "{a.collection}"' if a.collection else ""
+        print(f"Discarded but still saving reels{where} about: {', '.join(back)}."
+              f" Maybe worth another look: db.py ideas {' '.join(back)}{flag}")
     elif newer:
-        print("+N new: reels saved about that idea after it was marked (db.py ideas SLUG lists them).")
+        print(f"+N new: reels{where} saved about that idea after it was marked"
+              " (db.py ideas SLUG lists them).")
     if a.new:
         # marking again stamps a new date, so +N goes back to 0 (and the note is kept)
         by_status = {}
@@ -1012,7 +1024,7 @@ def main() -> None:
                    help="apply the one fix that needs no judgement: the rename check is sure of")
     p.set_defaults(fn=cmd_check)
     p = sub.add_parser("show"); p.add_argument("codes", nargs="+"); p.set_defaults(fn=cmd_show)
-    for name in ("status", "unavailable", "next", "dump", "similar", "recent", "ideas"):
+    for name in ("status", "unavailable", "next", "dump", "similar", "recent", "marks", "ideas"):
         sub.choices[name].add_argument("--collection",
                                        help="only reels from this Instagram collection or YouTube playlist")
     a = ap.parse_args()
