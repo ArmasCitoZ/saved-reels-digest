@@ -4,10 +4,13 @@
   db.py collections                         Instagram collections and YouTube playlists, with
                                             how many reels each has
   db.py unavailable                         saved posts that were deleted or are private
-  db.py next [--limit 40] [--field relevant] posts still waiting for triage, compact
+  db.py next [--limit 40] [--chars 220]     posts still waiting for triage, compact
+            [--maybe]                          (caption cut to --chars); --maybe also lists the
+                                            'maybe' reels, with their transcript and images text
   db.py set FIELD VALUE CODE [CODE ...]     e.g. set relevant true C1 C2 / set topic "Claude Code" C3
   db.py dump [--undigested] [--all]         relevant reels with caption + transcript, for merging
-            [--max-total 60000] [--offset N]   output is capped; continue with --offset
+            [--max-total 60000] [--offset N]   output is capped; continue with --offset;
+            [--chars 600]                      --chars cuts each caption (transcripts get 3x)
   db.py similar [--threshold 0.3]           groups of reels that probably say the same thing,
             [--ngram-threshold 0.1]            also across languages (by similar spellings);
             [--engine auto|python|rust]        uses the Rust reels-similar if installed (faster)
@@ -18,13 +21,18 @@
             [--new]                            with how many reels were saved about it since;
                                             --new: only ideas with reels saved after the mark
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
-            [--older-than DAYS] [--min-reels N]
+            [--older-than DAYS | --newer-than DAYS]
+            [--min-reels N] [--limit N]
                                             every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark (+N new: reels saved
                                             after it was marked), to reuse slugs;
                                             --older-than DAYS: only ideas with no reel saved
                                             lately (with --status todo: forgotten ideas);
+                                            --newer-than DAYS: only ideas with a reel saved in
+                                            the last DAYS days (what you are saving now);
                                             --min-reels N: only ideas with N or more reels
+                                            (with --collection, N reels from it);
+                                            --limit N: only the first N, after filters and sort
   db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link;
             [--since-mark]                     --since-mark: only those saved after the idea was
                                             marked (the +N new of db.py marks)
