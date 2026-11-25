@@ -5,6 +5,12 @@ and versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `db.py marks --collection NAME` lists only the marked ideas with reels from that Instagram collection or YouTube playlist, and `+N new` counts only the reels from it, so the weekly review of one collection does not mix in the others (the skill adds it there when the user works with one collection). The "Discarded but still saving" hint keeps the flag in its `db.py ideas` command.
+
+### Fixed
+- `db.py -h` names every option again: `ideas --newer-than` and `--limit`, `next --chars` and `--maybe`, and `dump --chars` were missing, and `next` listed a `--field` option that does not exist. A test now keeps the overview in step with each command's own help.
+
 ## [0.3.0] - 2026-11-25
 
 ### Added
