@@ -92,6 +92,9 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py ideas --newer-than DÍAS`: listar solo las ideas con algún reel guardado en los últimos DÍAS días (los temas que estás guardando ahora), lo contrario de `--older-than`; combina con `--status`, `--min-reels`, `--sort` y `--collection`, y no se puede usar junto a `--older-than`
 - [x] `db.py ideas --limit N`: enseñar solo las N primeras ideas después de filtrar y ordenar, y decir cuántas quedan fuera, para que el resumen de la skill proponga unas pocas ideas en vez de una lista de 40
 - [x] Skill, README y CHANGELOG: documentar `ideas --newer-than` e `ideas --limit` (y usar `--status todo --min-reels 3 --limit 5` en el resumen final de la skill)
+- [ ] `db.py -h`: la ayuda de `ideas` no menciona `--newer-than` ni `--limit` (ni el texto de `--collection` dice que `ideas` cuenta solo esos reels con `--min-reels`); ponerla al día, porque es lo primero que lee Claude cuando duda de un comando, y un test que compruebe que cada opción de `ideas` aparece en la ayuda
+- [ ] `db.py marks --collection`: listar solo las ideas marcadas con reels de esa colección o lista, contando en `+N new` solo los reels de ella, como ya aceptan `ideas`, `status`, `next`, `dump`...; así el repaso semanal de una colección (`marks --new --collection "IA"`) no mezcla las novedades de otras
+- [ ] Skill, README y CHANGELOG: documentar `marks --collection` (y usarlo en el repaso semanal cuando el usuario trabaja con una sola colección)
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo
