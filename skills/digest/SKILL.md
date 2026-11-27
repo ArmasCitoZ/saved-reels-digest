@@ -284,8 +284,10 @@ Weekly review: run `PY SCRIPTS/db.py ideas --status todo --older-than 30 --sort 
 It lists the pending ideas no new reel has come in for in a month, which tend to be
 forgotten. If it lists any, name up to three of them in the summary and ask whether the
 user tried them or wants to drop them; record the answer with `db.py mark`.
-Then run `PY SCRIPTS/db.py marks --new`: it lists only the tried or discarded ideas that
-got reels after they were marked. For each one, `PY SCRIPTS/db.py ideas SLUG --since-mark`
+Then run `PY SCRIPTS/db.py marks --new --sort new`: it lists only the tried or discarded
+ideas that got reels after they were marked, the ones with the most new reels first, so
+start there (if the review has to be cut short, the busiest ideas are already covered).
+For each one, `PY SCRIPTS/db.py ideas SLUG --since-mark`
 lists just those new reels (the `+N new`); read the ones of a tried idea for tricks worth
 adding to its entry, and mention the discarded ones that keep coming back (add
 `--status tried` or `--status discarded` to look at one kind; when the user works with one

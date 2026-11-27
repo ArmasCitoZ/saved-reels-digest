@@ -6,6 +6,7 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py marks --sort status|new|date` orders the marked ideas by status and name (the default, as before), by `+N new` with the most new reels first (ties by name), or by the date of the mark with the oldest first (undated marks last). It combines with `--new`, `--status` and `--collection`, and the skill's weekly review runs `marks --new --sort new` so it starts with the ideas that have the most news.
 - `db.py marks --collection NAME` lists only the marked ideas with reels from that Instagram collection or YouTube playlist, and `+N new` counts only the reels from it, so the weekly review of one collection does not mix in the others (the skill adds it there when the user works with one collection). The "Discarded but still saving" hint keeps the flag in its `db.py ideas` command.
 
 ### Fixed
