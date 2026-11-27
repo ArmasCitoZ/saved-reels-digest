@@ -19,7 +19,9 @@
                                             remember what the user did with a digest idea
   db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind),
             [--new]                            with how many reels were saved about it since;
-                                            --new: only ideas with reels saved after the mark
+            [--sort status|new|date]           --new: only ideas with reels saved after the mark;
+                                            --sort new: most +N new first, date: oldest mark
+                                            first (default: by status, then name)
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS | --newer-than DAYS]
             [--min-reels N] [--limit N]
@@ -566,7 +568,15 @@ def cmd_marks(a):
             kind = f"{a.status} " if a.status else ""
             print(f"No reels{where} saved about any {kind}idea since it was marked.")
             return
-    for slug, e in sorted(entries.items(), key=lambda kv: (kv[1].get("status", ""), kv[0])):
+    def mark_date(e):
+        # oldest mark first; a mark with no date cannot be placed, so it goes last
+        u = e.get("updated")
+        return (0, u) if isinstance(u, (int, float)) else (1, 0)
+
+    order = {"status": lambda kv: (kv[1].get("status", ""), kv[0]),
+             "new": lambda kv: (-newer.get(kv[0], 0), kv[0]),
+             "date": lambda kv: (mark_date(kv[1]), kv[0])}[a.sort]
+    for slug, e in sorted(entries.items(), key=order):
         n = newer.get(slug, 0)
         print(f"  {e.get('status', '?'):10} {slug:32} {_day(e.get('updated'))}"
               + (f"  +{n} new" if n else "")
@@ -990,6 +1000,8 @@ def main() -> None:
     p.set_defaults(fn=cmd_mark)
     p = sub.add_parser("marks")
     p.add_argument("--status", choices=("tried", "discarded"), help="list only this kind of mark")
+    p.add_argument("--sort", choices=("status", "new", "date"), default="status",
+                   help="status (then name), new (most +N new first) or date (oldest mark first)")
     p.add_argument("--new", action="store_true",
                    help="list only the ideas with reels saved after they were marked;"
                         " marking an idea again resets its count")

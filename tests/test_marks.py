@@ -220,3 +220,51 @@ def test_marks_collection_without_marked_ideas_in_it(tmp_path):
     assert "No tried idea has reels from collection 'Cocina'." in run(
         tmp_path, "marks", "--status", "tried", "--collection", "Cocina")
     assert "Did you mean" in run_failing(tmp_path, "marks", "--collection", "Cocin")
+
+
+def _listed(out):
+    return [line.split()[1] for line in out.splitlines() if line.startswith("  ")]
+
+
+def test_marks_sort_new_puts_the_most_new_reels_first(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path,
+            reel("AAAAA1", relevant=True, entry="subagents", saved_at=marked + 86400),
+            reel("BBBBB2", relevant=True, entry="hooks", saved_at=marked + 86400),
+            reel("CCCCC3", relevant=True, entry="hooks", saved_at=marked + 2 * 86400),
+            reel("DDDDD4", relevant=True, entry="hooks", saved_at=marked + 3 * 86400),
+            reel("EEEEE5", relevant=True, entry="mcp-servers", saved_at=marked - 86400),
+            reel("FFFFF6", relevant=True, entry="agents-md", saved_at=marked + 86400))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": marked},
+                           "hooks": {"status": "tried", "updated": marked},
+                           "mcp-servers": {"status": "discarded", "updated": marked},
+                           "agents-md": {"status": "discarded", "updated": marked}})
+    # default: by status, then name
+    assert _listed(run(tmp_path, "marks")) == ["agents-md", "mcp-servers", "hooks", "subagents"]
+    # most +N new first, ties by name, ideas with nothing new last
+    assert _listed(run(tmp_path, "marks", "--sort", "new")) == [
+        "hooks", "agents-md", "subagents", "mcp-servers"]
+    # it combines with --new and --status
+    assert _listed(run(tmp_path, "marks", "--new", "--sort", "new")) == [
+        "hooks", "agents-md", "subagents"]
+    assert _listed(run(tmp_path, "marks", "--status", "tried", "--sort", "new")) == [
+        "hooks", "subagents"]
+
+
+def test_marks_sort_date_puts_the_oldest_mark_first(tmp_path):
+    make_db(tmp_path,
+            reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="hooks"),
+            reel("CCCCC3", relevant=True, entry="mcp-servers"),
+            reel("DDDDD4", relevant=True, entry="agents-md"))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": 1763000000},
+                           "hooks": {"status": "discarded", "updated": 1761000000},
+                           "mcp-servers": {"status": "tried"},  # no date: last
+                           "agents-md": {"status": "tried", "updated": 1762000000}})
+    assert _listed(run(tmp_path, "marks", "--sort", "date")) == [
+        "hooks", "agents-md", "subagents", "mcp-servers"]
+
+
+def test_marks_sort_rejects_unknown_orders(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    assert "invalid choice" in run_failing(tmp_path, "marks", "--sort", "reels")
