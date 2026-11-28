@@ -27,7 +27,7 @@
                                             days ago (old decisions worth a second look)
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS | --newer-than DAYS]
-            [--min-reels N] [--limit N]
+            [--min-reels N] [--limit N] [--json]
                                             every idea (slug) reels point to: how many reels,
                                             the newest saved and its mark (+N new: reels saved
                                             after it was marked), to reuse slugs;
@@ -37,7 +37,9 @@
                                             the last DAYS days (what you are saving now);
                                             --min-reels N: only ideas with N or more reels
                                             (with --collection, N reels from it);
-                                            --limit N: only the first N, after filters and sort
+                                            --limit N: only the first N, after filters and sort;
+                                            --json: the same list as JSON (total, ideas: slug,
+                                            reels, last_saved, status, note, new_since_mark)
   db.py ideas SLUG [SLUG ...]               the reels of these ideas: date, code, author, link;
             [--since-mark]                     --since-mark: only those saved after the idea was
                                             marked (the +N new of db.py marks)
@@ -644,19 +646,16 @@ def cmd_ideas(a):
     for r in db["reels"].values():
         if r.get("entry") and in_collection(r, a.collection):
             ideas.setdefault(r["entry"], []).append(r)
-    if not ideas:
-        print(f"No idea has reels from collection {a.collection!r} yet." if a.collection
-              else "No ideas yet: reels get one with db.py set entry SLUG CODE ... while merging.")
-        return
-    def status(slug):
-        return marks.get(slug, {}).get("status", "todo")
-
     if a.slugs:
         used = [f for f, v in (("--older-than", a.older_than), ("--newer-than", a.newer_than),
-                               ("--min-reels", a.min_reels), ("--limit", a.limit)) if v is not None]
+                               ("--min-reels", a.min_reels), ("--limit", a.limit),
+                               ("--json", a.json or None)) if v is not None]
         if used:
             flag = used[0]
-            sys.exit(f"{flag} filters the list of ideas; leave out the slugs to use it.")
+            sys.exit(f"{flag} works on the list of ideas; leave out the slugs to use it.")
+        if not ideas:
+            _no_ideas(a.collection)
+            return
         _show_ideas(a.slugs, ideas, marks, a.collection, a.since_mark)
         return
     if a.min_reels is not None and a.min_reels < 1:
@@ -671,6 +670,15 @@ def cmd_ideas(a):
     if a.since_mark:
         sys.exit("--since-mark lists the new reels of the ideas you name: db.py ideas SLUG --since-mark."
                  " To see which marked ideas have new reels: db.py marks --new")
+    if not ideas:
+        if a.json:
+            print(json.dumps({"total": 0, "ideas": []}))
+        else:
+            _no_ideas(a.collection)
+        return
+
+    def status(slug):
+        return marks.get(slug, {}).get("status", "todo")
 
     def newest(rs):
         return max((saved_ts(r) or 0 for r in rs), default=0)
@@ -700,6 +708,17 @@ def cmd_ideas(a):
         old = f" with a reel saved in the last {a.newer_than} days"
     if a.min_reels is not None:
         old = f" with {a.min_reels}+ reels" + (old.replace(" with ", " and ", 1) if old else "")
+    newer = _saved_since_mark(db["reels"].values(), marks)
+    if a.json:
+        shown = rows[:a.limit] if a.limit is not None else rows
+        print(json.dumps({"total": len(rows), "ideas": [
+            {"slug": slug, "reels": len(rs),
+             "last_saved": _day(newest(rs)) if newest(rs) else None,
+             "status": status(slug), "note": marks.get(slug, {}).get("note"),
+             # like export_digest.py --json: a count for marked ideas, null for the rest
+             "new_since_mark": newer.get(slug, 0) if status(slug) != "todo" else None}
+            for slug, rs in shown]}, ensure_ascii=False, indent=1))
+        return
     if not rows:
         what = [f"is {a.status}"] if a.status else []
         if a.older_than is not None:
@@ -719,7 +738,6 @@ def cmd_ideas(a):
     kind = f"{a.status} " if a.status else ""
     print(f"{top}{len(rows) + hidden} {kind}ideas{where}{old} (reels, newest saved, mark):")
     width = max(len(slug) for slug, _ in rows)
-    newer = _saved_since_mark(db["reels"].values(), marks)
     for slug, rs in rows:
         # +N new counts every reel of the idea saved after the mark, like db.py marks,
         # even when --collection only shows some of them
@@ -730,6 +748,11 @@ def cmd_ideas(a):
         print("+N new: reels saved after the idea was marked (db.py ideas SLUG --since-mark lists them).")
     if hidden:
         print(f"... and {hidden} more (raise --limit or leave it out to see them all).")
+
+
+def _no_ideas(collection: str | None) -> None:
+    print(f"No idea has reels from collection {collection!r} yet." if collection
+          else "No ideas yet: reels get one with db.py set entry SLUG CODE ... while merging.")
 
 
 def _show_ideas(slugs, ideas: dict, marks: dict, collection: str | None,
@@ -1056,6 +1079,9 @@ def main() -> None:
                    help="only ideas with a reel saved in the last DAYS days (what you save now)")
     p.add_argument("--limit", type=int, metavar="N",
                    help="show only the first N ideas after filtering and sorting")
+    p.add_argument("--json", action="store_true",
+                   help="print the list as JSON (total, then each idea's slug, reels, last_saved,"
+                        " status, note and new_since_mark)")
     p.add_argument("--min-reels", type=int, metavar="N",
                    help="only ideas backed by at least N reels (with --collection, N reels from it)")
     p.add_argument("--since-mark", action="store_true",

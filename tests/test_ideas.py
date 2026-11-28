@@ -322,3 +322,40 @@ def test_ideas_limit_is_checked(tmp_path):
     make_db(tmp_path, reel("AAAAA1", entry="hooks"))
     assert "1 or more" in run_failing(tmp_path, "ideas", "--limit", "0")
     assert "--limit filters the list" in run_failing(tmp_path, "ideas", "hooks", "--limit", "3")
+
+
+def test_ideas_json_has_the_same_rows_filters_and_order(tmp_path):
+    import json
+
+    marked = 1761500000
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="hooks", saved_at=1761600000),
+            reel("BBBBB2", relevant=True, entry="hooks", saved_at=1762000000),
+            reel("CCCCC3", relevant=True, entry="subagents", saved_at=1761000000),
+            reel("DDDDD4", relevant=True, entry="mcp", added_at=None))
+    db = json.loads((tmp_path / "reels.json").read_text(encoding="utf-8"))
+    db["entries"] = {"hooks": {"status": "tried", "updated": marked, "note": "útil"}}
+    (tmp_path / "reels.json").write_text(json.dumps(db), encoding="utf-8")
+    out = json.loads(run(tmp_path, "ideas", "--json"))
+    assert out["total"] == 3
+    assert out["ideas"] == [
+        {"slug": "hooks", "reels": 2, "last_saved": "2025-11-01", "status": "tried",
+         "note": "útil", "new_since_mark": 2},
+        {"slug": "mcp", "reels": 1, "last_saved": None, "status": "todo",
+         "note": None, "new_since_mark": None},
+        {"slug": "subagents", "reels": 1, "last_saved": "2025-10-20", "status": "todo",
+         "note": None, "new_since_mark": None}]
+    # filters, sort and --limit apply as in the text list; total counts before the limit
+    out = json.loads(run(tmp_path, "ideas", "--json", "--status", "todo", "--sort", "name",
+                         "--limit", "1"))
+    assert out["total"] == 2 and [i["slug"] for i in out["ideas"]] == ["mcp"]
+    # nothing matching is still valid JSON
+    assert json.loads(run(tmp_path, "ideas", "--json", "--min-reels", "5")) == {"total": 0, "ideas": []}
+
+
+def test_ideas_json_with_no_ideas_and_with_slugs(tmp_path):
+    import json
+
+    make_db(tmp_path, reel("AAAAA1", relevant=True))
+    assert json.loads(run(tmp_path, "ideas", "--json")) == {"total": 0, "ideas": []}
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="hooks"))
+    assert "--json works on the list of ideas" in run_failing(tmp_path, "ideas", "hooks", "--json")
