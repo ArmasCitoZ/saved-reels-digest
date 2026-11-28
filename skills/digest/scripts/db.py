@@ -21,10 +21,12 @@
             [--new]                            with how many reels were saved about it since;
             [--sort status|new|date]           --new: only ideas with reels saved after the mark;
             [--limit N]                        --sort new: most +N new first, date: oldest mark
-            [--older-than DAYS]                first (default: by status, then name);
+            [--older-than DAYS] [--json]       first (default: by status, then name);
                                             --limit N: only the first N, after filters and sort;
                                             --older-than DAYS: only ideas marked more than DAYS
-                                            days ago (old decisions worth a second look)
+                                            days ago (old decisions worth a second look);
+                                            --json: the same list as JSON (total, marks: slug,
+                                            status, marked, note, new_since_mark)
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS | --newer-than DAYS]
             [--min-reels N] [--limit N] [--json]
@@ -547,6 +549,11 @@ def cmd_mark(a):
              if unknown else ""))
 
 
+def _marks_empty(a, msg: str) -> None:
+    """Nothing to list: a sentence, or with --json an empty list that is still valid JSON."""
+    print(json.dumps({"total": 0, "marks": []}) if a.json else msg)
+
+
 def cmd_marks(a):
     db = load_db()
     entries = db.get("entries") or {}
@@ -557,8 +564,8 @@ def cmd_marks(a):
     if a.older_than is not None and a.older_than < 1:
         sys.exit("--older-than needs a number of days of 1 or more.")
     if not entries:
-        print(f"No ideas marked as {a.status} yet." if a.status
-              else "No ideas marked as tried or discarded yet.")
+        _marks_empty(a, f"No ideas marked as {a.status} yet." if a.status
+                     else "No ideas marked as tried or discarded yet.")
         return
     if a.older_than is not None:
         # a mark with no date cannot be said to be old, so it is left out
@@ -567,7 +574,7 @@ def cmd_marks(a):
                    if isinstance(e.get("updated"), (int, float)) and e["updated"] < cut}
         if not entries:
             kind = f"{a.status} " if a.status else ""
-            print(f"No {kind}idea was marked more than {a.older_than} days ago.")
+            _marks_empty(a, f"No {kind}idea was marked more than {a.older_than} days ago.")
             return
     # with --collection, only the ideas with reels from it, and +N counts only those reels
     reels = [r for r in db["reels"].values() if in_collection(r, a.collection)]
@@ -577,14 +584,14 @@ def cmd_marks(a):
         entries = {k: e for k, e in entries.items() if k in linked}
         if not entries:
             kind = f"{a.status} " if a.status else "marked "
-            print(f"No {kind}idea has reels{where}.")
+            _marks_empty(a, f"No {kind}idea has reels{where}.")
             return
     newer = _saved_since_mark(reels, entries)
     if a.new:
         entries = {k: e for k, e in entries.items() if newer.get(k)}
         if not entries:
             kind = f"{a.status} " if a.status else ""
-            print(f"No reels{where} saved about any {kind}idea since it was marked.")
+            _marks_empty(a, f"No reels{where} saved about any {kind}idea since it was marked.")
             return
     def mark_date(e):
         # oldest mark first; a mark with no date cannot be placed, so it goes last
@@ -595,6 +602,14 @@ def cmd_marks(a):
              "new": lambda kv: (-newer.get(kv[0], 0), kv[0]),
              "date": lambda kv: (mark_date(kv[1]), kv[0])}[a.sort]
     rows = sorted(entries.items(), key=order)
+    if a.json:
+        shown = rows[:a.limit] if a.limit is not None else rows
+        print(json.dumps({"total": len(rows), "marks": [
+            {"slug": slug, "status": e.get("status"),
+             "marked": _day(e["updated"]) if isinstance(e.get("updated"), (int, float)) else None,
+             "note": e.get("note"), "new_since_mark": newer.get(slug, 0)}
+            for slug, e in shown]}, ensure_ascii=False, indent=1))
+        return
     hidden = 0
     if a.limit is not None and len(rows) > a.limit:
         hidden = len(rows) - a.limit
@@ -1067,6 +1082,9 @@ def main() -> None:
                    help="show only the first N marked ideas after filtering and sorting")
     p.add_argument("--older-than", type=int, metavar="DAYS",
                    help="only ideas marked more than DAYS days ago")
+    p.add_argument("--json", action="store_true",
+                   help="print the list as JSON (total, then each idea's slug, status, marked,"
+                        " note and new_since_mark)")
     p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests
     p.set_defaults(fn=cmd_marks)
     p = sub.add_parser("ideas")

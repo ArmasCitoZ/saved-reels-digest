@@ -155,6 +155,8 @@ $PY db.py ideas --status todo --older-than 30  # ideas pendientes sin reels nuev
 $PY db.py ideas --status todo --min-reels 3   # ideas pendientes con 3 reels o más: las que más se repiten, para probarlas primero
 $PY db.py ideas --newer-than 7 --sort recent  # ideas con algún reel guardado esta semana (los temas que guardas ahora)
 $PY db.py ideas --status todo --min-reels 3 --limit 5  # solo las 5 primeras, y cuántas quedan fuera
+$PY db.py ideas --json                       # la misma lista en JSON (slug, reels, last_saved, status, note, new_since_mark), con los mismos filtros
+$PY db.py marks --json                       # las ideas marcadas en JSON (slug, status, marked, note, new_since_mark)
 $PY db.py ideas subagentes                   # los reels de una idea: fecha, código, autor y enlace
 $PY db.py ideas subagentes --since-mark      # solo los guardados después de marcarla (los +N new de marks)
 $PY db.py check [--strict] [--fix]           # digest.md y la base coinciden (ideas sin reels, slugs rotos, marcas de ideas que ya no están); --strict sale con error si no; --fix aplica el rename que no tiene dudas

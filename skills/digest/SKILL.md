@@ -180,7 +180,8 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    `PY SCRIPTS/db.py set entry <slug> CODE1 CODE2 ...`
    Slugs are lowercase words joined by `-` (letters with accents are fine); first run
    `PY SCRIPTS/db.py ideas` to see the slugs already in use (add `--collection NAME` when the
-   user asked for one collection or playlist), and reuse the existing one when a reel belongs
+   user asked for one collection or playlist; with hundreds of ideas, `--json` gives the same
+   list as JSON, easier to search than the columns), and reuse the existing one when a reel belongs
    to that idea instead of inventing a near-copy (`sub-agents` next to `subagents` splits one
    idea in two). If `set entry` warns that a new slug is nearly one already in use, it is
    almost always the same idea: run the `db.py rename` it prints. Unsure whether a reel fits an idea? `PY SCRIPTS/db.py ideas <slug>` lists the

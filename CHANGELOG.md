@@ -6,6 +6,8 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py ideas --json` prints the list of ideas as JSON: `total` (how many match, before `--limit`) and `ideas`, each with `slug`, `reels`, `last_saved`, `status`, `note` and `new_since_mark` (named as in `export_digest.py --json`: a count for marked ideas, `null` for the rest). Every filter, `--sort` and `--limit` work as in the text list, and an empty result is still valid JSON. The skill mentions it for digests with hundreds of ideas.
+- `db.py marks --json` prints the marked ideas as JSON: `total` and `marks`, each with `slug`, `status`, `marked` (the date of the mark, or `null`), `note` and `new_since_mark`, with the same filters and order as the text list.
 - `db.py marks --limit N` shows only the first N marked ideas after filtering and sorting and says how many were left out, like `ideas --limit`; the hints at the end only name the ideas shown. The skill's weekly review runs `marks --new --sort new --limit 5`.
 - `db.py marks --older-than DAYS` lists only the ideas marked more than DAYS days ago (marks with no date are left out), to revisit old decisions. It combines with `--status`, `--sort`, `--limit` and `--collection`, and the skill asks about `--status discarded --older-than 180 --limit 3` once in a while.
 - `db.py check` says how to fix a mark whose idea is no longer in the digest: the `db.py rename` that keeps it (with the new slug when exactly one idea has no reels) or `db.py mark todo SLUG` to forget it. When the idea's reels are lost too, it points to the rename already suggested for them, which moves the mark as well.

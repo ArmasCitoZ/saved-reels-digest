@@ -102,8 +102,8 @@ Tick the box when done and link the commit. Ideas welcome via issues.
 - [x] `db.py check`: cuando una idea marcada ya no está en el digest, decir cómo arreglarlo (`db.py rename VIEJO NUEVO` si se renombró, con el slug nuevo cuando solo hay una idea sin reels, o `db.py mark todo VIEJO` para olvidar la marca); hoy solo avisa
 - [x] Skill, README y CHANGELOG: documentar `marks --limit`, `marks --older-than` y el arreglo de marcas huérfanas en `check`
 - [x] `db.py ideas --json`: la misma lista (con sus filtros y orden) en JSON, con `slug`, `reels`, `last_saved`, `status`, `note` y `new_since_mark` como en `export_digest.py --json`, para que Claude y otros scripts la lean sin depender del formato de las columnas
-- [ ] `db.py marks --json`: las ideas marcadas en JSON (`slug`, `status`, `marked`, `note`, `new_since_mark`), con los mismos filtros y orden que la salida de texto
-- [ ] Skill, README y CHANGELOG: documentar `ideas --json` y `marks --json`
+- [x] `db.py marks --json`: las ideas marcadas en JSON (`slug`, `status`, `marked`, `note`, `new_since_mark`), con los mismos filtros y orden que la salida de texto
+- [x] Skill, README y CHANGELOG: documentar `ideas --json` y `marks --json`
 
 ## Robustez
 - [x] Reanudar transcripción tras cortes de red sin repetir trabajo

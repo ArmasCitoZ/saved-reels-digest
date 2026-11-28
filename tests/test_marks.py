@@ -330,3 +330,34 @@ def test_marks_older_than_must_be_positive(tmp_path):
     _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": 1762000000}})
     r = run_failing(tmp_path, "marks", "--older-than", "0")
     assert "--older-than needs a number of days of 1 or more" in r
+
+
+def test_marks_json_has_the_same_rows_filters_and_order(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path,
+            reel("AAAAA1", relevant=True, entry="subagents", saved_at=marked + 86400),
+            reel("BBBBB2", relevant=True, entry="hooks", saved_at=marked + 86400),
+            reel("CCCCC3", relevant=True, entry="hooks", saved_at=marked + 2 * 86400),
+            reel("DDDDD4", relevant=True, entry="mcp-servers", saved_at=marked - 86400))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": marked, "note": "útil"},
+                           "hooks": {"status": "tried", "updated": marked},
+                           "mcp-servers": {"status": "discarded"}})
+    out = json.loads(run(tmp_path, "marks", "--json"))
+    assert out == {"total": 3, "marks": [
+        {"slug": "mcp-servers", "status": "discarded", "marked": None, "note": None,
+         "new_since_mark": 0},
+        {"slug": "hooks", "status": "tried", "marked": "2025-11-01", "note": None,
+         "new_since_mark": 2},
+        {"slug": "subagents", "status": "tried", "marked": "2025-11-01", "note": "útil",
+         "new_since_mark": 1}]}
+    # --new, --sort and --limit apply as in the text list; total counts before the limit
+    out = json.loads(run(tmp_path, "marks", "--json", "--new", "--sort", "new", "--limit", "1"))
+    assert out["total"] == 2 and [m["slug"] for m in out["marks"]] == ["hooks"]
+    # nothing matching is still valid JSON, with no sentence around it
+    assert json.loads(run(tmp_path, "marks", "--json", "--status", "discarded", "--new")) == {
+        "total": 0, "marks": []}
+
+
+def test_marks_json_with_no_marks(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    assert json.loads(run(tmp_path, "marks", "--json")) == {"total": 0, "marks": []}
