@@ -20,8 +20,9 @@
   db.py marks [--status tried|discarded]    every idea marked tried or discarded (or only one kind),
             [--new]                            with how many reels were saved about it since;
             [--sort status|new|date]           --new: only ideas with reels saved after the mark;
-                                            --sort new: most +N new first, date: oldest mark
-                                            first (default: by status, then name)
+            [--limit N]                        --sort new: most +N new first, date: oldest mark
+                                            first (default: by status, then name);
+                                            --limit N: only the first N, after filters and sort
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS | --newer-than DAYS]
             [--min-reels N] [--limit N]
@@ -547,6 +548,8 @@ def cmd_marks(a):
     entries = db.get("entries") or {}
     if a.status:
         entries = {k: e for k, e in entries.items() if e.get("status") == a.status}
+    if a.limit is not None and a.limit < 1:
+        sys.exit("--limit needs a number of ideas of 1 or more.")
     if not entries:
         print(f"No ideas marked as {a.status} yet." if a.status
               else "No ideas marked as tried or discarded yet.")
@@ -576,7 +579,14 @@ def cmd_marks(a):
     order = {"status": lambda kv: (kv[1].get("status", ""), kv[0]),
              "new": lambda kv: (-newer.get(kv[0], 0), kv[0]),
              "date": lambda kv: (mark_date(kv[1]), kv[0])}[a.sort]
-    for slug, e in sorted(entries.items(), key=order):
+    rows = sorted(entries.items(), key=order)
+    hidden = 0
+    if a.limit is not None and len(rows) > a.limit:
+        hidden = len(rows) - a.limit
+        rows = rows[:a.limit]
+        # the hints below talk only about the ideas shown
+        entries = dict(rows)
+    for slug, e in rows:
         n = newer.get(slug, 0)
         print(f"  {e.get('status', '?'):10} {slug:32} {_day(e.get('updated'))}"
               + (f"  +{n} new" if n else "")
@@ -589,6 +599,8 @@ def cmd_marks(a):
     elif newer:
         print(f"+N new: reels{where} saved about that idea after it was marked"
               " (db.py ideas SLUG lists them).")
+    if hidden:
+        print(f"... and {hidden} more (raise --limit or leave it out to see them all).")
     if a.new:
         # marking again stamps a new date, so +N goes back to 0 (and the note is kept)
         by_status = {}
@@ -1005,6 +1017,8 @@ def main() -> None:
     p.add_argument("--new", action="store_true",
                    help="list only the ideas with reels saved after they were marked;"
                         " marking an idea again resets its count")
+    p.add_argument("--limit", type=int, metavar="N",
+                   help="show only the first N marked ideas after filtering and sorting")
     p.set_defaults(fn=cmd_marks)
     p = sub.add_parser("ideas")
     p.add_argument("slugs", nargs="*", help="list the reels of these ideas instead")

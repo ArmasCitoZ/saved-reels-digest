@@ -268,3 +268,33 @@ def test_marks_sort_date_puts_the_oldest_mark_first(tmp_path):
 def test_marks_sort_rejects_unknown_orders(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
     assert "invalid choice" in run_failing(tmp_path, "marks", "--sort", "reels")
+
+
+def test_marks_limit_shows_the_first_n_after_sorting(tmp_path):
+    marked = 1762000000
+    make_db(tmp_path,
+            reel("AAAAA1", relevant=True, entry="subagents", saved_at=marked + 86400),
+            reel("BBBBB2", relevant=True, entry="hooks", saved_at=marked + 86400),
+            reel("CCCCC3", relevant=True, entry="hooks", saved_at=marked + 2 * 86400),
+            reel("DDDDD4", relevant=True, entry="mcp-servers", saved_at=marked - 86400),
+            reel("EEEEE5", relevant=True, entry="agents-md", saved_at=marked + 86400))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": marked},
+                           "hooks": {"status": "tried", "updated": marked},
+                           "mcp-servers": {"status": "discarded", "updated": marked},
+                           "agents-md": {"status": "discarded", "updated": marked}})
+    out = run(tmp_path, "marks", "--sort", "new", "--limit", "2")
+    assert _listed(out) == ["hooks", "agents-md"]
+    assert "... and 2 more (raise --limit" in out
+    # the hints only name the ideas that are shown
+    out = run(tmp_path, "marks", "--new", "--sort", "new", "--limit", "1")
+    assert _listed(out) == ["hooks"] and "... and 2 more" in out
+    assert "db.py mark tried hooks" in out and "agents-md" not in out
+    # a limit at or above the count changes nothing
+    out = run(tmp_path, "marks", "--limit", "4")
+    assert len(_listed(out)) == 4 and "more" not in out
+
+
+def test_marks_limit_must_be_positive(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    _with_marks(tmp_path, {"subagents": {"status": "tried", "updated": 1762000000}})
+    assert "--limit needs a number of ideas of 1 or more" in run_failing(tmp_path, "marks", "--limit", "0")
