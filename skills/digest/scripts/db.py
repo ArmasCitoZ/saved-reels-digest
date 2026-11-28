@@ -895,8 +895,17 @@ def check_digest(db: dict, digest_text: str) -> list[str]:
     for slug in sorted(set(ANCHOR_LINK_RE.findall(digest_text)) - set(slugs)):
         problems.append(f"A link goes to (#{slug}), but no idea has that slug.")
     for slug in sorted(set(db.get("entries") or {}) - set(slugs)):
-        problems.append(f"{slug!r} is marked {db['entries'][slug].get('status', '?')} "
-                        "but is not in the digest.")
+        head = f"{slug!r} is marked {db['entries'][slug].get('status', '?')} but is not in the digest"
+        if slug in linked:
+            # its reels are lost too, and the rename suggested for them moves the mark as well
+            problems.append(f"{head}; the db.py rename for its reels moves the mark too.")
+            continue
+        # only a mark is left: the idea was renamed (keep the mark) or dropped (forget it)
+        target = unbacked[0] if not lost and len(unbacked) == 1 else None
+        problems.append(f"{head}. "
+                        + (f"If it was renamed to {{#{target}}}: db.py rename {slug} {target}; "
+                           if target else f"If it was renamed: db.py rename {slug} NEW-SLUG; ")
+                        + f"if it was dropped, forget the mark: db.py mark todo {slug}")
     demoted = reclassified(db)
     if demoted:
         codes = " ".join(demoted)

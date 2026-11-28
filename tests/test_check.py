@@ -1,4 +1,5 @@
 """db.py check: digest.md and reels.json must agree on which reels went into which idea."""
+import json
 import os
 import subprocess
 import sys
@@ -52,7 +53,38 @@ def test_marks_for_ideas_no_longer_in_the_digest(tmp_path):
     run(tmp_path, "mark", "discarded", "old")
     run(tmp_path, "set", "entry", "mcp-servers", "EEEEE5")
     write(tmp_path)
-    assert "'old' is marked discarded but is not in the digest" in run(tmp_path, "check")
+    out = run(tmp_path, "check")
+    assert "'old' is marked discarded but is not in the digest" in out
+    # both ideas still have reels, so it could have been renamed to either, or dropped
+    assert "db.py rename old NEW-SLUG" in out and "db.py mark todo old" in out
+
+
+def test_orphan_mark_suggests_the_rename_when_one_idea_lacks_reels(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"))
+    (tmp_path / "reels.json").write_text(
+        (tmp_path / "reels.json").read_text(encoding="utf-8").replace(
+            '"reels"', '"entries": {"mcp": {"status": "tried", "updated": 1762000000}}, "reels"', 1),
+        encoding="utf-8")
+    write(tmp_path)
+    out = run(tmp_path, "check")
+    assert "If it was renamed to {#mcp-servers}: db.py rename mcp mcp-servers" in out
+    assert "db.py mark todo mcp" in out
+    # following the suggestion moves the mark to the idea in the digest
+    run(tmp_path, "rename", "mcp", "mcp-servers")
+    db = json.loads((tmp_path / "reels.json").read_text(encoding="utf-8"))
+    assert list(db["entries"]) == ["mcp-servers"]
+    assert "is marked" not in run(tmp_path, "check")
+
+
+def test_orphan_mark_whose_reels_are_lost_points_to_their_rename(tmp_path):
+    make_db(tmp_path, reel("AAAAA1", relevant=True, entry="subagents"),
+            reel("BBBBB2", relevant=True, entry="mcp"))
+    run(tmp_path, "mark", "tried", "mcp")
+    write(tmp_path)
+    out = run(tmp_path, "check")
+    assert "db.py rename mcp mcp-servers" in out
+    assert "the db.py rename for its reels moves the mark too" in out
+    assert "mark todo mcp" not in out
 
 
 def test_slugs_inside_code_blocks_are_not_ideas(tmp_path):
