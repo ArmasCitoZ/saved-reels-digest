@@ -215,7 +215,9 @@ _Updated YYYY-MM-DD · N saved · N on topic · N unique ideas after merging_
    that rename for you; it never guesses when more than one idea could be the target), repeated `{#slug}`s, `(#slug)` links
    that go nowhere, relevant reels not merged yet and reels that back an idea but were
    triaged again as not relevant (if they still belong, `db.py set relevant true`; if not,
-   `db.py set entry none`; `set relevant` itself warns about them when it happens). Fix each one and run it again until it
+   `db.py set entry none`; `set relevant` itself warns about them when it happens), and marks
+   of ideas that are no longer in the digest (if the idea was renamed, run the `db.py rename`
+   it suggests so the mark follows it; if it was dropped, `db.py mark todo SLUG`). Fix each one and run it again until it
    says they agree; otherwise the next run merges new reels into the wrong ideas. Under
    "Maybe the same idea" it also lists entries with nearly the same slug (`subagent` and
    `subagents`): read both, and only if they really are one idea run the rename it suggests
@@ -284,9 +286,10 @@ Weekly review: run `PY SCRIPTS/db.py ideas --status todo --older-than 30 --sort 
 It lists the pending ideas no new reel has come in for in a month, which tend to be
 forgotten. If it lists any, name up to three of them in the summary and ask whether the
 user tried them or wants to drop them; record the answer with `db.py mark`.
-Then run `PY SCRIPTS/db.py marks --new --sort new`: it lists only the tried or discarded
-ideas that got reels after they were marked, the ones with the most new reels first, so
-start there (if the review has to be cut short, the busiest ideas are already covered).
+Then run `PY SCRIPTS/db.py marks --new --sort new --limit 5`: it lists only the tried or
+discarded ideas that got reels after they were marked, the ones with the most new reels
+first, and stops at five so the review stays short (its last lines say how many were left
+for next week).
 For each one, `PY SCRIPTS/db.py ideas SLUG --since-mark`
 lists just those new reels (the `+N new`); read the ones of a tried idea for tricks worth
 adding to its entry, and mention the discarded ones that keep coming back (add
@@ -297,7 +300,9 @@ entry), mark it again with the same status,
 as the last line of `marks --new` spells out (`PY SCRIPTS/db.py mark tried SLUG`): that
 resets its `+N` while keeping the note, so next week's review only brings up reels saved
 since. If the user decides a discarded idea deserves a try after all, mark it with the
-new status instead.
+new status instead. Once in a while (every month or so), also run
+`PY SCRIPTS/db.py marks --status discarded --older-than 180 --limit 3` and ask the user whether
+any of those old decisions deserves another look.
 
 ## Troubleshooting
 

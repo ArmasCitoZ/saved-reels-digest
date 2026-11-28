@@ -6,6 +6,9 @@ and versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `db.py marks --limit N` shows only the first N marked ideas after filtering and sorting and says how many were left out, like `ideas --limit`; the hints at the end only name the ideas shown. The skill's weekly review runs `marks --new --sort new --limit 5`.
+- `db.py marks --older-than DAYS` lists only the ideas marked more than DAYS days ago (marks with no date are left out), to revisit old decisions. It combines with `--status`, `--sort`, `--limit` and `--collection`, and the skill asks about `--status discarded --older-than 180 --limit 3` once in a while.
+- `db.py check` says how to fix a mark whose idea is no longer in the digest: the `db.py rename` that keeps it (with the new slug when exactly one idea has no reels) or `db.py mark todo SLUG` to forget it. When the idea's reels are lost too, it points to the rename already suggested for them, which moves the mark as well.
 - `db.py marks --sort status|new|date` orders the marked ideas by status and name (the default, as before), by `+N new` with the most new reels first (ties by name), or by the date of the mark with the oldest first (undated marks last). It combines with `--new`, `--status` and `--collection`, and the skill's weekly review runs `marks --new --sort new` so it starts with the ideas that have the most news.
 - `db.py marks --collection NAME` lists only the marked ideas with reels from that Instagram collection or YouTube playlist, and `+N new` counts only the reels from it, so the weekly review of one collection does not mix in the others (the skill adds it there when the user works with one collection). The "Discarded but still saving" hint keeps the flag in its `db.py ideas` command.
 
