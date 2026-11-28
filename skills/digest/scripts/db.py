@@ -21,8 +21,10 @@
             [--new]                            with how many reels were saved about it since;
             [--sort status|new|date]           --new: only ideas with reels saved after the mark;
             [--limit N]                        --sort new: most +N new first, date: oldest mark
-                                            first (default: by status, then name);
-                                            --limit N: only the first N, after filters and sort
+            [--older-than DAYS]                first (default: by status, then name);
+                                            --limit N: only the first N, after filters and sort;
+                                            --older-than DAYS: only ideas marked more than DAYS
+                                            days ago (old decisions worth a second look)
   db.py ideas [--status todo|tried|discarded] [--sort reels|recent|name]
             [--older-than DAYS | --newer-than DAYS]
             [--min-reels N] [--limit N]
@@ -550,10 +552,21 @@ def cmd_marks(a):
         entries = {k: e for k, e in entries.items() if e.get("status") == a.status}
     if a.limit is not None and a.limit < 1:
         sys.exit("--limit needs a number of ideas of 1 or more.")
+    if a.older_than is not None and a.older_than < 1:
+        sys.exit("--older-than needs a number of days of 1 or more.")
     if not entries:
         print(f"No ideas marked as {a.status} yet." if a.status
               else "No ideas marked as tried or discarded yet.")
         return
+    if a.older_than is not None:
+        # a mark with no date cannot be said to be old, so it is left out
+        cut = (a.now or time.time()) - a.older_than * 86400
+        entries = {k: e for k, e in entries.items()
+                   if isinstance(e.get("updated"), (int, float)) and e["updated"] < cut}
+        if not entries:
+            kind = f"{a.status} " if a.status else ""
+            print(f"No {kind}idea was marked more than {a.older_than} days ago.")
+            return
     # with --collection, only the ideas with reels from it, and +N counts only those reels
     reels = [r for r in db["reels"].values() if in_collection(r, a.collection)]
     where = f" from collection {a.collection!r}" if a.collection else ""
@@ -1019,6 +1032,9 @@ def main() -> None:
                         " marking an idea again resets its count")
     p.add_argument("--limit", type=int, metavar="N",
                    help="show only the first N marked ideas after filtering and sorting")
+    p.add_argument("--older-than", type=int, metavar="DAYS",
+                   help="only ideas marked more than DAYS days ago")
+    p.add_argument("--now", type=float, help=argparse.SUPPRESS)  # fixed clock for tests
     p.set_defaults(fn=cmd_marks)
     p = sub.add_parser("ideas")
     p.add_argument("slugs", nargs="*", help="list the reels of these ideas instead")
