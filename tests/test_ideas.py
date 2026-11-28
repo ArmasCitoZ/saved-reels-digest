@@ -358,4 +358,4 @@ def test_ideas_json_with_no_ideas_and_with_slugs(tmp_path):
     make_db(tmp_path, reel("AAAAA1", relevant=True))
     assert json.loads(run(tmp_path, "ideas", "--json")) == {"total": 0, "ideas": []}
     make_db(tmp_path, reel("AAAAA1", relevant=True, entry="hooks"))
-    assert "--json works on the list of ideas" in run_failing(tmp_path, "ideas", "hooks", "--json")
+    assert "--json prints the list of ideas" in run_failing(tmp_path, "ideas", "hooks", "--json")

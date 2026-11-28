@@ -652,7 +652,8 @@ def cmd_ideas(a):
                                ("--json", a.json or None)) if v is not None]
         if used:
             flag = used[0]
-            sys.exit(f"{flag} works on the list of ideas; leave out the slugs to use it.")
+            what = "prints the list of ideas" if flag == "--json" else "filters the list of ideas"
+            sys.exit(f"{flag} {what}; leave out the slugs to use it.")
         if not ideas:
             _no_ideas(a.collection)
             return
